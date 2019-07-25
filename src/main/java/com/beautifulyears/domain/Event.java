@@ -27,6 +27,8 @@ public class Event {
 	private String 	languages;
 	private String 	phone;
 	private String 	organiser;
+	private final Date createdAt = new Date();
+	private Date lastModifiedAt = new Date();
 
 	public String getId() {
 		return id;
@@ -117,6 +119,18 @@ public class Event {
 	}
 	public void setOrganiser(String organiser) {
 		this.organiser = organiser;
+	}
+
+	public Date getCreatedAt() {
+		return createdAt;
+	}
+
+	public Date getLastModifiedAt() {
+		return lastModifiedAt;
+	}
+
+	public void setLastModifiedAt(Date lastModifiedAt) {
+		this.lastModifiedAt = lastModifiedAt;
 	}
 
 	public Event(String title, Date datetime, String description, int entryFee, int perPerson, int eventType,

@@ -2,6 +2,7 @@ package com.beautifulyears.rest;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -190,6 +191,7 @@ public class EventController {
 					oldEvent.setLanguages(event.getLanguages());
 					oldEvent.setPhone(event.getPhone());
 					oldEvent.setOrganiser(event.getOrganiser());
+					oldEvent.setLastModifiedAt(new Date());
 					
 					event = eventRepository.save(oldEvent);
 					logHandler.addLog(event,
