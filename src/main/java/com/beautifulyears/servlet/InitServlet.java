@@ -13,8 +13,8 @@ public class InitServlet extends HttpServlet {
 	private String productServerHost = "qa.beautifulyears.com";
 	private String productServerPort = "8083";
 	private String mailSupported = "";
-	private String imageUploadPath = "c:/uploads";
-	private String sitemapPath = "c:/sitemap";
+	private String imageUploadPath = "/Users/pulkit/Work/SocialAlpha/server_data/uploads";
+	private String sitemapPath = "/Users/pulkit/Work/SocialAlpha/server_data/sitemap";
 	private String s3MediaBucketName = "dev-media.beautifulyears.com";
 	private String cdnPath = "https://d33mlq9vmeqlx3.cloudfront.net";
 
