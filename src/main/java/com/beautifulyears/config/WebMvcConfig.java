@@ -11,10 +11,12 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 
 import com.beautifulyears.interceptors.LoggerInterceptor;
 import com.beautifulyears.interceptors.SessionInterceptor;
 import com.beautifulyears.rest.MenuController;
+
 
 @EnableWebMvc
 @ComponentScan(basePackageClasses = MenuController.class)
@@ -39,5 +41,11 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter {
 		registry.addInterceptor(loggerInterceptor).addPathPatterns("/**");
 		registry.addInterceptor(sessionInterceptor).addPathPatterns("/**");
 		;
+	}
+
+
+	@Override
+	public void addCorsMappings(CorsRegistry registry) {
+		registry.addMapping("/**").allowedMethods("GET", "POST","PUT", "OPTIONS", "DELETE").allowedOrigins("*");
 	}
 }
