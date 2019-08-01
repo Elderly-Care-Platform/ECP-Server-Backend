@@ -1,6 +1,7 @@
 package com.beautifulyears.rest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Date;
 import java.util.List;
@@ -66,68 +67,39 @@ public class EventController {
 		shareLogHandler = new SharedActivityLogHandler(mongoTemplate);
 	}
 
-	// @RequestMapping(consumes = { "application/json" }, value = { "/contactUs" })
-	// @ResponseBody
-	// public Object submitFeedback(@RequestBody Event event,
-	// 		HttpServletRequest request, HttpServletResponse res)
-	// 		throws Exception {
-	// 	LoggerUtil.logEntry();
-	// 	User currentUser = Util.getSessionUser(request);
-	// 	if (null != currentUser) {
-	// 		event.setUserId(currentUser.getId());
-	// 		event.setUsername(currentUser.getUserName());
-	// 		Query query = new Query();
-	// 		query.addCriteria(Criteria.where("userId").is(currentUser.getId()));
-	// 		UserProfile profile = mongoTemplate.findOne(query,
-	// 				UserProfile.class);
-	// 		event.setUserProfile(profile);
-	// 	}
-	// 	event.setEventType("F");
+	/**
+	 * API to get the event detail for provided eventId
+	 * 
+	 * @param req
+	 * @param eventId
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(method = { RequestMethod.GET }, value = { "" }, produces = { "application/json" })
+	@ResponseBody
+	public Object getEventDetail(HttpServletRequest req,
+			@RequestParam(value = "eventId", required = true) String eventId)
+			throws Exception {
+		LoggerUtil.logEntry();
+		Util.logStats(mongoTemplate, req, "get detail of discuss item", null,
+				null, eventId, null, null,
+				Arrays.asList("eventId = " + eventId),
+				"get detail page for eventId " + eventId, "COMMUNITY");
 
-	// 	event = eventRepository.save(event);
-	// 	logHandler.addLog(event, ActivityLogConstants.CRUD_TYPE_CREATE,
-	// 			request);
-	// 	try {
-	// 		MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
-	// 				"New Feedback: " + event.getTitle(), event.getText());
-	// 	} catch (Exception e) {
-	// 		logger.error("error sending the mail for this feedback");
-	// 	}
-
-	// 	logger.info("new feedback entity created with ID: " + event.getId());
-	// 	Util.logStats(mongoTemplate, request, "New Feedback",
-	// 			event.getUserId(), null, event.getId(), null, null, null,
-	// 			"new feedback added", "EVENT");
-	// 	return BYGenericResponseHandler.getResponse(event);
-	// }
-
-	// @RequestMapping(method = { RequestMethod.GET }, value = { "/getLinkInfo" }, produces = { "application/json" })
-	// @ResponseBody
-	// public Object getLinkInfo(
-	// 		@RequestParam(value = "url", required = true) String url,
-	// 		HttpServletRequest req) throws Exception {
-	// 	LinkInfo linkInfo = null;
-	// 	WebPageParser parser = null;
-	// 	try {
-	// 		parser = new WebPageParser(url);
-	// 	} catch (Exception e) {
-	// 		Util.handleException(e);
-	// 	} finally {
-	// 		if (parser != null) {
-	// 			linkInfo = parser.getUrlDetails();
-	// 		}
-	// 	}
-	// 	Util.logStats(mongoTemplate, req, "Get link Info", null, null, url,
-	// 			null, url, null, "submitting url to get the link preview",
-	// 			"EVENT");
-	// 	return BYGenericResponseHandler.getResponse(linkInfo);
-	// }
+		Event event = eventRepository.findOne(eventId);
+		try {
+			if (null == event) {
+				throw new BYException(BYErrorCodes.DISCUSS_NOT_FOUND);
+			}
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+		return BYGenericResponseHandler.getResponse(event);
+	}
 
 	@RequestMapping(method = { RequestMethod.POST }, consumes = { "application/json" })
 	@ResponseBody
-	public Object submitEvent(@RequestBody Event event,
-			HttpServletRequest request, HttpServletResponse res)
-			throws Exception {
+	public Object submitEvent(@RequestBody Event event, HttpServletRequest request) throws Exception {
 		LoggerUtil.logEntry();
 		User currentUser = Util.getSessionUser(request);
 		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "POST")) {
@@ -167,7 +139,7 @@ public class EventController {
 
 	@RequestMapping(method = { RequestMethod.PUT }, consumes = { "application/json" })
 	@ResponseBody
-	public Object editEvent(@RequestBody Event event, HttpServletRequest request, HttpServletResponse res) throws Exception {
+	public Object editEvent(@RequestBody Event event, HttpServletRequest request) throws Exception {
 		LoggerUtil.logEntry();
 		User currentUser = Util.getSessionUser(request);
 		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "POST")) {
