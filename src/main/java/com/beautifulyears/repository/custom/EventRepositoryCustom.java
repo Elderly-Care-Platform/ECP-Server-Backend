@@ -7,7 +7,7 @@ import com.beautifulyears.rest.response.PageImpl;
 
 public interface EventRepositoryCustom {
 
-	public PageImpl<Event> getPage(String searchTxt,Integer eventType, Pageable pageable);
+	public PageImpl<Event> getPage(String searchTxt,Integer eventType,Long startDatetime, Pageable pageable);
 
-	public long getCount(String searchTxt,Integer eventType);
+	public long getCount(String searchTxt,Integer eventType, Long startDatetime);
 }

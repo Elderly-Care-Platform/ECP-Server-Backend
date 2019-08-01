@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.log4j.Logger;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,14 +15,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
-
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-
 import com.beautifulyears.constants.ActivityLogConstants;
 import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.domain.Event;
@@ -197,6 +193,7 @@ public class EventController {
 	public Object getPage(
 			@RequestParam(value = "searchTxt", required = false) String searchTxt,
 			@RequestParam(value = "eventType", required = false) Integer eventType,
+			@RequestParam(value = "startDatetime", required = false) Long startDatetime,
 			@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
 			@RequestParam(value = "p", required = false, defaultValue = "0") int pageIndex,
@@ -214,19 +211,20 @@ public class EventController {
 			}
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
-			page = eventRepository.getPage(searchTxt,eventType, pageable);
+			page = eventRepository.getPage(searchTxt,eventType, startDatetime, pageable);
 			eventPage = EventResponse.getPage(page, currentUser);
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
 		return BYGenericResponseHandler.getResponse(eventPage);
-	}
+	}	
 
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/count" }, produces = { "application/json" })
 	@ResponseBody
 	public Object eventByEventTypeTopicAndSubTopicCount(
 			@RequestParam(value = "searchTxt", required = false) String searchTxt,
 			@RequestParam(value = "eventType", required = false) Integer eventType,
+			@RequestParam(value = "startDatetime", required = false) Long startDatetime,
 			HttpServletRequest request) throws Exception {
 		LoggerUtil.logEntry();
 		Map<String, Long> obj = new HashMap<String, Long>();
@@ -238,25 +236,25 @@ public class EventController {
 			Long indoorCount = null;
 			if (null!= searchTxt) {
 				if(eventType == 0){
-					allCount = eventRepository.getCount(searchTxt,0);
+					allCount = eventRepository.getCount(searchTxt,0,startDatetime);
 					filterCriteria.add("eventType = 0");
 					obj.put("all", new Long(allCount));
 
-					outdoorCount = eventRepository.getCount(searchTxt,1);
+					outdoorCount = eventRepository.getCount(searchTxt,1,startDatetime);
 					filterCriteria.add("eventType = 1");
 					obj.put("outdoor", new Long(outdoorCount));
 
-					indoorCount = eventRepository.getCount(searchTxt,2);
+					indoorCount = eventRepository.getCount(searchTxt,2,startDatetime);
 					filterCriteria.add("eventType = 2");
 					obj.put("indoor", new Long(indoorCount));
 				}
 				if(eventType == 1){
-					outdoorCount = eventRepository.getCount(searchTxt,1);
+					outdoorCount = eventRepository.getCount(searchTxt,1,startDatetime);
 					filterCriteria.add("eventType = 1");
 					obj.put("outdoor", new Long(outdoorCount));
 				}
 				if(eventType == 2){
-					indoorCount = eventRepository.getCount(searchTxt,2);
+					indoorCount = eventRepository.getCount(searchTxt,2,startDatetime);
 					filterCriteria.add("eventType = 2");
 					obj.put("indoor", new Long(indoorCount));
 				}

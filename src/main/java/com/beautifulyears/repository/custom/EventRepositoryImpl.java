@@ -1,12 +1,9 @@
 package com.beautifulyears.repository.custom;
 
 import java.util.List;
-
+import java.util.Date;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Direction;
-import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -20,11 +17,11 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
 	private MongoTemplate mongoTemplate;
 
 	@Override
-	public PageImpl<Event> getPage(String searchTxt, Integer eventType, Pageable pageable) {
+	public PageImpl<Event> getPage(String searchTxt, Integer eventType,Long startDatetime, Pageable pageable) {
 		List<Event> stories = null;
 
 		Query query = new Query();
-		query = getQuery(query, searchTxt, eventType);
+		query = getQuery(query, searchTxt, eventType, startDatetime);
 		query.with(pageable);
 		query.addCriteria(Criteria.where("status").is(EventConstants.EVENT_STATUS_ACTIVE));
 		
@@ -36,9 +33,13 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
 		return storyPage;
 	}
 
-	private Query getQuery(Query q, String searchTxt, Integer eventType) {
+	private Query getQuery(Query q, String searchTxt, Integer eventType, Long startDatetime) {
 		if (null != searchTxt) {
 			q.addCriteria(Criteria.where("title").regex(searchTxt));
+		}
+		if (null != startDatetime) {
+			Date dt = new Date(startDatetime);			
+			q.addCriteria(Criteria.where("datetime").gte(dt));
 		}
 		if(eventType !=null && eventType > 0){
 			q.addCriteria(Criteria.where("eventType").is(eventType));
@@ -47,10 +48,10 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
 	}
 
 	@Override
-	public long getCount(String searchTxt, Integer eventType) {
+	public long getCount(String searchTxt, Integer eventType, Long startDatetime) {
 		long count = 0;
 		Query query = new Query();
-		query = getQuery(query, searchTxt, eventType);
+		query = getQuery(query, searchTxt, eventType, startDatetime);
 		query.addCriteria(Criteria.where("status").is(
 				EventConstants.EVENT_STATUS_ACTIVE));
 		
