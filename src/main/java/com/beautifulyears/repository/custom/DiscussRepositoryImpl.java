@@ -21,13 +21,13 @@ public class DiscussRepositoryImpl implements DiscussRepositoryCustom {
 	private MongoTemplate mongoTemplate;
 
 	@Override
-	public PageImpl<Discuss> getPage(List<String> discussTypeArray,
+	public PageImpl<Discuss> getPage(String searchTxt, List<String> discussTypeArray,
 			List<ObjectId> tagIds, String userId, Boolean isFeatured,
 			Boolean isPromotion, Pageable pageable) {
 		List<Discuss> stories = null;
 
 		Query query = new Query();
-		query = getQuery(query, discussTypeArray, tagIds, userId, isFeatured,
+		query = getQuery(query, searchTxt, discussTypeArray, tagIds, userId, isFeatured,
 				isPromotion);
 		query.with(new Sort(new Order(Direction.DESC, "isPromotion")));
 		query.with(pageable);
@@ -42,10 +42,13 @@ public class DiscussRepositoryImpl implements DiscussRepositoryCustom {
 		return storyPage;
 	}
 
-	private Query getQuery(Query q, List<String> discussTypeArray,
+	private Query getQuery(Query q, String searchTxt, List<String> discussTypeArray,
 			List<ObjectId> tagIds, String userId, Boolean isFeatured,
 			Boolean isPromotion) {
 
+		if(searchTxt != null){
+			q.addCriteria(Criteria.where("title").regex(searchTxt));
+		}
 		if (discussTypeArray != null && discussTypeArray.size() > 0) {
 			q.addCriteria(Criteria.where((String) "discussType").in(
 					discussTypeArray));
@@ -67,11 +70,11 @@ public class DiscussRepositoryImpl implements DiscussRepositoryCustom {
 	}
 
 	@Override
-	public long getCount(List<String> discussTypeArray, List<ObjectId> tagIds,
+	public long getCount(String searchTxt, List<String> discussTypeArray, List<ObjectId> tagIds,
 			String userId, Boolean isFeatured, Boolean isPromotion) {
 		long count = 0;
 		Query query = new Query();
-		query = getQuery(query, discussTypeArray, tagIds, userId, isFeatured,
+		query = getQuery(query, searchTxt, discussTypeArray, tagIds, userId, isFeatured,
 				isPromotion);
 		query.addCriteria(Criteria.where("status").is(
 				DiscussConstants.DISCUSS_STATUS_ACTIVE));

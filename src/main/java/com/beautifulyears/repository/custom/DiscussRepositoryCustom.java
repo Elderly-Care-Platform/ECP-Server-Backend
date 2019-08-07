@@ -10,10 +10,10 @@ import com.beautifulyears.rest.response.PageImpl;
 
 public interface DiscussRepositoryCustom {
 
-	public PageImpl<Discuss> getPage(List<String> discussTypeArray,
+	public PageImpl<Discuss> getPage(String searchTxt, List<String> discussTypeArray,
 			List<ObjectId> tagIds, String userId, Boolean isFeatured,
 			Boolean isPromotion, Pageable pageable);
 
-	public long getCount(List<String> discussTypeArray, List<ObjectId> tagIds,
+	public long getCount(String searchTxt, List<String> discussTypeArray, List<ObjectId> tagIds,
 			String userId, Boolean isFeatured, Boolean isPromotion);
 }

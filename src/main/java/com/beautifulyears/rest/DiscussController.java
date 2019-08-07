@@ -245,6 +245,7 @@ public class DiscussController {
 			// topicId,
 			// @RequestParam(value = "subTopicId", required = false)
 			// List<String> subTopicId,
+			@RequestParam(value = "searchTxt", required = false) String searchTxt,
 			@RequestParam(value = "userId", required = false) String userId,
 			@RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
 			@RequestParam(value = "isPromotion", required = false) Boolean isPromotion,
@@ -282,7 +283,7 @@ public class DiscussController {
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize,
 					sortDirection, sort);
-			page = discussRepository.getPage(discussTypeArray, tagIds, userId,
+			page = discussRepository.getPage(searchTxt, discussTypeArray, tagIds, userId,
 					isFeatured, isPromotion, pageable);
 			discussPage = DiscussResponse.getPage(page, currentUser);
 			// page = discussRepository.getByCriteria(discussTypeArray, topicId,
@@ -318,6 +319,7 @@ public class DiscussController {
 			// topicId,
 			// @RequestParam(value = "subTopicId", required = false)
 			// List<String> subTopicId,
+			@RequestParam(value = "searchTxt", required = false) String searchTxt,
 			@RequestParam(value = "tags", required = false) List<String> tags,
 			@RequestParam(value = "userId", required = false) String userId,
 			@RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
@@ -340,21 +342,21 @@ public class DiscussController {
 			Long postsCount = null;
 			Long featuredCount = null;
 			if (contentTypes.contains("q")) {
-				questionsCount = discussRepository.getCount(
+				questionsCount = discussRepository.getCount(searchTxt,
 						(new ArrayList<String>(Arrays.asList("Q"))), tagIds,
 						userId, isFeatured, isPromotion);
 				filterCriteria.add(" contentType = q");
 				obj.put("q", new Long(questionsCount));
 			}
 			if (contentTypes.contains("p")) {
-				postsCount = discussRepository.getCount((new ArrayList<String>(
+				postsCount = discussRepository.getCount(searchTxt, (new ArrayList<String>(
 						Arrays.asList("P"))), tagIds, userId, isFeatured,
 						isPromotion);
 				filterCriteria.add(" contentType = p");
 				obj.put("p", new Long(postsCount));
 			}
 			if (contentTypes.contains("f")) {
-				featuredCount = discussRepository.getCount(null, tagIds,
+				featuredCount = discussRepository.getCount(searchTxt, null, tagIds,
 						userId, true, isPromotion);
 				filterCriteria.add(" contentType = featured");
 				obj.put("featured", new Long(featuredCount));
@@ -362,12 +364,12 @@ public class DiscussController {
 			if (contentTypes.contains("total")) {
 				filterCriteria.add(" contentType = total");
 				if (null == questionsCount) {
-					questionsCount = discussRepository.getCount(
+					questionsCount = discussRepository.getCount(searchTxt, 
 							(new ArrayList<String>(Arrays.asList("Q"))),
 							tagIds, userId, isFeatured, isPromotion);
 				}
 				if (null == postsCount) {
-					postsCount = discussRepository.getCount(
+					postsCount = discussRepository.getCount(searchTxt,
 							(new ArrayList<String>(Arrays.asList("P"))),
 							tagIds, userId, isFeatured, isPromotion);
 				}
