@@ -164,7 +164,7 @@
 					</execution>
 				</executions>
 				<configuration>
-					<useCache>true</useCache>
+					<useCache>false</useCache>
 					<failOnMissingWebXml>false</failOnMissingWebXml>
 					<outputDirectory>target</outputDirectory>
 				</configuration>
