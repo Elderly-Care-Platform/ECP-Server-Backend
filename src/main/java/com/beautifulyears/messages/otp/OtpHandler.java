@@ -19,7 +19,7 @@ public class OtpHandler {
 	private static final Logger logger = Logger.getLogger(OtpHandler.class);
 
 	private String baseUrl = "https://control.msg91.com/api";
-	private String authkey = "YourAuthKey";
+	private String authkey = "288637ABlqJNxoGya5d4ac03d";
 	private String messageOtp = "/sendotp.php?";
 	private String resendOtp = "/retryotp.php?";
 	private String verfiyOtp = "/verifyRequestOTP.php?";
@@ -110,7 +110,7 @@ public class OtpHandler {
 			StringBuilder sbPostData = new StringBuilder(postUrl);
 			sbPostData.append("authkey=" + this.authkey);
 			sbPostData.append("&mobile=" + mobileNo);
-
+			sbPostData.append("&retrytype=" + "text");
 			// final string
 			postUrl = sbPostData.toString();
 
