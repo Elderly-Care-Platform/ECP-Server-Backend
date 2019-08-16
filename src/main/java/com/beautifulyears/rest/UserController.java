@@ -622,6 +622,7 @@ public class UserController {
 		String passwordCode = user.getPassword();
 		Date passwordCodeExpiry = user.getPasswordCodeExpiry();
 		List<String> userTags = user.getUserTags();
+		List<String> favEvents = user.getFavEvents();
 
 		// Users registered through the BY site will always have ROLE = USER
 		String userRoleId = "USER";
@@ -631,11 +632,11 @@ public class UserController {
 				&& (userRoleId.equals(UserRolePermissions.USER) || userRoleId.equals(UserRolePermissions.WRITER))) {
 			return new User(userName, userIdType, userRegType, password, email, phoneNumber, verificationCode,
 					verificationCodeExpiry, socialSignOnId, socialSignOnPlatform, passwordCode, passwordCodeExpiry,
-					userRoleId, "In-Active", userTags);
+					userRoleId, "In-Active", userTags,favEvents);
 		} else {
 			return new User(userName, userIdType, userRegType, password, email, phoneNumber, verificationCode,
 					verificationCodeExpiry, socialSignOnId, socialSignOnPlatform, passwordCode, passwordCodeExpiry,
-					userRoleId, "In-Active", userTags);
+					userRoleId, "In-Active", userTags,favEvents);
 		}
 	}
 
