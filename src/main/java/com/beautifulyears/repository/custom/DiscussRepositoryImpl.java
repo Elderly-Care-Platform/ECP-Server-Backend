@@ -46,7 +46,7 @@ public class DiscussRepositoryImpl implements DiscussRepositoryCustom {
 			List<ObjectId> tagIds, String userId, Boolean isFeatured,
 			Boolean isPromotion) {
 
-		if(searchTxt != null){
+		if(searchTxt != null && !searchTxt.isEmpty()){
 			q.addCriteria(Criteria.where("title").regex(searchTxt));
 		}
 		if (discussTypeArray != null && discussTypeArray.size() > 0) {
@@ -65,7 +65,7 @@ public class DiscussRepositoryImpl implements DiscussRepositoryCustom {
 		if (null != userId) {
 			q.addCriteria(Criteria.where("userId").is(userId));
 		}
-
+		
 		return q;
 	}
 
