@@ -124,23 +124,25 @@ public class UserController {
 					// }
 					q.addCriteria(criteria);
 					user = mongoTemplate.findOne(q, User.class);
-					if (null == user && Util.isEmpty(loginRequest.getPassword())) {
-						user = createGuestUser(loginRequest, true, req, res);
-					} else if (!Util.isEmpty(loginRequest.getPassword())) {
-						Util.isPasswordMatching(loginRequest.getPassword(), user.getPassword());
-					}
+					/* Removed Guest user login */
+					// if (null == user && Util.isEmpty(loginRequest.getPassword())) {
+					// 	user = createGuestUser(loginRequest, true, req, res);
+					// } else if (!Util.isEmpty(loginRequest.getPassword())) {
+					// 	Util.isPasswordMatching(loginRequest.getPassword(), user.getPassword());
+					// }
 				} else {
 					throw new BYException(BYErrorCodes.MISSING_PARAMETER);
 				}
 			} else if (loginRequest.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE) {
-				if (!Util.isEmpty(loginRequest.getPhoneNumber()) && !Util.isEmpty(loginRequest.getPassword())) {
+				if (!Util.isEmpty(loginRequest.getPhoneNumber())) {
 					q.addCriteria(Criteria.where("phoneNumber").is(loginRequest.getPhoneNumber()));
 					// .and("password")
 					// .is(loginRequest.getPassword()));
 					user = mongoTemplate.findOne(q, User.class);
-					if (null != user) {
-						Util.isPasswordMatching(loginRequest.getPassword(), user.getPassword());
-					}
+					/* Removed poswword user login */
+					// if (null != user) {
+					// 	Util.isPasswordMatching(loginRequest.getPassword(), user.getPassword());
+					// }
 				} else {
 					throw new BYException(BYErrorCodes.MISSING_PARAMETER);
 				}
@@ -148,7 +150,7 @@ public class UserController {
 
 			if (null == user) {
 				logger.debug("User login failed with user email : " + loginRequest.getEmail());
-				throw new BYException(BYErrorCodes.USER_LOGIN_FAILED);
+				throw new BYException(BYErrorCodes.USER_EMAIL_DOES_NOT_EXIST);
 			} else if (user.getUserRegType() == BYConstants.USER_REG_TYPE_SOCIAL) {
 				throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRE_SOCIAL_SIGNIN);
 			} else {
@@ -198,7 +200,7 @@ public class UserController {
 	}
 
 	// create user - registration
-	@RequestMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(method = RequestMethod.POST)
 	@ResponseBody
 	public Object submitUser(@RequestBody User user,
 			@RequestParam(value = "session", required = false, defaultValue = "true") boolean isSession,
@@ -234,14 +236,14 @@ public class UserController {
 					}
 				}
 
-				if (isGuestUser(user)) {
-					userWithExtractedInformation.setUserRegType(BYConstants.USER_REG_TYPE_GUEST);
-				} else {
-					if (null != user.getId()) {
-						userWithExtractedInformation.setId(user.getId());
-					}
-					userWithExtractedInformation.setUserRegType(BYConstants.USER_REG_TYPE_FULL);
-				}
+				// if (isGuestUser(user)) {
+				// 	userWithExtractedInformation.setUserRegType(BYConstants.USER_REG_TYPE_GUEST);
+				// } else {
+				// 	if (null != user.getId()) {
+				// 		userWithExtractedInformation.setId(user.getId());
+				// 	}
+				// 	userWithExtractedInformation.setUserRegType(BYConstants.USER_REG_TYPE_FULL);
+				// }
 
 				userWithExtractedInformation = userRepository.save(userWithExtractedInformation);
 				changeUserName(userWithExtractedInformation.getId(), userWithExtractedInformation.getUserName());
