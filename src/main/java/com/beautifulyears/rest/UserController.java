@@ -159,7 +159,7 @@ public class UserController {
 						: loginRequest.getPhoneNumber());
 				session = (Session) req.getSession().getAttribute("session");
 				if (null == session) {
-					session = createSession(req, res, user, !Util.isEmpty(loginRequest.getPassword()));
+					session = createSession(req, res, user, true);
 				}
 
 			}
@@ -252,9 +252,9 @@ public class UserController {
 					logHandler.addLog(userWithExtractedInformation, ActivityLogConstants.CRUD_TYPE_CREATE, req);
 				}
 
-				if (Util.isEmpty(user.getPassword())) {
-					isPasswordEntered = false;
-				}
+				// if (Util.isEmpty(user.getPassword())) {
+				// 	isPasswordEntered = false;
+				// }
 				if (isSession) {
 					req.getSession().setAttribute("user", userWithExtractedInformation);
 					session = createSession(req, res, userWithExtractedInformation, isPasswordEntered);
