@@ -23,7 +23,7 @@ public class OtpHandler {
 	private String messageOtp = "/sendotp.php?";
 	private String resendOtp = "/retryotp.php?";
 	private String verfiyOtp = "/verifyRequestOTP.php?";
-	private String message = "Your verification code is ##OTP##.";
+	private String message = "Your verification code for Elderly Care Platform is ##OTP##.";
 	private String senderId = "OTPSMS";
 
 	public String sendOtp(String mobileNo) {

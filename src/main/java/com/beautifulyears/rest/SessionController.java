@@ -38,9 +38,10 @@ public class SessionController {
 					permission = true;
 				} else if (currentSession.getSessionType() == BYConstants.SESSION_TYPE_GUEST) {
 					throw new BYException(BYErrorCodes.USER_PROFILE_INCOMPLETE);
-				} else if (currentSession.getSessionType() == BYConstants.SESSION_TYPE_PARTIAL) {
-					throw new BYException(BYErrorCodes.USER_FULL_LOGIN_REQUIRED);
-				}
+				} 
+				// else if (currentSession.getSessionType() == BYConstants.SESSION_TYPE_PARTIAL) {
+				// 	throw new BYException(BYErrorCodes.USER_FULL_LOGIN_REQUIRED);
+				// }
 				break;
 			default:
 				throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
