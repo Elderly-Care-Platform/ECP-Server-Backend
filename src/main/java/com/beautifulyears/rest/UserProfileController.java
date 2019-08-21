@@ -45,6 +45,7 @@ import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
 import com.beautifulyears.repository.UserProfileRepository;
+import com.beautifulyears.repository.UserRepository;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.rest.response.UserProfileResponse;
 import com.beautifulyears.rest.response.UserProfileResponse.UserProfilePage;
@@ -66,7 +67,7 @@ import com.beautifulyears.util.activityLogHandler.UserProfileLogHandler;
 public class UserProfileController {
 	private static Logger logger = Logger
 			.getLogger(UserProfileController.class);
-
+	private static UserRepository userRepository;
 	private UserProfileRepository userProfileRepository;
 	private ActivityLogHandler<UserProfile> logHandler;
 	private MongoTemplate mongoTemplate;
@@ -318,6 +319,27 @@ public class UserProfileController {
 					if (userProfile.getUserId() != null
 							&& userProfile.getUserId().equals(
 									currentUser.getId())) {
+										if(!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryEmail()))
+										{
+											Query q = new Query();
+											User existingUser = null;
+											UserProfile existinprofile = null;
+											Criteria criteria = Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail());
+											q.addCriteria(criteria);
+											existingUser = mongoTemplate.findOne(q, User.class);
+											if (null != existingUser && currentUser.getId() != existingUser.getId()) {
+												currentUser.setEmail(userProfile.getBasicProfileInfo().getPrimaryEmail());
+												currentUser.setUserName(userProfile.getBasicProfileInfo().getFirstName());
+												currentUser =  UserController.saveUser(currentUser);
+												Query q2 = new Query();
+												q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
+												existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
+												if(null != existinprofile){
+													userProfileRepository.delete(existinprofile);
+												}
+												UserController.deleteUser(existingUser);
+											}
+										}
 						if (this.userProfileRepository.findByUserId(userProfile
 								.getUserId()) == null) {
 							profile = new UserProfile();
@@ -346,8 +368,9 @@ public class UserProfileController {
 									userProfile.getId(), null, null, null,
 									"Create new user profile", "SERVICE");
 						} else {
-							throw new BYException(
-									BYErrorCodes.USER_ALREADY_EXIST);
+							// throw new BYException(
+							// 		BYErrorCodes.USER_ALREADY_EXIST);
+							return updateUserProfile(userProfile,userProfile.getUserId(),req,res);
 						}
 					} else {
 						throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
