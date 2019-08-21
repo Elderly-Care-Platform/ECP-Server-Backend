@@ -107,8 +107,8 @@ public class UserController {
 	}
 
 	@RequestMapping(value = "/login", method = RequestMethod.POST)
-	public @ResponseBody Object login(@RequestBody LoginRequest loginRequest, HttpServletRequest req,
-			HttpServletResponse res) throws Exception {
+	public @ResponseBody Object login(@RequestBody User loginRequest, HttpServletRequest req, HttpServletResponse res)
+			throws Exception {
 		LoggerUtil.logEntry();
 		Session session = killSession(req, res);
 		try {
@@ -126,9 +126,9 @@ public class UserController {
 					user = mongoTemplate.findOne(q, User.class);
 					/* Removed Guest user login */
 					// if (null == user && Util.isEmpty(loginRequest.getPassword())) {
-					// 	user = createGuestUser(loginRequest, true, req, res);
+					// user = createGuestUser(loginRequest, true, req, res);
 					// } else if (!Util.isEmpty(loginRequest.getPassword())) {
-					// 	Util.isPasswordMatching(loginRequest.getPassword(), user.getPassword());
+					// Util.isPasswordMatching(loginRequest.getPassword(), user.getPassword());
 					// }
 				} else {
 					throw new BYException(BYErrorCodes.MISSING_PARAMETER);
@@ -141,7 +141,7 @@ public class UserController {
 					user = mongoTemplate.findOne(q, User.class);
 					/* Removed poswword user login */
 					// if (null != user) {
-					// 	Util.isPasswordMatching(loginRequest.getPassword(), user.getPassword());
+					// Util.isPasswordMatching(loginRequest.getPassword(), user.getPassword());
 					// }
 				} else {
 					throw new BYException(BYErrorCodes.MISSING_PARAMETER);
@@ -149,8 +149,9 @@ public class UserController {
 			}
 
 			if (null == user) {
-				logger.debug("User login failed with user email : " + loginRequest.getEmail());
-				throw new BYException(BYErrorCodes.USER_EMAIL_DOES_NOT_EXIST);
+				logger.debug("User does not exist");
+				// throw new BYException(BYErrorCodes.USER_EMAIL_DOES_NOT_EXIST);
+				return submitUser(loginRequest, true, req, res);
 			} else if (user.getUserRegType() == BYConstants.USER_REG_TYPE_SOCIAL) {
 				throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRE_SOCIAL_SIGNIN);
 			} else {
@@ -237,12 +238,12 @@ public class UserController {
 				}
 
 				// if (isGuestUser(user)) {
-				// 	userWithExtractedInformation.setUserRegType(BYConstants.USER_REG_TYPE_GUEST);
+				// userWithExtractedInformation.setUserRegType(BYConstants.USER_REG_TYPE_GUEST);
 				// } else {
-				// 	if (null != user.getId()) {
-				// 		userWithExtractedInformation.setId(user.getId());
-				// 	}
-				// 	userWithExtractedInformation.setUserRegType(BYConstants.USER_REG_TYPE_FULL);
+				// if (null != user.getId()) {
+				// userWithExtractedInformation.setId(user.getId());
+				// }
+				// userWithExtractedInformation.setUserRegType(BYConstants.USER_REG_TYPE_FULL);
 				// }
 
 				userWithExtractedInformation = userRepository.save(userWithExtractedInformation);
@@ -253,7 +254,7 @@ public class UserController {
 				}
 
 				// if (Util.isEmpty(user.getPassword())) {
-				// 	isPasswordEntered = false;
+				// isPasswordEntered = false;
 				// }
 				if (isSession) {
 					req.getSession().setAttribute("user", userWithExtractedInformation);
@@ -548,7 +549,8 @@ public class UserController {
 		user1.setPassword(user.getPassword());
 		Util.logStats(mongoTemplate, req, "New reset password request", user.getId(), user.getEmail(), user.getId(),
 				null, null, null, "New reset password request", "USER");
-		return login(new LoginRequest(user1), req, res);
+		// return login(new LoginRequest(user1), req, res);
+		return null;
 	}
 
 	@RequestMapping(value = "/verifyPwdCode", method = RequestMethod.GET)
@@ -668,6 +670,17 @@ public class UserController {
 		LoggerUtil.logEntry();
 		User user = userRepository.findOne(userId);
 		return user;
+	}
+
+	public static User saveUser(User user){
+		LoggerUtil.logEntry();
+		User newuser = userRepository.save(user);
+		return newuser;
+	}
+
+	public static void deleteUser(User user){
+		LoggerUtil.logEntry();
+		userRepository.delete(user);
 	}
 
 	private void inValidateAllSessions(String userId) {

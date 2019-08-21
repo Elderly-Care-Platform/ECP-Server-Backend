@@ -38,7 +38,7 @@ public class OtpHandler {
 			// Prepare parameter string
 			StringBuilder sbPostData = new StringBuilder(postUrl);
 			sbPostData.append("authkey=" + this.authkey);
-			sbPostData.append("&mobile=" + mobileNo);
+			sbPostData.append("&mobile=+91" + mobileNo);
 			sbPostData.append("&message=" + encoded_message);
 			sbPostData.append("&sender=" + this.senderId);
 
@@ -74,7 +74,7 @@ public class OtpHandler {
 			// Prepare parameter string
 			StringBuilder sbPostData = new StringBuilder(postUrl);
 			sbPostData.append("authkey=" + this.authkey);
-			sbPostData.append("&mobile=" + mobileNo);
+			sbPostData.append("&mobile=+91" + mobileNo);
 			sbPostData.append("&otp=" + otp);
 
 			// final string
@@ -109,7 +109,7 @@ public class OtpHandler {
 			// Prepare parameter string
 			StringBuilder sbPostData = new StringBuilder(postUrl);
 			sbPostData.append("authkey=" + this.authkey);
-			sbPostData.append("&mobile=" + mobileNo);
+			sbPostData.append("&mobile=+91" + mobileNo);
 			sbPostData.append("&retrytype=" + "text");
 			// final string
 			postUrl = sbPostData.toString();
