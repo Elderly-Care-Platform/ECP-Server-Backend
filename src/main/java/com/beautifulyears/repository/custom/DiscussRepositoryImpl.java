@@ -47,7 +47,7 @@ public class DiscussRepositoryImpl implements DiscussRepositoryCustom {
 			Boolean isPromotion) {
 
 		if(searchTxt != null && !searchTxt.isEmpty()){
-			q.addCriteria(Criteria.where("title").regex(searchTxt));
+			q.addCriteria(Criteria.where("title").regex(searchTxt,"i"));
 		}
 		if (discussTypeArray != null && discussTypeArray.size() > 0) {
 			q.addCriteria(Criteria.where((String) "discussType").in(

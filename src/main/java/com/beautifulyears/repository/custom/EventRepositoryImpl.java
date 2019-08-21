@@ -35,7 +35,7 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
 
 	private Query getQuery(Query q, String searchTxt, Integer eventType, Long startDatetime) {
 		if (null != searchTxt) {
-			q.addCriteria(Criteria.where("title").regex(searchTxt));
+			q.addCriteria(Criteria.where("title").regex(searchTxt,"i"));
 		}
 		if (null != startDatetime) {
 			Date dt = new Date(startDatetime);			
