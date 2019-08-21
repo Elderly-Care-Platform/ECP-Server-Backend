@@ -25,7 +25,7 @@ public enum BYErrorCodes {
 	USER_LOGIN_FAILED(3003,"User login failed. Invalid user/password combination."),
 	USER_ALREADY_EXIST(3004,"User with the same credentials already exists"),
 	INVALID_SESSION(3005,"Invalid session, please login to continue"),
-	USER_EMAIL_DOES_NOT_EXIST(3006,"User's emailId is not registered"),
+	USER_EMAIL_DOES_NOT_EXIST(3006,"User's emailId or mobile number is not registered"),
 	USER_CODE_EXPIRED(3007,"Validation code has been expired, please generate a new one"),
 	USER_CODE_DOES_NOT_EXIST(3008,"Validation code entered is invalid. Please enter a valid code."),
 	USER_LOGIN_REQUIRE_SOCIAL_SIGNIN(3009,"User is required to login using social sign in."),
