@@ -319,7 +319,7 @@ public class UserProfileController {
 					if (userProfile.getUserId() != null
 							&& userProfile.getUserId().equals(
 									currentUser.getId())) {
-										if(!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryEmail()))
+										if(!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryEmail()) && currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE)
 										{
 											Query q = new Query();
 											User existingUser = null;
@@ -327,7 +327,7 @@ public class UserProfileController {
 											Criteria criteria = Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail());
 											q.addCriteria(criteria);
 											existingUser = mongoTemplate.findOne(q, User.class);
-											if (null != existingUser && currentUser.getId() != existingUser.getId()) {
+											if (null != existingUser && !currentUser.getId().equals(existingUser.getId())) {
 												currentUser.setEmail(userProfile.getBasicProfileInfo().getPrimaryEmail());
 												currentUser.setUserName(userProfile.getBasicProfileInfo().getFirstName());
 												currentUser =  UserController.saveUser(currentUser);
