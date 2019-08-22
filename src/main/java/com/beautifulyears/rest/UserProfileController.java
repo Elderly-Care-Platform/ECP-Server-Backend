@@ -309,37 +309,44 @@ public class UserProfileController {
 							q.addCriteria(criteria);
 							existingUser = mongoTemplate.findOne(q, User.class);
 							if (null != existingUser && !currentUser.getId().equals(existingUser.getId())) {
-								currentUser.setEmail(userProfile.getBasicProfileInfo().getPrimaryEmail());
-								currentUser = UserController.saveUser(currentUser);
+								existingUser.setPhoneNumber(currentUser.getPhoneNumber());
+								existingUser = UserController.saveUser(existingUser);
 								Query q2 = new Query();
 								q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
 								existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
 								if (null != existinprofile) {
-									userProfileRepository.delete(existinprofile);
+									existinprofile.getBasicProfileInfo().setPrimaryPhoneNo(currentUser.getPhoneNumber());
+									existinprofile = userProfileRepository.save(existinprofile);
 								}
-								UserController.deleteUser(existingUser);
+								UserController.deleteUser(currentUser);
+								UserController userControl = new UserController(userRepository, mongoTemplate);
+								return userControl.login(existingUser, req, res);
 							}
-						} else if(!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())
+
+						} else if (!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())
 								&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_EMAIL) {
-									Query q = new Query();
-									User existingUser = null;
-									UserProfile existinprofile = null;
-									Criteria criteria = Criteria.where("phoneNumber")
-											.is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo());
-									q.addCriteria(criteria);
-									existingUser = mongoTemplate.findOne(q, User.class);
-									if (null != existingUser && !currentUser.getId().equals(existingUser.getId())) {
-										currentUser.setEmail(userProfile.getBasicProfileInfo().getPrimaryPhoneNo());
-										currentUser = UserController.saveUser(currentUser);
-										Query q2 = new Query();
-										q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
-										existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
-										if (null != existinprofile) {
-											userProfileRepository.delete(existinprofile);
-										}
-										UserController.deleteUser(existingUser);
+							Query q = new Query();
+							User existingUser = null;
+							UserProfile existinprofile = null;
+							Criteria criteria = Criteria.where("phoneNumber")
+									.is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo());
+							q.addCriteria(criteria);
+							existingUser = mongoTemplate.findOne(q, User.class);
+							if (null != existingUser && !currentUser.getId().equals(existingUser.getId())) {
+								existingUser.setEmail(currentUser.getEmail());
+								existingUser = UserController.saveUser(existingUser);
+								Query q2 = new Query();
+								q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
+								existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
+								if (null != existinprofile) {
+									existinprofile.getBasicProfileInfo().setPrimaryEmail(currentUser.getEmail());;
+									existinprofile = userProfileRepository.save(existinprofile);
+								}
+								UserController.deleteUser(currentUser);
+								UserController userControl = new UserController(userRepository, mongoTemplate);
+								return userControl.login(existingUser, req, res);
+							}
 						}
-					}
 
 						if (this.userProfileRepository.findByUserId(userProfile.getUserId()) == null) {
 							profile = new UserProfile();
@@ -352,6 +359,12 @@ public class UserProfileController {
 							}
 							if (null != userProfile.getBasicProfileInfo().getFirstName()) {
 								currentUser.setUserName(userProfile.getBasicProfileInfo().getFirstName());
+								if (null != userProfile.getBasicProfileInfo().getPrimaryEmail()) {
+									currentUser.setEmail(userProfile.getBasicProfileInfo().getPrimaryEmail());
+								}
+								if (null != userProfile.getBasicProfileInfo().getPrimaryPhoneNo()) {
+									currentUser.setPhoneNumber(userProfile.getBasicProfileInfo().getPrimaryPhoneNo());
+								}
 								currentUser = UserController.saveUser(currentUser);
 							}
 							profile = mergeProfile(profile, userProfile, currentUser, req);
