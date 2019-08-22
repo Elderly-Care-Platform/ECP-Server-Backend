@@ -65,16 +65,14 @@ import com.beautifulyears.util.activityLogHandler.UserProfileLogHandler;
 @Controller
 @RequestMapping("/userProfile")
 public class UserProfileController {
-	private static Logger logger = Logger
-			.getLogger(UserProfileController.class);
+	private static Logger logger = Logger.getLogger(UserProfileController.class);
 	private static UserRepository userRepository;
 	private UserProfileRepository userProfileRepository;
 	private ActivityLogHandler<UserProfile> logHandler;
 	private MongoTemplate mongoTemplate;
 
 	@Autowired
-	public UserProfileController(UserProfileRepository userProfileRepository,
-			MongoTemplate mongoTemplate) {
+	public UserProfileController(UserProfileRepository userProfileRepository, MongoTemplate mongoTemplate) {
 		this.userProfileRepository = userProfileRepository;
 		this.mongoTemplate = mongoTemplate;
 		logHandler = new UserProfileLogHandler(mongoTemplate);
@@ -82,9 +80,8 @@ public class UserProfileController {
 
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/{userId}" }, produces = { "application/json" })
 	@ResponseBody
-	public Object getUserProfilebyID(
-			@PathVariable(value = "userId") String userId,
-			HttpServletRequest req, HttpServletResponse res) throws Exception {
+	public Object getUserProfilebyID(@PathVariable(value = "userId") String userId, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
 		LoggerUtil.logEntry();
 		// User sessionUser = Util.getSessionUser(req);
 		User userInfo = UserController.getUser(userId);
@@ -102,10 +99,8 @@ public class UserProfileController {
 					logger.error("did not find any profile matching ID");
 					userProfile = new UserProfile();
 					if (userInfo != null) {
-						userProfile.getBasicProfileInfo().setPrimaryEmail(
-								userInfo.getEmail());
-						userProfile.getBasicProfileInfo().setPrimaryPhoneNo(
-								userInfo.getPhoneNumber());
+						userProfile.getBasicProfileInfo().setPrimaryEmail(userInfo.getEmail());
+						userProfile.getBasicProfileInfo().setPrimaryPhoneNo(userInfo.getPhoneNumber());
 						userProfile.setUserTags(userInfo.getUserTags());
 					}
 				} else {
@@ -119,23 +114,22 @@ public class UserProfileController {
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
-		return BYGenericResponseHandler.getResponse(UserProfileResponse
-				.getUserProfileEntity(userProfile, userInfo));
+		return BYGenericResponseHandler.getResponse(UserProfileResponse.getUserProfileEntity(userProfile, userInfo));
 	}
 
 	/*
 	 * this method allows to get a page of userProfiles based on page number and
 	 * size
 	 */
-	@RequestMapping(method = { RequestMethod.GET }, value = { "/list" }, params = {
-			"page", "size" }, produces = { "application/json" })
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/list" }, params = { "page", "size" }, produces = {
+			"application/json" })
 	@ResponseBody
 	public Object getUserProfilebyPageParams(
 			@RequestParam(value = "page", required = false, defaultValue = "0") int page,
 			@RequestParam(value = "size", required = false, defaultValue = "10") int size,
 			@RequestParam(value = "sort", required = false, defaultValue = "lastModifiedAt") String sort,
-			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
-			HttpServletRequest req, HttpServletResponse res) throws Exception {
+			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
 		List<String> filterCriteria = new ArrayList<String>();
 		filterCriteria.add("page = " + page);
 		filterCriteria.add("size = " + size);
@@ -157,8 +151,7 @@ public class UserProfileController {
 			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
 
 			/* check is at least one record exists. */
-			profilePage = UserProfileResponse.getPage(
-					userProfileRepository.findAllUserProfiles(pageable), user);
+			profilePage = UserProfileResponse.getPage(userProfileRepository.findAllUserProfiles(pageable), user);
 			if (profilePage.getContent().size() == 0) {
 				logger.debug("There is nothing to retrieve");
 				/* not sure whether I should be setting an error here */
@@ -167,8 +160,7 @@ public class UserProfileController {
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
-		Util.logStats(mongoTemplate, req, "get page of user profiles", null,
-				null, null, null, null, filterCriteria,
+		Util.logStats(mongoTemplate, req, "get page of user profiles", null, null, null, null, null, filterCriteria,
 				"get page of user profiles", "SERVICE");
 		return BYGenericResponseHandler.getResponse(profilePage);
 
@@ -179,17 +171,17 @@ public class UserProfileController {
 	 * this method allows to get a page of userProfiles based on page number and
 	 * size, also optional filter parameters like service types and city.
 	 */
-	@RequestMapping(method = { RequestMethod.GET }, value = { "/list/serviceProviders" }, produces = { "application/json" })
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/list/serviceProviders" }, produces = {
+			"application/json" })
 	@ResponseBody
-	public Object getUserProfilebyCity(
-			@RequestParam(value = "city", required = false) String city,
+	public Object getUserProfilebyCity(@RequestParam(value = "city", required = false) String city,
 			@RequestParam(value = "tags", required = false) List<String> tags,
 			@RequestParam(value = "page", required = false, defaultValue = "0") int page,
 			@RequestParam(value = "size", required = false, defaultValue = "10") int size,
 			@RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
 			@RequestParam(value = "sort", required = false, defaultValue = "lastModifiedAt") String sort,
-			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
-			HttpServletRequest req, HttpServletResponse res) throws Exception {
+			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
 		List<String> filterCriteria = new ArrayList<String>();
 		filterCriteria.add("page = " + page);
 		filterCriteria.add("size = " + size);
@@ -199,17 +191,15 @@ public class UserProfileController {
 		filterCriteria.add("isFeatured = " + isFeatured);
 		filterCriteria.add("city = " + city);
 
-		Integer[] userTypes = { UserTypes.INSTITUTION_HOUSING,
-				UserTypes.INSTITUTION_BRANCH, UserTypes.INSTITUTION_PRODUCTS,
-				UserTypes.INSTITUTION_NGO, UserTypes.INDIVIDUAL_PROFESSIONAL };
+		Integer[] userTypes = { UserTypes.INSTITUTION_HOUSING, UserTypes.INSTITUTION_BRANCH,
+				UserTypes.INSTITUTION_PRODUCTS, UserTypes.INSTITUTION_NGO, UserTypes.INDIVIDUAL_PROFESSIONAL };
 		LoggerUtil.logEntry();
 		List<ObjectId> tagIds = new ArrayList<ObjectId>();
 		User user = Util.getSessionUser(req);
 
 		UserProfileResponse.UserProfilePage profilePage = null;
 		try {
-			logger.debug(" city " + city + " tags " + tags + " page " + page
-					+ " size " + size);
+			logger.debug(" city " + city + " tags " + tags + " page " + page + " size " + size);
 			// if (null == services) {
 			// services = new ArrayList<String>();
 			// }
@@ -230,8 +220,7 @@ public class UserProfileController {
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
 			profilePage = UserProfileResponse.getPage(userProfileRepository
-					.getServiceProvidersByFilterCriteria(userTypes, city,
-							tagIds, isFeatured, pageable, fields), user);
+					.getServiceProvidersByFilterCriteria(userTypes, city, tagIds, isFeatured, pageable, fields), user);
 			if (profilePage.getContent().size() > 0) {
 				logger.debug("found something");
 			} else {
@@ -240,35 +229,33 @@ public class UserProfileController {
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
-		Util.logStats(mongoTemplate, req, "get service providers", null, null,
-				null, null, null, filterCriteria, "get service providers",
-				"SERVICE");
+		Util.logStats(mongoTemplate, req, "get service providers", null, null, null, null, null, filterCriteria,
+				"get service providers", "SERVICE");
 		return BYGenericResponseHandler.getResponse(profilePage);
 	}
 
 	/*
-	 * this method allows to get a page of userProfiles who are service
-	 * providers based on page number and size. Service providers can be
-	 * institution as well as individuals.
+	 * this method allows to get a page of userProfiles who are service providers
+	 * based on page number and size. Service providers can be institution as well
+	 * as individuals.
 	 */
-	@RequestMapping(method = { RequestMethod.GET }, value = { "/list/serviceProviders/all" }, params = {
-			"page", "size" }, produces = { "application/json" })
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/list/serviceProviders/all" }, params = { "page",
+			"size" }, produces = { "application/json" })
 	@ResponseBody
 	public Object getServiceProviderUserProfiles(
 			@RequestParam(value = "page", required = false, defaultValue = "0") int page,
 			@RequestParam(value = "size", required = false, defaultValue = "10") int size,
 			@RequestParam(value = "sort", required = false, defaultValue = "lastModifiedAt") String sort,
-			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
-			HttpServletRequest req, HttpServletResponse res) throws Exception {
+			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
 		UserProfilePage userProfilePage = null;
 		List<String> filterCriteria = new ArrayList<String>();
 		filterCriteria.add("page = " + page);
 		filterCriteria.add("size = " + size);
 		filterCriteria.add("sort = " + sort);
 		filterCriteria.add("dir = " + dir);
-		Integer[] userTypes = { UserTypes.INSTITUTION_HOUSING,
-				UserTypes.INSTITUTION_SERVICES, UserTypes.INSTITUTION_PRODUCTS,
-				UserTypes.INSTITUTION_NGO, UserTypes.INDIVIDUAL_PROFESSIONAL };
+		Integer[] userTypes = { UserTypes.INSTITUTION_HOUSING, UserTypes.INSTITUTION_SERVICES,
+				UserTypes.INSTITUTION_PRODUCTS, UserTypes.INSTITUTION_NGO, UserTypes.INDIVIDUAL_PROFESSIONAL };
 		LoggerUtil.logEntry();
 		logger.debug("trying to get all service provider profiles");
 
@@ -284,8 +271,7 @@ public class UserProfileController {
 
 			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
 			userProfilePage = UserProfileResponse.getPage(userProfileRepository
-					.getServiceProvidersByFilterCriteria(userTypes, null, null,
-							null, pageable, fields), null);
+					.getServiceProvidersByFilterCriteria(userTypes, null, null, null, pageable, fields), null);
 			if (userProfilePage.getContent().size() > 0) {
 				logger.debug("did not find any service providers");
 			}
@@ -293,8 +279,7 @@ public class UserProfileController {
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
-		Util.logStats(mongoTemplate, req, "get all service providers", null,
-				null, null, null, null, filterCriteria,
+		Util.logStats(mongoTemplate, req, "get all service providers", null, null, null, null, null, filterCriteria,
 				"get all service providers", "SERVICE");
 		return BYGenericResponseHandler.getResponse(userProfilePage);
 	}
@@ -302,8 +287,8 @@ public class UserProfileController {
 	/* This method allows the creation of a user profile */
 	@RequestMapping(method = { RequestMethod.POST }, value = { "" }, consumes = { "application/json" })
 	@ResponseBody
-	public Object submitUserProfile(@RequestBody UserProfile userProfile,
-			HttpServletRequest req, HttpServletResponse res) throws Exception {
+	public Object submitUserProfile(@RequestBody UserProfile userProfile, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
 
 		LoggerUtil.logEntry();
 		UserProfile profile = null;
@@ -311,66 +296,76 @@ public class UserProfileController {
 		try {
 			if ((userProfile != null)) {
 				currentUser = Util.getSessionUser(req);
-				if (null != currentUser
-						&& SessionController.checkCurrentSessionFor(req,
-								"SUBMIT_PROFILE")) {
-					logger.debug("current user details"
-							+ currentUser.toString());
-					if (userProfile.getUserId() != null
-							&& userProfile.getUserId().equals(
-									currentUser.getId())) {
-										if(!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryEmail()) && currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE)
-										{
-											Query q = new Query();
-											User existingUser = null;
-											UserProfile existinprofile = null;
-											Criteria criteria = Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail());
-											q.addCriteria(criteria);
-											existingUser = mongoTemplate.findOne(q, User.class);
-											if (null != existingUser && !currentUser.getId().equals(existingUser.getId())) {
-												currentUser.setEmail(userProfile.getBasicProfileInfo().getPrimaryEmail());
-												currentUser.setUserName(userProfile.getBasicProfileInfo().getFirstName());
-												currentUser =  UserController.saveUser(currentUser);
-												Query q2 = new Query();
-												q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
-												existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
-												if(null != existinprofile){
-													userProfileRepository.delete(existinprofile);
-												}
-												UserController.deleteUser(existingUser);
-											}
+				if (null != currentUser && SessionController.checkCurrentSessionFor(req, "SUBMIT_PROFILE")) {
+					logger.debug("current user details" + currentUser.toString());
+					if (userProfile.getUserId() != null && userProfile.getUserId().equals(currentUser.getId())) {
+						if (!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryEmail())
+								&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE) {
+							Query q = new Query();
+							User existingUser = null;
+							UserProfile existinprofile = null;
+							Criteria criteria = Criteria.where("email")
+									.is(userProfile.getBasicProfileInfo().getPrimaryEmail());
+							q.addCriteria(criteria);
+							existingUser = mongoTemplate.findOne(q, User.class);
+							if (null != existingUser && !currentUser.getId().equals(existingUser.getId())) {
+								currentUser.setEmail(userProfile.getBasicProfileInfo().getPrimaryEmail());
+								currentUser = UserController.saveUser(currentUser);
+								Query q2 = new Query();
+								q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
+								existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
+								if (null != existinprofile) {
+									userProfileRepository.delete(existinprofile);
+								}
+								UserController.deleteUser(existingUser);
+							}
+						} else if(!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())
+								&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_EMAIL) {
+									Query q = new Query();
+									User existingUser = null;
+									UserProfile existinprofile = null;
+									Criteria criteria = Criteria.where("phoneNumber")
+											.is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo());
+									q.addCriteria(criteria);
+									existingUser = mongoTemplate.findOne(q, User.class);
+									if (null != existingUser && !currentUser.getId().equals(existingUser.getId())) {
+										currentUser.setEmail(userProfile.getBasicProfileInfo().getPrimaryPhoneNo());
+										currentUser = UserController.saveUser(currentUser);
+										Query q2 = new Query();
+										q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
+										existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
+										if (null != existinprofile) {
+											userProfileRepository.delete(existinprofile);
 										}
-						if (this.userProfileRepository.findByUserId(userProfile
-								.getUserId()) == null) {
+										UserController.deleteUser(existingUser);
+						}
+					}
+
+						if (this.userProfileRepository.findByUserId(userProfile.getUserId()) == null) {
 							profile = new UserProfile();
 							profile.setUserId(currentUser.getId());
 							profile.setUserTypes(userProfile.getUserTypes());
 							if (currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_EMAIL) {
-								profile.getBasicProfileInfo().setPrimaryEmail(
-										currentUser.getEmail());
+								profile.getBasicProfileInfo().setPrimaryEmail(currentUser.getEmail());
 							} else if (currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE) {
-								profile.getBasicProfileInfo()
-										.setPrimaryPhoneNo(
-												currentUser.getPhoneNumber());
+								profile.getBasicProfileInfo().setPrimaryPhoneNo(currentUser.getPhoneNumber());
 							}
-							profile = mergeProfile(profile, userProfile,
-									currentUser, req);
+							if (null != userProfile.getBasicProfileInfo().getFirstName()) {
+								currentUser.setUserName(userProfile.getBasicProfileInfo().getFirstName());
+								currentUser = UserController.saveUser(currentUser);
+							}
+							profile = mergeProfile(profile, userProfile, currentUser, req);
 							profile = userProfileRepository.save(profile);
-							UpdateUserProfileHandler userProfileHandler = new UpdateUserProfileHandler(
-									mongoTemplate);
+							UpdateUserProfileHandler userProfileHandler = new UpdateUserProfileHandler(mongoTemplate);
 							userProfileHandler.setProfile(profile);
 							new Thread(userProfileHandler).start();
-							logHandler.addLog(profile,
-									ActivityLogConstants.CRUD_TYPE_CREATE, req);
-							Util.logStats(mongoTemplate, req,
-									"Create new user profile",
-									userProfile.getUserId(), null,
-									userProfile.getId(), null, null, null,
-									"Create new user profile", "SERVICE");
+							logHandler.addLog(profile, ActivityLogConstants.CRUD_TYPE_CREATE, req);
+							Util.logStats(mongoTemplate, req, "Create new user profile", userProfile.getUserId(), null,
+									userProfile.getId(), null, null, null, "Create new user profile", "SERVICE");
 						} else {
 							// throw new BYException(
-							// 		BYErrorCodes.USER_ALREADY_EXIST);
-							return updateUserProfile(userProfile,userProfile.getUserId(),req,res);
+							// BYErrorCodes.USER_ALREADY_EXIST);
+							return updateUserProfile(userProfile, userProfile.getUserId(), req, res);
 						}
 					} else {
 						throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
@@ -385,15 +380,13 @@ public class UserProfileController {
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
-		return BYGenericResponseHandler.getResponse(UserProfileResponse
-				.getUserProfileEntity(profile, currentUser));
+		return BYGenericResponseHandler.getResponse(UserProfileResponse.getUserProfileEntity(profile, currentUser));
 	}
 
 	/* @PathVariable(value = "userId") String userId */
 	@RequestMapping(method = { RequestMethod.PUT }, value = { "/{userId}" }, consumes = { "application/json" })
 	@ResponseBody
-	public Object updateUserProfile(@RequestBody UserProfile userProfile,
-			@PathVariable(value = "userId") String userId,
+	public Object updateUserProfile(@RequestBody UserProfile userProfile, @PathVariable(value = "userId") String userId,
 			HttpServletRequest req, HttpServletResponse res) throws Exception {
 
 		LoggerUtil.logEntry();
@@ -401,14 +394,11 @@ public class UserProfileController {
 		User currentUser = Util.getSessionUser(req);
 		try {
 			if ((userProfile != null) && (userId != null)) {
-				if (null != currentUser
-						&& SessionController.checkCurrentSessionFor(req,
-								"SUBMIT_PROFILE")) {
+				if (null != currentUser && SessionController.checkCurrentSessionFor(req, "SUBMIT_PROFILE")) {
 					if (userProfile.getUserId().equals(currentUser.getId())) {
 						profile = userProfileRepository.findByUserId(userId);
 
-						profile = mergeProfile(profile, userProfile,
-								currentUser, req);
+						profile = mergeProfile(profile, userProfile, currentUser, req);
 
 					} else {
 						throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
@@ -424,19 +414,17 @@ public class UserProfileController {
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
-		Util.logStats(mongoTemplate, req, "Edit new user profile",
-				userProfile.getUserId(), null, userProfile.getId(), null, null,
-				null, "Edit new user profile", "SERVICE");
-		return BYGenericResponseHandler.getResponse(UserProfileResponse
-				.getUserProfileEntity(profile, currentUser));
+		Util.logStats(mongoTemplate, req, "Edit new user profile", userProfile.getUserId(), null, userProfile.getId(),
+				null, null, null, "Edit new user profile", "SERVICE");
+		return BYGenericResponseHandler.getResponse(UserProfileResponse.getUserProfileEntity(profile, currentUser));
 	}
 
-	@RequestMapping(method = { RequestMethod.GET }, value = { "/address/{userId}" }, params = { "addressIndex" }, produces = { "application/json" })
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/address/{userId}" }, params = {
+			"addressIndex" }, produces = { "application/json" })
 	@ResponseBody
-	public Object getAddress(
-			@PathVariable(value = "userId") String userId,
-			@RequestParam(value = "addressIndex", defaultValue = "0") int addressIndex,
-			HttpServletRequest req, HttpServletResponse res) throws Exception {
+	public Object getAddress(@PathVariable(value = "userId") String userId,
+			@RequestParam(value = "addressIndex", defaultValue = "0") int addressIndex, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
 		LoggerUtil.logEntry();
 		UserProfile userProfile = null;
 		UserAddress userAddress = null;
@@ -446,16 +434,12 @@ public class UserProfileController {
 				if (userProfile == null) {
 					logger.error("did not find any profile matching ID");
 				} else {
-					if (addressIndex == 0
-							&& null != userProfile.getBasicProfileInfo()) {
-						userAddress = userProfile.getBasicProfileInfo()
-								.getPrimaryUserAddress();
+					if (addressIndex == 0 && null != userProfile.getBasicProfileInfo()) {
+						userAddress = userProfile.getBasicProfileInfo().getPrimaryUserAddress();
 					} else {
-						List<UserAddress> addressArray = userProfile
-								.getBasicProfileInfo().getOtherAddresses();
+						List<UserAddress> addressArray = userProfile.getBasicProfileInfo().getOtherAddresses();
 						if (addressArray.size() > addressIndex - 1) {
-							userAddress = userProfile.getBasicProfileInfo()
-									.getOtherAddresses().get(addressIndex - 1);
+							userAddress = userProfile.getBasicProfileInfo().getOtherAddresses().get(addressIndex - 1);
 						} else {
 							throw new BYException(BYErrorCodes.NO_CONTENT_FOUND);
 						}
@@ -469,27 +453,22 @@ public class UserProfileController {
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
-		Util.logStats(mongoTemplate, req, "get user profile's address", userId,
-				null, null, null, null, null, "get user profile's address",
-				"USER");
+		Util.logStats(mongoTemplate, req, "get user profile's address", userId, null, null, null, null, null,
+				"get user profile's address", "USER");
 		return BYGenericResponseHandler.getResponse(userAddress);
 	}
 
 	@RequestMapping(method = { RequestMethod.PUT }, value = { "/address/{userId}" }, consumes = { "application/json" })
 	@ResponseBody
-	public Object updateAddress(
-			@RequestBody UserAddress userAddress,
-			@PathVariable(value = "userId") String userId,
-			@RequestParam(value = "addressIndex", required = true) int addressIndex,
-			HttpServletRequest req, HttpServletResponse res) throws Exception {
+	public Object updateAddress(@RequestBody UserAddress userAddress, @PathVariable(value = "userId") String userId,
+			@RequestParam(value = "addressIndex", required = true) int addressIndex, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
 
 		LoggerUtil.logEntry();
 		UserProfile userProfile = null;
 		User currentUser = Util.getSessionUser(req);
 		try {
-			if (userId != null
-					&& SessionController.checkCurrentSessionFor(req,
-							"NEW_ADDRESS")) {
+			if (userId != null && SessionController.checkCurrentSessionFor(req, "NEW_ADDRESS")) {
 				userProfile = this.userProfileRepository.findByUserId(userId);
 				if (userProfile == null) {
 					logger.error("did not find any profile matching ID");
@@ -498,18 +477,13 @@ public class UserProfileController {
 						throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
 					}
 
-					if (addressIndex == 0
-							&& null != userProfile.getBasicProfileInfo()) {
-						userProfile.getBasicProfileInfo()
-								.setPrimaryUserAddress(userAddress);
+					if (addressIndex == 0 && null != userProfile.getBasicProfileInfo()) {
+						userProfile.getBasicProfileInfo().setPrimaryUserAddress(userAddress);
 						mongoTemplate.save(userProfile);
 					} else {
-						List<UserAddress> addressArray = userProfile
-								.getBasicProfileInfo().getOtherAddresses();
+						List<UserAddress> addressArray = userProfile.getBasicProfileInfo().getOtherAddresses();
 						if (addressArray.size() > addressIndex - 1) {
-							userProfile.getBasicProfileInfo()
-									.getOtherAddresses()
-									.set(addressIndex - 1, userAddress);
+							userProfile.getBasicProfileInfo().getOtherAddresses().set(addressIndex - 1, userAddress);
 							mongoTemplate.save(userProfile);
 						} else {
 							throw new BYException(BYErrorCodes.NO_CONTENT_FOUND);
@@ -524,33 +498,28 @@ public class UserProfileController {
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
-		Util.logStats(mongoTemplate, req, "update user profile's address",
-				userId, null, null, null, null, null,
+		Util.logStats(mongoTemplate, req, "update user profile's address", userId, null, null, null, null, null,
 				"update user profile's address", "USER");
 		return BYGenericResponseHandler.getResponse(userAddress);
 	}
 
 	@RequestMapping(method = { RequestMethod.POST }, value = { "/address/{userId}" }, consumes = { "application/json" })
 	@ResponseBody
-	public Object addAddress(@RequestBody UserAddress userAddress,
-			@PathVariable(value = "userId") String userId,
+	public Object addAddress(@RequestBody UserAddress userAddress, @PathVariable(value = "userId") String userId,
 			HttpServletRequest req, HttpServletResponse res) throws Exception {
 
 		LoggerUtil.logEntry();
 		UserProfile userProfile = null;
 		User currentUser = Util.getSessionUser(req);
 		try {
-			if (userId != null
-					&& SessionController.checkCurrentSessionFor(req,
-							"NEW_ADDRESS")) {
+			if (userId != null && SessionController.checkCurrentSessionFor(req, "NEW_ADDRESS")) {
 				userProfile = this.userProfileRepository.findByUserId(userId);
 				if (userProfile == null) {
 					logger.error("did not find any profile matching ID");
 				} else if (!userProfile.getUserId().equals(currentUser.getId())) {
 					throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
 				} else {
-					userProfile.getBasicProfileInfo().getOtherAddresses()
-							.add(userAddress);
+					userProfile.getBasicProfileInfo().getOtherAddresses().add(userAddress);
 					mongoTemplate.save(userProfile);
 				}
 			} else {
@@ -561,14 +530,12 @@ public class UserProfileController {
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
-		Util.logStats(mongoTemplate, req, "add user profile's address", userId,
-				null, null, null, null, null, "add user profile's address",
-				"USER");
+		Util.logStats(mongoTemplate, req, "add user profile's address", userId, null, null, null, null, null,
+				"add user profile's address", "USER");
 		return BYGenericResponseHandler.getResponse(userAddress);
 	}
 
-	private List<UserProfile> saveBranches(List<UserProfile> branchInfo,
-			String userId) {
+	private List<UserProfile> saveBranches(List<UserProfile> branchInfo, String userId) {
 		for (UserProfile branch : branchInfo) {
 			if (!branch.getUserTypes().contains(UserTypes.INSTITUTION_BRANCH)) {
 				throw new BYException(BYErrorCodes.MISSING_PARAMETER);
@@ -582,8 +549,7 @@ public class UserProfileController {
 				newBranch.setLastModifiedAt(new Date());
 				newBranch.setBasicProfileInfo(branch.getBasicProfileInfo());
 				newBranch.setIndividualInfo(branch.getIndividualInfo());
-				newBranch.setServiceProviderInfo(branch
-						.getServiceProviderInfo());
+				newBranch.setServiceProviderInfo(branch.getServiceProviderInfo());
 				newBranch.setSystemTags(branch.getSystemTags());
 				newBranch.setTags(branch.getTags());
 				newBranch.setUserTags(branch.getUserTags());
@@ -604,10 +570,8 @@ public class UserProfileController {
 
 	private String getShortDescription(UserProfile profile) {
 		String shortDescription = null;
-		if (null != profile.getBasicProfileInfo()
-				&& null != profile.getBasicProfileInfo().getDescription()) {
-			Document doc = Jsoup.parse(profile.getBasicProfileInfo()
-					.getDescription());
+		if (null != profile.getBasicProfileInfo() && null != profile.getBasicProfileInfo().getDescription()) {
+			Document doc = Jsoup.parse(profile.getBasicProfileInfo().getDescription());
 			String longDesc = doc.text();
 			String desc = Util.truncateText(doc.text());
 			if (longDesc != null && !desc.equals(longDesc)) {
@@ -621,73 +585,53 @@ public class UserProfileController {
 	@ResponseBody
 	private Object getProfileCount() {
 
-		Aggregation aggregation = newAggregation(
-				match(where("status")
-						.is(DiscussConstants.DISCUSS_STATUS_ACTIVE)),
+		Aggregation aggregation = newAggregation(match(where("status").is(DiscussConstants.DISCUSS_STATUS_ACTIVE)),
 				unwind("userTypes"), group("userTypes").count().as("total"),
 				project("total").and("_id").as("userTypes"));
 
-		AggregationResults<UserProfileController.ProfileCount> groupResults = mongoTemplate
-				.aggregate(aggregation, UserProfile.class,
-						UserProfileController.ProfileCount.class);
+		AggregationResults<UserProfileController.ProfileCount> groupResults = mongoTemplate.aggregate(aggregation,
+				UserProfile.class, UserProfileController.ProfileCount.class);
 		Map<String, Integer> countMap = new HashMap<String, Integer>();
-		for (UserProfileController.ProfileCount profileCount : groupResults
-				.getMappedResults()) {
-			if(null != profileCount.getUserTypes()){
+		for (UserProfileController.ProfileCount profileCount : groupResults.getMappedResults()) {
+			if (null != profileCount.getUserTypes()) {
 				countMap.put(profileCount.getUserTypes(), profileCount.getTotal());
 			}
 		}
 		Long housing = HousingController.getHousingCount();
-		countMap.put("" + UserTypes.INSTITUTION_HOUSING,
-				(Integer) housing.intValue());
+		countMap.put("" + UserTypes.INSTITUTION_HOUSING, (Integer) housing.intValue());
 		return BYGenericResponseHandler.getResponse(countMap);
 	}
 
-	private UserProfile mergeProfile(UserProfile oldProfile,
-			UserProfile newProfile, User currentUser, HttpServletRequest req) {
+	private UserProfile mergeProfile(UserProfile oldProfile, UserProfile newProfile, User currentUser,
+			HttpServletRequest req) {
 		if (oldProfile != null) {
-			newProfile.getBasicProfileInfo().setShortDescription(
-					getShortDescription(newProfile));
+			newProfile.getBasicProfileInfo().setShortDescription(getShortDescription(newProfile));
 			oldProfile.setLastModifiedAt(new Date());
 			oldProfile.setSystemTags(newProfile.getSystemTags());
 
 			oldProfile.setBasicProfileInfo(newProfile.getBasicProfileInfo());
 			oldProfile.setUserTypes(newProfile.getUserTypes());
-			if (!Collections.disjoint(
-					oldProfile.getUserTypes(),
-					new ArrayList<>(Arrays.asList(
-							UserTypes.INDIVIDUAL_CAREGIVER,
-							UserTypes.INDIVIDUAL_ELDER,
-							UserTypes.INDIVIDUAL_PROFESSIONAL,
-							UserTypes.INDIVIDUAL_VOLUNTEER)))) {
+			if (!Collections.disjoint(oldProfile.getUserTypes(),
+					new ArrayList<>(Arrays.asList(UserTypes.INDIVIDUAL_CAREGIVER, UserTypes.INDIVIDUAL_ELDER,
+							UserTypes.INDIVIDUAL_PROFESSIONAL, UserTypes.INDIVIDUAL_VOLUNTEER)))) {
 				oldProfile.setIndividualInfo(newProfile.getIndividualInfo());
 			}
 
-			if (oldProfile.getUserTypes().contains(
-					UserTypes.INSTITUTION_SERVICES)
-					|| oldProfile.getUserTypes().contains(
-							UserTypes.INSTITUTION_BRANCH)) {
-				oldProfile.setServiceProviderInfo(newProfile
-						.getServiceProviderInfo());
-				List<UserProfile> branchInfo = saveBranches(
-						newProfile.getServiceBranches(), currentUser.getId());
+			if (oldProfile.getUserTypes().contains(UserTypes.INSTITUTION_SERVICES)
+					|| oldProfile.getUserTypes().contains(UserTypes.INSTITUTION_BRANCH)) {
+				oldProfile.setServiceProviderInfo(newProfile.getServiceProviderInfo());
+				List<UserProfile> branchInfo = saveBranches(newProfile.getServiceBranches(), currentUser.getId());
 				oldProfile.setServiceBranches(branchInfo);
 
-			} else if (oldProfile.getUserTypes().contains(
-					UserTypes.INDIVIDUAL_PROFESSIONAL)) {
-				oldProfile.setServiceProviderInfo(newProfile
-						.getServiceProviderInfo());
-			} else if (oldProfile.getUserTypes().contains(
-					UserTypes.INSTITUTION_HOUSING)) {
-				oldProfile.setFacilities(HousingController.addFacilities(
-						newProfile.getFacilities(), currentUser));
+			} else if (oldProfile.getUserTypes().contains(UserTypes.INDIVIDUAL_PROFESSIONAL)) {
+				oldProfile.setServiceProviderInfo(newProfile.getServiceProviderInfo());
+			} else if (oldProfile.getUserTypes().contains(UserTypes.INSTITUTION_HOUSING)) {
+				oldProfile.setFacilities(HousingController.addFacilities(newProfile.getFacilities(), currentUser));
 			}
 
 			userProfileRepository.save(oldProfile);
-			logHandler.addLog(oldProfile,
-					ActivityLogConstants.CRUD_TYPE_UPDATE, req);
-			logger.info("User Profile update with details: "
-					+ oldProfile.toString());
+			logHandler.addLog(oldProfile, ActivityLogConstants.CRUD_TYPE_UPDATE, req);
+			logger.info("User Profile update with details: " + oldProfile.toString());
 		} else {
 			throw new BYException(BYErrorCodes.USER_PROFILE_DOES_NOT_EXIST);
 		}
