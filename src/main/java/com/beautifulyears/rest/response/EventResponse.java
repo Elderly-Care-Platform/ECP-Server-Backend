@@ -97,6 +97,7 @@ public class EventResponse implements IResponse {
 		private String languages;
 		private String phone;
 		private String organiser;
+		private Integer isPast;
 		private boolean isEditableByUser = false;
 
 		public EventEntity(Event event, User user) {
@@ -115,6 +116,7 @@ public class EventResponse implements IResponse {
 			this.setLanguages(event.getLanguages());
 			this.setPhone(event.getPhone());
 			this.setOrganiser(event.getOrganiser());
+			this.setIsPast( (new Date()).compareTo(event.getDatetime()) > 0 ? 1 : -1  );
 			
 			if (null != user
 					&& (BYConstants.USER_ROLE_EDITOR.equals(user.getUserRoleId())
@@ -250,6 +252,14 @@ public class EventResponse implements IResponse {
 
 		public void setLocLng(String locLng) {
 			this.locLng = locLng;
+		}
+
+		public Integer getIsPast() {
+			return isPast;
+		}
+
+		public void setIsPast(Integer isPast) {
+			this.isPast = isPast;
 		}
 	}
 

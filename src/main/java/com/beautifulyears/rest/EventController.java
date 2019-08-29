@@ -193,6 +193,7 @@ public class EventController {
 	public Object getPage(
 			@RequestParam(value = "searchTxt", required = false) String searchTxt,
 			@RequestParam(value = "eventType", required = false) Integer eventType,
+			@RequestParam(value = "pastEvents", required = false) Integer pastEvents,
 			@RequestParam(value = "startDatetime", required = false) Long startDatetime,
 			@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
@@ -211,7 +212,7 @@ public class EventController {
 			}
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
-			page = eventRepository.getPage(searchTxt,eventType, startDatetime, pageable);
+			page = eventRepository.getPage(searchTxt,eventType, startDatetime,pastEvents, pageable);
 			eventPage = EventResponse.getPage(page, currentUser);
 		} catch (Exception e) {
 			Util.handleException(e);
@@ -223,7 +224,6 @@ public class EventController {
 	@ResponseBody
 	public Object eventByEventTypeTopicAndSubTopicCount(
 			@RequestParam(value = "searchTxt", required = false) String searchTxt,
-			@RequestParam(value = "eventType", required = false) Integer eventType,
 			@RequestParam(value = "startDatetime", required = false) Long startDatetime,
 			HttpServletRequest request) throws Exception {
 		LoggerUtil.logEntry();
@@ -232,32 +232,21 @@ public class EventController {
 		try {
 
 			Long allCount = null;
-			Long outdoorCount = null;
-			Long indoorCount = null;
+			Long past = null;
+			Long upcoming = null;
 			if (null!= searchTxt) {
-				if(eventType == 0){
-					allCount = eventRepository.getCount(searchTxt,0,startDatetime);
-					filterCriteria.add("eventType = 0");
-					obj.put("all", new Long(allCount));
+				
+				allCount = eventRepository.getCount(searchTxt,0,startDatetime,0);
+				filterCriteria.add("isPast = 0");
+				obj.put("all", new Long(allCount));
 
-					outdoorCount = eventRepository.getCount(searchTxt,1,startDatetime);
-					filterCriteria.add("eventType = 1");
-					obj.put("outdoor", new Long(outdoorCount));
+				past = eventRepository.getCount(searchTxt,0,startDatetime,1);
+				filterCriteria.add("isPast = 1");
+				obj.put("past", new Long(past));
 
-					indoorCount = eventRepository.getCount(searchTxt,2,startDatetime);
-					filterCriteria.add("eventType = 2");
-					obj.put("indoor", new Long(indoorCount));
-				}
-				if(eventType == 1){
-					outdoorCount = eventRepository.getCount(searchTxt,1,startDatetime);
-					filterCriteria.add("eventType = 1");
-					obj.put("outdoor", new Long(outdoorCount));
-				}
-				if(eventType == 2){
-					indoorCount = eventRepository.getCount(searchTxt,2,startDatetime);
-					filterCriteria.add("eventType = 2");
-					obj.put("indoor", new Long(indoorCount));
-				}
+				upcoming = eventRepository.getCount(searchTxt,0,startDatetime,-1);
+				filterCriteria.add("isPast = -1");
+				obj.put("upcoming", new Long(upcoming));
 			}
 		} catch (Exception e) {
 			Util.handleException(e);
