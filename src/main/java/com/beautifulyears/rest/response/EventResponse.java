@@ -83,20 +83,19 @@ public class EventResponse implements IResponse {
 
 	public static class EventEntity {
 		private String id;
-		private String title;
-		private Date datetime;
-		private String description;
-		private int entryFee;
-		private int perPerson;
-		private int eventType;
-		private int status;
-		private String email;
-		private String location;
-		private String locLat;
-		private String locLng;
-		private String languages;
-		private String phone;
-		private String organiser;
+		private String 	title;
+		private Date 	datetime;
+		private String 	description;
+		private int 	capacity;
+		private int 	entryFee;
+		private int 	eventType;
+		private int 	status;
+		private String 	address;
+		private String 	landmark;
+		private String 	languages;
+		private String 	organiser;
+		private String 	orgPhone;
+		private String 	orgEmail;
 		private Integer isPast;
 		private boolean isEditableByUser = false;
 
@@ -105,17 +104,16 @@ public class EventResponse implements IResponse {
 			this.setTitle(event.getTitle());
 			this.setDatetime(event.getDatetime());
 			this.setDescription(event.getDescription());
+			this.setCapacity(event.getCapacity());
 			this.setEntryFee(event.getEntryFee());
-			this.setPerPerson(event.getPerPerson());
 			this.setEventType(event.getEventType());
 			this.setStatus(event.getStatus());
-			this.setEmail(event.getEmail());
-			this.setLocation(event.getLocation());
-			this.setLocLat(event.getLocLat());
-			this.setLocLng(event.getLocLng());
+			this.setAddress(event.getAddress());
+			this.setLandmark(event.getLandmark());
 			this.setLanguages(event.getLanguages());
-			this.setPhone(event.getPhone());
 			this.setOrganiser(event.getOrganiser());
+			this.setOrgEmail(event.getOrgEmail());
+			this.setOrgPhone(event.getOrgPhone());
 			this.setIsPast( (new Date()).compareTo(event.getDatetime()) > 0 ? 1 : -1  );
 			
 			if (null != user
@@ -174,36 +172,12 @@ public class EventResponse implements IResponse {
 			this.status = status;
 		}
 
-		public String getEmail() {
-			return email;
-		}
-
-		public void setEmail(String email) {
-			this.email = email;
-		}
-
-		public String getLocation() {
-			return location;
-		}
-
-		public void setLocation(String location) {
-			this.location = location;
-		}
-
 		public String getLanguages() {
 			return languages;
 		}
 
 		public void setLanguages(String languages) {
 			this.languages = languages;
-		}
-
-		public String getPhone() {
-			return phone;
-		}
-
-		public void setPhone(String phone) {
-			this.phone = phone;
 		}
 
 		public String getOrganiser() {
@@ -222,36 +196,12 @@ public class EventResponse implements IResponse {
 			this.entryFee = entryFee;
 		}
 
-		public int getPerPerson() {
-			return perPerson;
-		}
-
-		public void setPerPerson(int perPerson) {
-			this.perPerson = perPerson;
-		}
-
 		public int getEventType() {
 			return eventType;
 		}
 
 		public void setEventType(int eventType) {
 			this.eventType = eventType;
-		}
-
-		public String getLocLat() {
-			return locLat;
-		}
-
-		public void setLocLat(String locLat) {
-			this.locLat = locLat;
-		}
-
-		public String getLocLng() {
-			return locLng;
-		}
-
-		public void setLocLng(String locLng) {
-			this.locLng = locLng;
 		}
 
 		public Integer getIsPast() {
@@ -261,6 +211,47 @@ public class EventResponse implements IResponse {
 		public void setIsPast(Integer isPast) {
 			this.isPast = isPast;
 		}
+
+		public int getCapacity() {
+			return capacity;
+		}
+
+		public void setCapacity(int capacity) {
+			this.capacity = capacity;
+		}
+
+		public String getAddress() {
+			return address;
+		}
+
+		public void setAddress(String address) {
+			this.address = address;
+		}
+
+		public String getLandmark() {
+			return landmark;
+		}
+
+		public void setLandmark(String landmark) {
+			this.landmark = landmark;
+		}
+
+		public String getOrgPhone() {
+			return orgPhone;
+		}
+
+		public void setOrgPhone(String orgPhone) {
+			this.orgPhone = orgPhone;
+		}
+
+		public String getOrgEmail() {
+			return orgEmail;
+		}
+
+		public void setOrgEmail(String orgEmail) {
+			this.orgEmail = orgEmail;
+		}
+		
 	}
 
 	public void add(List<Event> eventArray) {

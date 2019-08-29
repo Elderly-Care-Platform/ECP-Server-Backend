@@ -100,26 +100,25 @@ public class EventController {
 		User currentUser = Util.getSessionUser(request);
 		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "POST")) {
 			if (event != null && (Util.isEmpty(event.getId()))) {
-				event.setOrganiser(currentUser.getId());
+				event.setOrganiser(currentUser.getUserName());
 				Event eventExtracted = new Event(
 					event.getTitle(), 
 					event.getDatetime(), 
-					event.getDescription(), 
+					event.getDescription(),
+					event.getCapacity(), 
 					event.getEntryFee(), 
-					event.getPerPerson(), 
 					event.getEventType(), 
 					event.getStatus(), 
-					event.getEmail(), 
-					event.getLocation(), 
-					event.getLocLat(), 
-					event.getLocLng(), 
+					event.getAddress(), 
+					event.getLandmark(), 
 					event.getLanguages(), 
-					event.getPhone(), 
-					event.getOrganiser());
+					event.getOrganiser(), 
+					event.getOrgPhone(), 
+					event.getOrgEmail());
 
 				event = eventRepository.save(eventExtracted);
 				logHandler.addLog(event, ActivityLogConstants.CRUD_TYPE_CREATE, request);
-				logger.info("new event entity created with ID: " + event.getId() + " by User " + event.getOrganiser());
+				logger.info("new event entity created with ID: " + event.getId() + " for Organiser " + event.getOrganiser());
 			} else {
 				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
 			}
@@ -141,24 +140,22 @@ public class EventController {
 		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "POST")) {
 			if (event != null && (!Util.isEmpty(event.getId()))) {
 				if (BYConstants.USER_ROLE_EDITOR.equals(currentUser.getUserRoleId())
-						|| BYConstants.USER_ROLE_SUPER_USER.equals(currentUser.getUserRoleId())
-						|| event.getOrganiser().equals(currentUser.getId())) {
+						|| BYConstants.USER_ROLE_SUPER_USER.equals(currentUser.getUserRoleId()) ) {
 
 					Event oldEvent = mongoTemplate.findById(new ObjectId(event.getId()), Event.class);
-					oldEvent.setTitle(event.getTitle());
+					oldEvent.setTitle(event.getTitle()); 
 					oldEvent.setDatetime(event.getDatetime());
 					oldEvent.setDescription(event.getDescription());
+					oldEvent.setCapacity(event.getCapacity());
 					oldEvent.setEntryFee(event.getEntryFee());
-					oldEvent.setPerPerson(event.getPerPerson());
 					oldEvent.setEventType(event.getEventType());
 					oldEvent.setStatus(event.getStatus());
-					oldEvent.setEmail(event.getEmail());
-					oldEvent.setLocation(event.getLocation());
-					oldEvent.setLocLat(event.getLocLat());
-					oldEvent.setLocLng(event.getLocLat());
+					oldEvent.setAddress(event.getAddress());
+					oldEvent.setLandmark(event.getLandmark());
 					oldEvent.setLanguages(event.getLanguages());
-					oldEvent.setPhone(event.getPhone());
-					oldEvent.setOrganiser(event.getOrganiser());
+					oldEvent.setOrganiser(event.getOrganiser()); 
+					oldEvent.setOrgPhone(event.getOrgPhone()); 
+					oldEvent.setOrgEmail(event.getOrgEmail());
 					oldEvent.setLastModifiedAt(new Date());
 					
 					event = eventRepository.save(oldEvent);
