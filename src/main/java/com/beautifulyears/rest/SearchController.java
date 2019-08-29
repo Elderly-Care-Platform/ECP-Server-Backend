@@ -229,7 +229,7 @@ public class SearchController {
 			JustdialToken JDtoken = null;
 			List<JustdialToken> JDtokenList = null;
 			JDtokenList = this.justDialTokenRepository.findAll();
-			if (null != JDtokenList) {
+			if (JDtokenList.size() > 0) {
 				JDtoken = JDtokenList.get(0);
 			}
 			// TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
@@ -239,7 +239,7 @@ public class SearchController {
 			JustDialHandler JDHandler = new JustDialHandler();
 			Long currentTime = cuurentdate.getTime() / 1000;
 
-			if (currentTime >= JDtoken.getExpires() || null == JDtoken) {
+			if (null == JDtoken || currentTime >= JDtoken.getExpires()) {
 				JustdialToken JDNewtoken = JDHandler.getNewToken();
 				JDtoken.setToken(JDNewtoken.getToken());
 				JDtoken.setExpires(JDNewtoken.getExpires());
@@ -255,12 +255,12 @@ public class SearchController {
 				JSONArray dataInfoList = dataList.getJSONArray(i);
 				JSONObject dataInfoMap = new JSONObject();
 				for (int j = 0; j < dataInfoList.length(); j++) {
-					dataInfoMap.put(columns.getString(j), dataInfoList.get(j));
+						dataInfoMap.put(columns.getString(j), dataInfoList.get(j));
 				}
 				newDataList.put(dataInfoMap);
 			}
 			response.put("services", newDataList);
-			response.put("JDResponse",JDResponse);
+			response.put("JDResponse", JDResponse);
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
