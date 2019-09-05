@@ -27,6 +27,7 @@ import com.beautifulyears.domain.Event;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
+import com.beautifulyears.repository.UserRepository;
 import com.beautifulyears.repository.EventRepository;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.rest.response.EventResponse;
@@ -50,14 +51,16 @@ public class EventController {
 	private static final Logger logger = Logger
 			.getLogger(EventController.class);
 	private EventRepository eventRepository;
+	private UserRepository userRepository;
 	private MongoTemplate mongoTemplate;
 	ActivityLogHandler<Event> logHandler;
 	ActivityLogHandler<Object> shareLogHandler;
 
 	@Autowired
-	public EventController(EventRepository eventRepository,
+	public EventController(EventRepository eventRepository, UserRepository userRepository,
 			MongoTemplate mongoTemplate) {
 		this.eventRepository = eventRepository;
+		this.userRepository = userRepository;
 		this.mongoTemplate = mongoTemplate;
 		logHandler = new EventActivityLogHandler(mongoTemplate);
 		shareLogHandler = new SharedActivityLogHandler(mongoTemplate);
@@ -252,5 +255,32 @@ public class EventController {
 				null, null, null, null, filterCriteria,
 				"querying count for event", "EVENT");
 		return BYGenericResponseHandler.getResponse(obj);
+	}
+
+	@RequestMapping(method = { RequestMethod.GET },value = { "/markfav" }, produces = { "application/json" })
+	@ResponseBody
+	public Object markEventFav(
+		@RequestParam(value = "eventId", required = true) String eventId,
+		@RequestParam(value = "userId", required = true) String userId,
+		@RequestParam(value = "markIt", required = true) Boolean markIt,
+		HttpServletRequest request) throws Exception {
+		LoggerUtil.logEntry();
+		User currentUser = Util.getSessionUser(request);
+		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "LIKE")) {
+			List<String> eventIds = currentUser.getFavEvents();
+			if(!eventIds.contains(eventId) && markIt == true){
+				eventIds.add(eventId);
+				currentUser.setFavEvents(eventIds);
+				this.userRepository.save(currentUser);
+			}
+			if(eventIds.contains(eventId) && markIt == false){
+				eventIds.remove(eventId);
+				currentUser.setFavEvents(eventIds);
+				this.userRepository.save(currentUser);
+			}
+		} else {
+			throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
+		}
+		return BYGenericResponseHandler.getResponse(currentUser.getFavEvents());
 	}
 }
