@@ -136,7 +136,7 @@ public class JustDialHandler {
 
     }
 
-    public String getServiceDetail(String token, String service, Integer docID) {
+    public String getServiceDetail(String token, String service, String docID) {
         LoggerUtil.logEntry();
         String response = null;
         String result = null;
@@ -145,12 +145,12 @@ public class JustDialHandler {
 
             // Prepare parameter string
             StringBuilder sbPostData = new StringBuilder(postUrl);
-            sbPostData.append("city=" + this.city);
-            sbPostData.append("&case=" + this.JDdetailCase);
-            sbPostData.append("&search=" + service);
+            sbPostData.append("search=" + URLEncoder.encode(service, "UTF-8"));
             sbPostData.append("&docid=" + docID);
-            sbPostData.append("&version=" + this.JDversion);
+            sbPostData.append("&case=" + this.JDdetailCase);
+            sbPostData.append("&city=" + this.city);
             sbPostData.append("&wap=" + this.wap);
+            sbPostData.append("&version=" + this.JDversion);
 
             // final string
             postUrl = sbPostData.toString();
