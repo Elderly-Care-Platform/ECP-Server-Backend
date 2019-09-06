@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -64,6 +65,15 @@ public class DiscussController {
 	private MongoTemplate mongoTemplate;
 	ActivityLogHandler<Discuss> logHandler;
 	ActivityLogHandler<Object> shareLogHandler;
+
+	private class TopicSummary {
+		public Long totalCount;
+		public DiscussPage discussPage;
+		public TopicSummary(Long totalCount, DiscussPage discussPage) {
+			this.totalCount = totalCount;
+			this.discussPage = discussPage;
+		}
+	}
 
 	@Autowired
 	public DiscussController(DiscussRepository discussRepository,
@@ -310,6 +320,41 @@ public class DiscussController {
 
 		}
 		return BYGenericResponseHandler.getResponse(sharedDiscuss);
+	}
+	
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/summary" }, produces = { "application/json" })
+	@ResponseBody 
+	public Object getTopicsSummary(
+		@RequestParam(value = "tagsData") List<String> tagsData,
+		HttpServletRequest request
+	){
+		User currentUser = Util.getSessionUser(request);
+		ListIterator<String> iteratorTags = tagsData.listIterator();
+		Map<String, TopicSummary> obj = new HashMap<String, TopicSummary>();
+		String itemId =  null;
+		Long count = null;
+		PageImpl<Discuss> page = null;
+		DiscussPage discussPage = null;
+		Pageable pageable = new PageRequest(0, 1, Direction.DESC, "lastModefied");
+		String[] tagIdsArr;
+		List<ObjectId> tagIds= new ArrayList<ObjectId>();
+		
+
+		while (iteratorTags.hasNext()) {
+			tagIdsArr = iteratorTags.next().split("_");
+			itemId = tagIdsArr[0];
+			for(int i = 1;i<tagIdsArr.length;i++){
+				tagIds.add(new ObjectId(tagIdsArr[i]));
+			}
+
+			count = discussRepository.getCount(null, null, tagIds, null, null, null);
+			page = discussRepository.getPage(null, null, tagIds, null, null, null, pageable);
+			discussPage = DiscussResponse.getPage(page, currentUser);
+			obj.put(itemId, new TopicSummary(new Long(count),discussPage));
+			tagIds.clear();
+		}
+		
+		return BYGenericResponseHandler.getResponse(obj);
 	}
 
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/count" }, produces = { "application/json" })

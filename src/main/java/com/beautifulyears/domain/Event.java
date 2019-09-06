@@ -16,17 +16,16 @@ public class Event {
 	private String 	title;
 	private Date 	datetime;
 	private String 	description;
+	private int 	capacity;
 	private int 	entryFee;
-	private int 	perPerson;
 	private int 	eventType;
 	private int 	status;
-	private String 	email;
-	private String 	location;
-	private String 	locLat;
-	private String 	locLng;
+	private String 	address;
+	private String 	landmark;
 	private String 	languages;
-	private String 	phone;
 	private String 	organiser;
+	private String 	orgPhone;
+	private String 	orgEmail;
 	private final Date createdAt = new Date();
 	private Date lastModifiedAt = new Date();
 
@@ -35,6 +34,12 @@ public class Event {
 	}
 	public void setId(String id) {
 		this.id = id;
+	}
+	public int getCapacity() {
+		return capacity;
+	}
+	public void setCapacity(int capacity) {
+		this.capacity = capacity;
 	}
 	public String getTitle() {
 		return title;
@@ -60,12 +65,6 @@ public class Event {
 	public void setEntryFee(int entryFee) {
 		this.entryFee = entryFee;
 	}
-	public int getPerPerson() {
-		return perPerson;
-	}
-	public void setPerPerson(int perPerson) {
-		this.perPerson = perPerson;
-	}
 	public int getEventType() {
 		return eventType;
 	}
@@ -78,29 +77,17 @@ public class Event {
 	public void setStatus(int status) {
 		this.status = status;
 	}
-	public String getEmail() {
-		return email;
+	public String getAddress() {
+		return address;
 	}
-	public void setEmail(String email) {
-		this.email = email;
+	public void setAddress(String address) {
+		this.address = address;
 	}
-	public String getLocation() {
-		return location;
+	public String getLandmark() {
+		return landmark;
 	}
-	public void setLocation(String location) {
-		this.location = location;
-	}
-	public String getLocLat() {
-		return locLat;
-	}
-	public void setLocLat(String locLat) {
-		this.locLat = locLat;
-	}
-	public String getLocLng() {
-		return locLng;
-	}
-	public void setLocLng(String locLng) {
-		this.locLng = locLng;
+	public void setLandmark(String landmark) {
+		this.landmark = landmark;
 	}
 	public String getLanguages() {
 		return languages;
@@ -108,48 +95,50 @@ public class Event {
 	public void setLanguages(String languages) {
 		this.languages = languages;
 	}
-	public String getPhone() {
-		return phone;
-	}
-	public void setPhone(String phone) {
-		this.phone = phone;
-	}
 	public String getOrganiser() {
 		return organiser;
 	}
 	public void setOrganiser(String organiser) {
 		this.organiser = organiser;
 	}
-
 	public Date getCreatedAt() {
 		return createdAt;
 	}
-
 	public Date getLastModifiedAt() {
 		return lastModifiedAt;
 	}
-
 	public void setLastModifiedAt(Date lastModifiedAt) {
 		this.lastModifiedAt = lastModifiedAt;
 	}
-
-	public Event(String title, Date datetime, String description, int entryFee, int perPerson, int eventType,
-			int status, String email, String location, String locLat, String locLng, String languages, String phone,
-			String organiser) {
+	public String getOrgPhone() {
+		return orgPhone;
+	}
+	public void setOrgPhone(String orgPhone) {
+		this.orgPhone = orgPhone;
+	}
+	public String getOrgEmail() {
+		return orgEmail;
+	}
+	public void setOrgEmail(String orgEmail) {
+		this.orgEmail = orgEmail;
+	}
+	
+	public Event(String title, Date datetime, String description, int capacity, int entryFee, int eventType,
+			int status, String address, String landmark, String languages,
+			String organiser, String orgPhone, String orgEmail) {
 		this.title = title;
 		this.datetime = datetime;
 		this.description = description;
+		this.capacity = capacity;
 		this.entryFee = entryFee;
-		this.perPerson = perPerson;
 		this.eventType = eventType;
 		this.status = status;
-		this.email = email;
-		this.location = location;
-		this.locLat = locLat;
-		this.locLng = locLng;
+		this.address = address;
+		this.landmark = landmark;
 		this.languages = languages;
-		this.phone = phone;
 		this.organiser = organiser;
+		this.orgPhone = orgPhone;
+		this.orgEmail = orgEmail;
 	}
 
 	public Event() {

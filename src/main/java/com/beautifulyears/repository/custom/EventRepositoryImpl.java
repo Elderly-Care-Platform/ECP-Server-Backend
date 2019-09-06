@@ -17,11 +17,11 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
 	private MongoTemplate mongoTemplate;
 
 	@Override
-	public PageImpl<Event> getPage(String searchTxt, Integer eventType,Long startDatetime, Pageable pageable) {
+	public PageImpl<Event> getPage(String searchTxt, Integer eventType,Long startDatetime, Integer pastEvents,  Pageable pageable) {
 		List<Event> stories = null;
 
 		Query query = new Query();
-		query = getQuery(query, searchTxt, eventType, startDatetime);
+		query = getQuery(query, searchTxt, eventType, startDatetime, pastEvents);
 		query.with(pageable);
 		query.addCriteria(Criteria.where("status").is(EventConstants.EVENT_STATUS_ACTIVE));
 		
@@ -33,9 +33,14 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
 		return storyPage;
 	}
 
-	private Query getQuery(Query q, String searchTxt, Integer eventType, Long startDatetime) {
+	private Query getQuery(Query q, String searchTxt, Integer eventType, Long startDatetime, Integer pastEvents) {
 		if (null != searchTxt) {
-			q.addCriteria(Criteria.where("title").regex(searchTxt));
+			q.addCriteria(
+				new Criteria().orOperator(
+					Criteria.where("title").regex(searchTxt,"i"),
+					Criteria.where("address").regex(searchTxt,"i")
+				)
+			);
 		}
 		if (null != startDatetime) {
 			Date dt = new Date(startDatetime);			
@@ -44,14 +49,21 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
 		if(eventType !=null && eventType > 0){
 			q.addCriteria(Criteria.where("eventType").is(eventType));
 		}
+
+		if(pastEvents !=null && pastEvents == -1){
+			q.addCriteria(Criteria.where("datetime").gte( new Date() ));
+		}
+		if(pastEvents !=null && pastEvents == 1){
+			q.addCriteria(Criteria.where("datetime").lt( new Date() ));
+		}
 		return q;
 	}
 
 	@Override
-	public long getCount(String searchTxt, Integer eventType, Long startDatetime) {
+	public long getCount(String searchTxt, Integer eventType, Long startDatetime, Integer pastEvents) {
 		long count = 0;
 		Query query = new Query();
-		query = getQuery(query, searchTxt, eventType, startDatetime);
+		query = getQuery(query, searchTxt, eventType, startDatetime, pastEvents);
 		query.addCriteria(Criteria.where("status").is(
 				EventConstants.EVENT_STATUS_ACTIVE));
 		
