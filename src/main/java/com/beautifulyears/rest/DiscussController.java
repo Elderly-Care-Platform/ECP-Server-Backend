@@ -259,7 +259,7 @@ public class DiscussController {
 			@RequestParam(value = "userId", required = false) String userId,
 			@RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
 			@RequestParam(value = "isPromotion", required = false) Boolean isPromotion,
-			@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
+			@RequestParam(value = "sort", required = false, defaultValue = "lastModifiedAt") String sort,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
 			@RequestParam(value = "p", required = false, defaultValue = "0") int pageIndex,
 			@RequestParam(value = "s", required = false, defaultValue = "10") int pageSize,
@@ -335,7 +335,7 @@ public class DiscussController {
 		Long count = null;
 		PageImpl<Discuss> page = null;
 		DiscussPage discussPage = null;
-		Pageable pageable = new PageRequest(0, 1, Direction.DESC, "lastModefied");
+		Pageable pageable = new PageRequest(0, 1, Direction.DESC, "lastModifiedAt");
 		String[] tagIdsArr;
 		List<ObjectId> tagIds= new ArrayList<ObjectId>();
 		
