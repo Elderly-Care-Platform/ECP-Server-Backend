@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -25,12 +26,14 @@ public class JustDialHandler {
     private String baseUrl = "http://win.justdial.com/tata-v1";
     private String createToken = "/createToken.php";
     private String justDialsearch = "/searchziva.php?";
+    private String categories= "/catid_list.php";
     private String city = "Hyderabad";
 
     private String JDcase = "spcall";
-    private String JDdetailCase ="detail";
+    private String JDdetailCase = "detail";
     private int JDversion = 9;
     private String stype = "category_list";
+    private String searchstype = "company_list";
     private int wap = 2;
 
     private String createToken() {
@@ -179,6 +182,104 @@ public class JustDialHandler {
             response = b.toString();
             JSONObject json = new JSONObject(response);
             JSONObject resultsObject = json.getJSONObject("results");
+
+            result = resultsObject.toString();
+
+            logger.debug(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("ERROR in search from Justdial. " + e);
+        }
+        return result;
+
+    }
+
+    public JSONObject getSearchServiceList(String token, String search, int max, int pageNo) {
+        LoggerUtil.logEntry();
+        String response = null;
+        JSONObject resultsObject = new JSONObject();
+        try {
+            String postUrl = this.baseUrl + this.justDialsearch;
+
+            // Prepare parameter string
+            StringBuilder sbPostData = new StringBuilder(postUrl);
+            sbPostData.append("city=" + this.city);
+            sbPostData.append("&case=" + this.JDcase);
+            sbPostData.append("&stype=" + this.searchstype);
+            sbPostData.append("&search=" + search);
+            sbPostData.append("&max=" + max);
+            sbPostData.append("&pg_no=" + pageNo);
+            sbPostData.append("&wap=" + this.wap);
+
+            // final string
+            postUrl = sbPostData.toString();
+
+            logger.debug(postUrl);
+
+            URL u = new URL(postUrl);
+            String type = "application/json";
+            String Bearertoken = "Bearer " + token;
+            String encodedData = sbPostData.toString();
+            HttpURLConnection conn = (HttpURLConnection) u.openConnection();
+            conn.setDoOutput(true);
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Content-Type", type);
+            conn.setRequestProperty("Authorization", Bearertoken);
+            // conn.setRequestProperty("Content-Length",
+            // String.valueOf(encodedData.length()));
+            OutputStream os = conn.getOutputStream();
+            os.write(encodedData.getBytes());
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String inputLine;
+            StringBuffer b = new StringBuffer();
+            while ((inputLine = in.readLine()) != null)
+                b.append(inputLine + "\n");
+            in.close();
+            response = b.toString();
+            JSONObject json = new JSONObject(response);
+            resultsObject = json;
+
+            // result = resultsObject.toString();
+
+            logger.debug(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("ERROR in search from Justdial. " + e);
+        }
+        return resultsObject;
+
+    }
+
+    public String getServiceCategories(String token) {
+        LoggerUtil.logEntry();
+        String response = null;
+        String result = null;
+        try {
+            String postUrl = this.baseUrl + this.categories;
+
+            // final string
+
+            URL u = new URL(postUrl);
+            String type = "application/json";
+            String Bearertoken = "Bearer " + token;
+            HttpURLConnection conn = (HttpURLConnection) u.openConnection();
+            conn.setDoOutput(true);
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Content-Type", type);
+            conn.setRequestProperty("Authorization", Bearertoken);
+            // conn.setRequestProperty("Content-Length",
+            // String.valueOf(encodedData.length()));
+            // OutputStream os = conn.getOutputStream();
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String inputLine;
+            StringBuffer b = new StringBuffer();
+            while ((inputLine = in.readLine()) != null)
+                b.append(inputLine + "\n");
+            in.close();
+            response = b.toString();
+            JSONObject json = new JSONObject(response);
+            JSONArray resultsObject = json.getJSONArray("results");
 
             result = resultsObject.toString();
 

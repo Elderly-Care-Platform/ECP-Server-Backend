@@ -54,11 +54,11 @@ import com.beautifulyears.util.Util;
 @RequestMapping(value = { "/search" })
 public class SearchController {
 	private MongoTemplate mongoTemplate;
-	private JustDialTokenRepository justDialTokenRepository;
+	private static JustDialTokenRepository justDialTokenRepository;
 
 	@Autowired
 	public SearchController(MongoTemplate mongoTemplate, JustDialTokenRepository justDialTokenRepository) {
-		this.justDialTokenRepository = justDialTokenRepository;
+		SearchController.justDialTokenRepository = justDialTokenRepository;
 		this.mongoTemplate = mongoTemplate;
 	}
 
@@ -136,6 +136,7 @@ public class SearchController {
 		LoggerUtil.logEntry();
 		User currentUser = Util.getSessionUser(request);
 		UserProfilePage profilePage = null;
+		JSONObject response = new JSONObject();
 		try {
 			Direction sortDirection = Direction.DESC;
 			if (dir != 0) {
@@ -155,16 +156,32 @@ public class SearchController {
 
 			List<UserProfile> profiles = this.mongoTemplate.find(query, UserProfile.class);
 
-			long total = this.mongoTemplate.count(query, UserProfile.class);
-			PageImpl<UserProfile> storyPage = new PageImpl<UserProfile>(profiles, pageable, total);
+			JSONObject justDailSearchResponse = getJustDialSearchServicePage(pageIndex, pageSize, term, request);
+			JSONArray JDresult = justDailSearchResponse.getJSONArray("services");
+			JSONArray DbserviceList = new JSONArray(profiles);
+			for (int i = 0; i < JDresult.length(); i++) {
+				JSONObject jsonObject = JDresult.getJSONObject(i);
+				DbserviceList.put(jsonObject);
+			}
 
-			profilePage = UserProfileResponse.getPage(storyPage, currentUser);
+			long total = this.mongoTemplate.count(query, UserProfile.class);
+			total += 50;
+			response.put("total", total);
+			response.put("pageIndex", pageIndex);
+			response.put("data", DbserviceList);
+
+			// PageImpl<UserProfile> storyPage = new PageImpl<UserProfile>(profiles,
+			// pageable, total);
+
+			// profilePage = UserProfileResponse.getPage(storyPage, currentUser);
+
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
 		Util.logStats(mongoTemplate, request, "search services", null, null, null, null, term, filterCriteria,
 				"search services for term = " + term, "SEARCH");
-		return BYGenericResponseHandler.getResponse(profilePage);
+		// return BYGenericResponseHandler.getResponse(profilePage);
+		return response.toString();
 	}
 
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/housingPageSearch" }, produces = { "application/json" })
@@ -228,7 +245,7 @@ public class SearchController {
 
 			JustdialToken JDtoken = null;
 			List<JustdialToken> JDtokenList = null;
-			JDtokenList = this.justDialTokenRepository.findAll();
+			JDtokenList = justDialTokenRepository.findAll();
 			if (JDtokenList.size() > 0) {
 				JDtoken = JDtokenList.get(0);
 			}
@@ -243,7 +260,7 @@ public class SearchController {
 				JustdialToken JDNewtoken = JDHandler.getNewToken();
 				JDtoken.setToken(JDNewtoken.getToken());
 				JDtoken.setExpires(JDNewtoken.getExpires());
-				this.justDialTokenRepository.save(JDtoken);
+				justDialTokenRepository.save(JDtoken);
 			}
 
 			JSONObject JDResponse = JDHandler.getServiceList(JDtoken.getToken(), category, catID, max, pageNo);
@@ -280,14 +297,13 @@ public class SearchController {
 	public Object getJustDialServiceDetailPage(
 			// String category, Integer catID, Integer max, int pageNo
 			@RequestParam(value = "service", required = true) String service,
-			@RequestParam(value = "docID", required = true) String docID,
-			HttpServletRequest request) throws Exception {
-		String response =null;
+			@RequestParam(value = "docID", required = true) String docID, HttpServletRequest request) throws Exception {
+		String response = null;
 		try {
 
 			JustdialToken JDtoken = null;
 			List<JustdialToken> JDtokenList = null;
-			JDtokenList = this.justDialTokenRepository.findAll();
+			JDtokenList = justDialTokenRepository.findAll();
 			if (JDtokenList.size() > 0) {
 				JDtoken = JDtokenList.get(0);
 			}
@@ -302,11 +318,11 @@ public class SearchController {
 				JustdialToken JDNewtoken = JDHandler.getNewToken();
 				JDtoken.setToken(JDNewtoken.getToken());
 				JDtoken.setExpires(JDNewtoken.getExpires());
-				this.justDialTokenRepository.save(JDtoken);
+				justDialTokenRepository.save(JDtoken);
 			}
 
-			response = JDHandler.getServiceDetail(JDtoken.getToken(),service,docID);
-		
+			response = JDHandler.getServiceDetail(JDtoken.getToken(), service, docID);
+
 		} catch (Exception e) {
 			// throw e;
 			Util.handleException(e);
@@ -318,6 +334,106 @@ public class SearchController {
 		// String newResponse = response.toString();
 		// return BYGenericResponseHandler.getResponse(response);
 		return response;
+	}
+
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/justdialSearchService" }, produces = {
+			"application/json" })
+	@ResponseBody
+	public static JSONObject getJustDialSearchServicePage(@RequestParam(value = "pageNo", required = true) int pageNo,
+			@RequestParam(value = "max", required = false, defaultValue = "10") int max,
+			@RequestParam(value = "search", required = true) String search, HttpServletRequest request)
+			throws Exception {
+		JSONObject response = new JSONObject();
+		try {
+
+			JustdialToken JDtoken = null;
+			List<JustdialToken> JDtokenList = null;
+			JDtokenList = justDialTokenRepository.findAll();
+			if (JDtokenList.size() > 0) {
+				JDtoken = JDtokenList.get(0);
+			}
+			// TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+			Date cuurentdate = new Date();
+			// Date expireDate = new Date(JDtoken.getExpires()*1000);
+			// int comp = cuurentdate.compareTo(expireDate);
+			JustDialHandler JDHandler = new JustDialHandler();
+			Long currentTime = cuurentdate.getTime() / 1000;
+
+			if (null == JDtoken || currentTime >= JDtoken.getExpires()) {
+				JustdialToken JDNewtoken = JDHandler.getNewToken();
+				JDtoken.setToken(JDNewtoken.getToken());
+				JDtoken.setExpires(JDNewtoken.getExpires());
+				justDialTokenRepository.save(JDtoken);
+			}
+
+			JSONObject JDResponse = JDHandler.getSearchServiceList(JDtoken.getToken(), search, max, pageNo);
+			JSONObject resultsObject = JDResponse.getJSONObject("results");
+			JSONArray columns = resultsObject.getJSONArray("columns");
+			JSONArray dataList = resultsObject.getJSONArray("data");
+			JSONArray newDataList = new JSONArray();
+			for (int i = 0; i < dataList.length(); i++) {
+				JSONArray dataInfoList = dataList.getJSONArray(i);
+				JSONObject dataInfoMap = new JSONObject();
+				for (int j = 0; j < dataInfoList.length(); j++) {
+					dataInfoMap.put(columns.getString(j), dataInfoList.get(j));
+				}
+				newDataList.put(dataInfoMap);
+			}
+			response.put("services", newDataList);
+			// response.put("JDResponse", JDResponse);
+		} catch (Exception e) {
+			// throw e;
+			Util.handleException(e);
+			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
+		}
+		// Util.logStats(mongoTemplate, request, "search services", null, null, null,
+		// null, term, filterCriteria,
+		// "search services for term = " + term, "SEARCH");
+		// String newResponse = response.toString();
+		// return BYGenericResponseHandler.getResponse(response.toString());
+		return response;
+	}
+
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/justdailCategories" }, produces = {
+			"application/json" })
+	@ResponseBody
+	public Object getJustDialCategories(HttpServletRequest request) throws Exception {
+		String response = null;
+		try {
+
+			JustdialToken JDtoken = null;
+			List<JustdialToken> JDtokenList = null;
+			JDtokenList = justDialTokenRepository.findAll();
+			if (JDtokenList.size() > 0) {
+				JDtoken = JDtokenList.get(0);
+			}
+			// TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+			Date cuurentdate = new Date();
+			// Date expireDate = new Date(JDtoken.getExpires()*1000);
+			// int comp = cuurentdate.compareTo(expireDate);
+			JustDialHandler JDHandler = new JustDialHandler();
+			Long currentTime = cuurentdate.getTime() / 1000;
+
+			if (null == JDtoken || currentTime >= JDtoken.getExpires()) {
+				JustdialToken JDNewtoken = JDHandler.getNewToken();
+				JDtoken.setToken(JDNewtoken.getToken());
+				JDtoken.setExpires(JDNewtoken.getExpires());
+				justDialTokenRepository.save(JDtoken);
+			}
+
+			response = JDHandler.getServiceCategories(JDtoken.getToken());
+
+		} catch (Exception e) {
+			// throw e;
+			Util.handleException(e);
+			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
+		}
+		// Util.logStats(mongoTemplate, request, "search services", null, null, null,
+		// null, term, filterCriteria,
+		// "search services for term = " + term, "SEARCH");
+		// String newResponse = response.toString();
+		// return BYGenericResponseHandler.getResponse(response);
+		return response.toString();
 	}
 
 }
