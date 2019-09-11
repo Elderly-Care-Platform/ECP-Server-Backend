@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.*;
 
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 import static org.springframework.data.mongodb.core.query.Criteria.*;
@@ -17,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.bson.types.ObjectId;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -317,7 +319,8 @@ public class UserProfileController {
 								q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
 								existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
 								if (null != existinprofile) {
-									existinprofile.getBasicProfileInfo().setPrimaryPhoneNo(currentUser.getPhoneNumber());
+									existinprofile.getBasicProfileInfo()
+											.setPrimaryPhoneNo(currentUser.getPhoneNumber());
 									existinprofile = userProfileRepository.save(existinprofile);
 								}
 								UserController.deleteUser(currentUser);
@@ -341,7 +344,8 @@ public class UserProfileController {
 								q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
 								existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
 								if (null != existinprofile) {
-									existinprofile.getBasicProfileInfo().setPrimaryEmail(currentUser.getEmail());;
+									existinprofile.getBasicProfileInfo().setPrimaryEmail(currentUser.getEmail());
+									;
 									existinprofile = userProfileRepository.save(existinprofile);
 								}
 								UserController.deleteUser(currentUser);
@@ -617,92 +621,93 @@ public class UserProfileController {
 		return BYGenericResponseHandler.getResponse(countMap);
 	}
 
-
 	/* this method is to get list of service Provider user Profiles. */
 	/*
 	 * this method allows to get a page of userProfiles based on page number and
 	 * size, also optional filter parameters like service types and city.
 	 */
-	@RequestMapping(method = { RequestMethod.GET }, value = { "/allServiceList" }, produces = {
-		"application/json" })
-@ResponseBody
-public Object getAllServiceList(@RequestParam(value = "city", required = false) String city,
-		@RequestParam(value = "tags", required = false) List<String> tags,
-		@RequestParam(value = "pageNo", required = false, defaultValue = "0") int page,
-		@RequestParam(value = "max", required = false, defaultValue = "10") int size,
-		@RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
-		@RequestParam(value = "sort", required = false, defaultValue = "lastModifiedAt") String sort,
-		@RequestParam(value = "dir", required = false, defaultValue = "0") int dir, HttpServletRequest req,
-		HttpServletResponse res) throws Exception {
-	List<String> filterCriteria = new ArrayList<String>();
-	filterCriteria.add("page = " + page);
-	filterCriteria.add("size = " + size);
-	filterCriteria.add("sort = " + sort);
-	filterCriteria.add("dir = " + dir);
-	filterCriteria.add("tags = " + tags);
-	filterCriteria.add("isFeatured = " + isFeatured);
-	filterCriteria.add("city = " + city);
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/allServiceList" }, produces = { "application/json" })
+	@ResponseBody
+	public Object getAllServiceList(@RequestParam(value = "city", required = false) String city,
+			@RequestParam(value = "tags", required = false) List<String> tags,
+			@RequestParam(value = "pageNo", required = false, defaultValue = "0") int page,
+			@RequestParam(value = "max", required = false, defaultValue = "10") int size,
+			@RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
+			@RequestParam(value = "sort", required = false, defaultValue = "lastModifiedAt") String sort,
+			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
+		List<String> filterCriteria = new ArrayList<String>();
+		filterCriteria.add("page = " + page);
+		filterCriteria.add("size = " + size);
+		filterCriteria.add("sort = " + sort);
+		filterCriteria.add("dir = " + dir);
+		filterCriteria.add("tags = " + tags);
+		filterCriteria.add("isFeatured = " + isFeatured);
+		filterCriteria.add("city = " + city);
 
-	Integer[] userTypes = { UserTypes.INSTITUTION_HOUSING, UserTypes.INSTITUTION_BRANCH,
-			UserTypes.INSTITUTION_PRODUCTS, UserTypes.INSTITUTION_NGO, UserTypes.INDIVIDUAL_PROFESSIONAL };
+		Integer[] userTypes = { UserTypes.INSTITUTION_HOUSING, UserTypes.INSTITUTION_BRANCH,
+				UserTypes.INSTITUTION_PRODUCTS, UserTypes.INSTITUTION_NGO, UserTypes.INDIVIDUAL_PROFESSIONAL };
 
-		String JdsearchTerms= "care hospital clinics  nursing home";
-	LoggerUtil.logEntry();
-	List<ObjectId> tagIds = new ArrayList<ObjectId>();
-	User user = Util.getSessionUser(req);
+		String JdsearchTerms = "care hospital clinics  nursing home";
+		LoggerUtil.logEntry();
+		List<ObjectId> tagIds = new ArrayList<ObjectId>();
+		User user = Util.getSessionUser(req);
 
-	UserProfileResponse.UserProfilePage profilePage = null;
-	JSONObject response = new JSONObject();
-	try {
-		logger.debug(" city " + city + " tags " + tags + " page " + page + " size " + size);
-		// if (null == services) {
-		// services = new ArrayList<String>();
-		// }
+		UserProfileResponse.UserProfilePage profilePage = null;
+		JSONObject response = new JSONObject();
+		try {
+			logger.debug(" city " + city + " tags " + tags + " page " + page + " size " + size);
+			// if (null == services) {
+			// services = new ArrayList<String>();
+			// }
 
-		if (null != tags) {
-			for (String tagId : tags) {
-				tagIds.add(new ObjectId(tagId));
+			if (null != tags) {
+				for (String tagId : tags) {
+					tagIds.add(new ObjectId(tagId));
+				}
 			}
+
+			/* setting page and sort criteria */
+			Direction sortDirection = Direction.DESC;
+			if (dir != 0) {
+				sortDirection = Direction.ASC;
+			}
+
+			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
+			List<String> fields = new ArrayList<String>();
+			fields = UserProfilePrivacyHandler.getPublicFields(-1);
+			profilePage = UserProfileResponse.getPage(userProfileRepository
+					.getServiceProvidersByFilterCriteria(userTypes, city, tagIds, isFeatured, pageable, fields), user);
+
+			JSONObject justDailSearchResponse = SearchController.getJustDialSearchServicePage(page, size, JdsearchTerms,
+					req);
+			JSONArray JDresult = justDailSearchResponse.getJSONArray("services");
+			JSONArray DbserviceList = new JSONArray(profilePage.getContent());
+			for (int i = 0; i < JDresult.length(); i++) {
+				JSONObject jsonObject = JDresult.getJSONObject(i);
+				jsonObject.put("reviewCount", Integer.parseInt(jsonObject.getString("totalReviews")));
+				DbserviceList.put(jsonObject);
+			}
+
+			JSONArray sortedArray = sortJsonArray("reviewCount",DbserviceList);
+
+			long total = profilePage.getTotal() + 50;
+			response.put("total", total);
+			response.put("pageIndex", profilePage.getNumber());
+			response.put("data", sortedArray);
+
+			if (profilePage.getContent().size() > 0) {
+				logger.debug("found something");
+			} else {
+				logger.debug("did not find anything");
+			}
+		} catch (Exception e) {
+			Util.handleException(e);
 		}
-
-		/* setting page and sort criteria */
-		Direction sortDirection = Direction.DESC;
-		if (dir != 0) {
-			sortDirection = Direction.ASC;
-		}
-
-		Pageable pageable = new PageRequest(page, size, sortDirection, sort);
-		List<String> fields = new ArrayList<String>();
-		fields = UserProfilePrivacyHandler.getPublicFields(-1);
-		profilePage = UserProfileResponse.getPage(userProfileRepository
-				.getServiceProvidersByFilterCriteria(userTypes, city, tagIds, isFeatured, pageable, fields), user);
-
-
-				JSONObject justDailSearchResponse = SearchController.getJustDialSearchServicePage(page, size, JdsearchTerms, req);
-				JSONArray JDresult = justDailSearchResponse.getJSONArray("services");
-				JSONArray DbserviceList = new JSONArray(profilePage.getContent());
-				for (int i = 0; i < JDresult.length(); i++) {
-					JSONObject jsonObject = JDresult.getJSONObject(i);
-					DbserviceList.put(jsonObject);
-				}	
-				
-				long total = profilePage.getTotal() + 50;
-				response.put("total",total);
-				response.put("pageIndex", profilePage.getNumber());
-				response.put("data", DbserviceList);
-
-		if (profilePage.getContent().size() > 0) {
-			logger.debug("found something");
-		} else {
-			logger.debug("did not find anything");
-		}
-	} catch (Exception e) {
-		Util.handleException(e);
+		Util.logStats(mongoTemplate, req, "get service providers", null, null, null, null, null, filterCriteria,
+				"get service providers", "SERVICE");
+		return response.toString();
 	}
-	Util.logStats(mongoTemplate, req, "get service providers", null, null, null, null, null, filterCriteria,
-			"get service providers", "SERVICE");
-	return response.toString();
-}
 
 	private UserProfile mergeProfile(UserProfile oldProfile, UserProfile newProfile, User currentUser,
 			HttpServletRequest req) {
@@ -739,6 +744,42 @@ public Object getAllServiceList(@RequestParam(value = "city", required = false) 
 		}
 
 		return oldProfile;
+	}
+
+	public static JSONArray sortJsonArray(String field, JSONArray array) {
+		JSONArray sortedJsonArray = new JSONArray();
+
+		List<JSONObject> jsonValues = new ArrayList<JSONObject>();
+		for (int i = 0; i < array.length(); i++) {
+			jsonValues.add(array.getJSONObject(i));
+		}
+		Collections.sort(jsonValues, new Comparator<JSONObject>() {
+			// You can change "Name" with "ID" if you want to sort by ID
+			private final String KEY_NAME = field;
+
+			@Override
+			public int compare(JSONObject a, JSONObject b) {
+				String valA = new String();
+				String valB = new String();
+
+				try {
+					valA = String.valueOf(a.get(KEY_NAME)) ;
+					valB = String.valueOf(b.get(KEY_NAME)) ;
+				} catch (JSONException e) {
+					// do something
+					throw new RuntimeException("ERROR in sorting data. " + e);
+				}
+
+				return -valA.compareTo(valB);
+				// if you want to change the sort order, simply use the following:
+				// return -valA.compareTo(valB);
+			}
+		});
+
+		for (int i = 0; i < array.length(); i++) {
+			sortedJsonArray.put(jsonValues.get(i));
+		}
+		return sortedJsonArray;
 	}
 
 	class ProfileCount {

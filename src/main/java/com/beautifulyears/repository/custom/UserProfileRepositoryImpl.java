@@ -55,6 +55,8 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 			}
 
 		}
+
+		q.addCriteria(Criteria.where("basicProfileInfo.firstName").exists(true));
 		q.with(page);
 		userProfileList = mongoTemplate.find(q, UserProfile.class);
 
