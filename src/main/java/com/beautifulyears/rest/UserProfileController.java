@@ -685,7 +685,11 @@ public class UserProfileController {
 			JSONArray DbserviceList = new JSONArray(profilePage.getContent());
 			for (int i = 0; i < JDresult.length(); i++) {
 				JSONObject jsonObject = JDresult.getJSONObject(i);
-				jsonObject.put("reviewCount", Integer.parseInt(jsonObject.getString("totalReviews")));
+				String totReviews = jsonObject.getString("totalReviews");
+				if(totReviews.equals("")){
+					totReviews = "0";
+				}
+				jsonObject.put("reviewCount", Integer.parseInt(totReviews));
 				DbserviceList.put(jsonObject);
 			}
 
