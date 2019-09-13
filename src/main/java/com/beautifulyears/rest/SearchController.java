@@ -159,16 +159,29 @@ public class SearchController {
 			JSONObject justDailSearchResponse = getJustDialSearchServicePage(pageIndex, pageSize, term, request);
 			JSONArray JDresult = justDailSearchResponse.getJSONArray("services");
 			JSONArray DbserviceList = new JSONArray(profiles);
+			for (int i = 0; i < DbserviceList.length(); i++) {
+				JSONObject jsonDBObject = DbserviceList.getJSONObject(i);
+				JSONArray totReviews = jsonDBObject.getJSONArray("reviewedBy");
+				jsonDBObject.put("reviewCount", totReviews.length());
+				DbserviceList.put(i, jsonDBObject);
+			}
+
 			for (int i = 0; i < JDresult.length(); i++) {
 				JSONObject jsonObject = JDresult.getJSONObject(i);
+				String totReviews = jsonObject.getString("totalReviews");
+				if(totReviews.equals("")){
+					totReviews = "0";
+				}
+				jsonObject.put("reviewCount", Integer.parseInt(totReviews));
 				DbserviceList.put(jsonObject);
 			}
+			JSONArray sortedArray = UserProfileController.sortJsonArray("reviewCount", DbserviceList);
 
 			long total = this.mongoTemplate.count(query, UserProfile.class);
 			total += 50;
 			response.put("total", total);
 			response.put("pageIndex", pageIndex);
-			response.put("data", DbserviceList);
+			response.put("data", sortedArray);
 
 			// PageImpl<UserProfile> storyPage = new PageImpl<UserProfile>(profiles,
 			// pageable, total);
