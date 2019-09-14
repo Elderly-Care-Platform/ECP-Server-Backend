@@ -121,6 +121,34 @@ public class UserProfileController {
 		return BYGenericResponseHandler.getResponse(UserProfileResponse.getUserProfileEntity(userProfile, userInfo));
 	}
 
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/serviceProvider/{userId}" }, produces = {
+			"application/json" })
+	@ResponseBody
+	public Object getUserServiceProviderbyID(@PathVariable(value = "userId") String userId, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
+		List<Integer> serviceTypes = new ArrayList<Integer>();
+		serviceTypes.add(UserTypes.INDIVIDUAL_PROFESSIONAL);
+		serviceTypes.add(UserTypes.INSTITUTION_NGO);
+		serviceTypes.add(UserTypes.INSTITUTION_BRANCH);
+
+		LoggerUtil.logEntry();
+		UserProfile userProfile = null;
+		try {
+
+			Query query = new Query();
+
+			query.addCriteria(Criteria.where("userTypes").in(serviceTypes));
+			query.addCriteria(
+					Criteria.where("status").in(new Object[] { DiscussConstants.DISCUSS_STATUS_ACTIVE, null }));
+			query.addCriteria(Criteria.where("id").is(userId));
+			userProfile = mongoTemplate.findOne(query, UserProfile.class);
+
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+		return BYGenericResponseHandler.getResponse(userProfile);
+	}
+
 	/*
 	 * this method allows to get a page of userProfiles based on page number and
 	 * size
@@ -686,14 +714,14 @@ public class UserProfileController {
 			for (int i = 0; i < JDresult.length(); i++) {
 				JSONObject jsonObject = JDresult.getJSONObject(i);
 				String totReviews = jsonObject.getString("totalReviews");
-				if(totReviews.equals("")){
+				if (totReviews.equals("")) {
 					totReviews = "0";
 				}
 				jsonObject.put("reviewCount", Integer.parseInt(totReviews));
 				DbserviceList.put(jsonObject);
 			}
 
-			JSONArray sortedArray = sortJsonArray("reviewCount",DbserviceList);
+			JSONArray sortedArray = sortJsonArray("reviewCount", DbserviceList);
 
 			long total = profilePage.getTotal() + 50;
 			response.put("total", total);
@@ -767,8 +795,8 @@ public class UserProfileController {
 				String valB = new String();
 
 				try {
-					valA = String.valueOf(a.get(KEY_NAME)) ;
-					valB = String.valueOf(b.get(KEY_NAME)) ;
+					valA = String.valueOf(a.get(KEY_NAME));
+					valB = String.valueOf(b.get(KEY_NAME));
 				} catch (JSONException e) {
 					// do something
 					throw new RuntimeException("ERROR in sorting data. " + e);
