@@ -43,6 +43,13 @@ public class SessionController {
 				// 	throw new BYException(BYErrorCodes.USER_FULL_LOGIN_REQUIRED);
 				// }
 				break;
+			case "PRODUCT":
+				if (currentSession.getSessionType() == BYConstants.SESSION_TYPE_FULL) {
+					permission = true;
+				} else{
+					throw new BYException(BYErrorCodes.USER_FULL_LOGIN_REQUIRED);
+				}
+				break;
 			default:
 				throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
 			}
