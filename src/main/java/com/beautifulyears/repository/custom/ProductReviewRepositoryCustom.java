@@ -7,7 +7,7 @@ import com.beautifulyears.rest.response.PageImpl;
 
 public interface ProductReviewRepositoryCustom {
 
-	public PageImpl<ProductReview> getPage(String searchTxt, Pageable pageable);
+	public PageImpl<ProductReview> getPage(String searchTxt, String productId, Pageable pageable);
 
-	public long getCount(String searchTxt);
+	public long getCount(String searchTxt, String productId);
 }

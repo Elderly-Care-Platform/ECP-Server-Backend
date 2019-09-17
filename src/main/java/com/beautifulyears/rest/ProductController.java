@@ -361,6 +361,7 @@ public class ProductController {
 	@ResponseBody
 	public Object getReviewPage(
 			@RequestParam(value = "searchTxt", required = false) String searchTxt,
+			@RequestParam(value = "productId", required = false) String productId,
 			@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
 			@RequestParam(value = "p", required = false, defaultValue = "0") int pageIndex,
@@ -377,7 +378,7 @@ public class ProductController {
 			}
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
-			page = productRevRepo.getPage(searchTxt, pageable);
+			page = productRevRepo.getPage(searchTxt, productId, pageable);
 			productRevPage = ProductReviewResponse.getPage(page, currentUser);
 		} catch (Exception e) {
 			Util.handleException(e);

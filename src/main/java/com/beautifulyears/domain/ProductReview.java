@@ -16,7 +16,7 @@ public class ProductReview {
 	private String 	productId;
 	private String 	rating;
 	private String 	review;
-	private Boolean likeCount;
+	private Integer likeCount;
 	private Integer unLikeCount;
 	private int 	status;
 	private String 	userName;
@@ -56,11 +56,11 @@ public class ProductReview {
 		this.review = review;
 	}
 
-	public Boolean getLikeCount() {
+	public Integer getLikeCount() {
 		return likeCount;
 	}
 
-	public void setLikeCount(Boolean likeCount) {
+	public void setLikeCount(Integer likeCount) {
 		this.likeCount = likeCount;
 	}
 
@@ -108,7 +108,7 @@ public class ProductReview {
 		this.lastModifiedAt = lastModifiedAt;
 	}
 
-	public ProductReview(String productId, String rating, String review, Boolean likeCount, Integer unLikeCount,
+	public ProductReview(String productId, String rating, String review, Integer likeCount, Integer unLikeCount,
 			int status, String userName, String parentReviewId) {
 		this.productId = productId;
 		this.rating = rating;

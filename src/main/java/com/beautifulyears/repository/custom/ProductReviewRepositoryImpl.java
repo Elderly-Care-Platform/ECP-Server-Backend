@@ -15,11 +15,11 @@ public class ProductReviewRepositoryImpl implements ProductReviewRepositoryCusto
 	private MongoTemplate mongoTemplate;
 
 	@Override
-	public PageImpl<ProductReview> getPage(String searchTxt, Pageable pageable) {
+	public PageImpl<ProductReview> getPage(String searchTxt, String productId, Pageable pageable) {
 		List<ProductReview> stories = null;
 
 		Query query = new Query();
-		query = getQuery(query, searchTxt);
+		query = getQuery(query, searchTxt, productId);
 		query.with(pageable);
 		
 		stories = this.mongoTemplate.find(query, ProductReview.class);
@@ -29,18 +29,21 @@ public class ProductReviewRepositoryImpl implements ProductReviewRepositoryCusto
 		return storyPage;
 	}
 
-	private Query getQuery(Query q, String searchTxt) {
-		if (null != searchTxt) {
+	private Query getQuery(Query q, String searchTxt, String productId) {
+		if (null != searchTxt && searchTxt != "") {
 			q.addCriteria(Criteria.where("name").regex(searchTxt,"i"));
+		}
+		if(productId!= null  && productId != ""){
+			q.addCriteria(Criteria.where("productId").is(productId));
 		}
 		return q;
 	}
 
 	@Override
-	public long getCount(String searchTxt) {
+	public long getCount(String searchTxt, String productId) {
 		long count = 0;
 		Query query = new Query();
-		query = getQuery(query, searchTxt);
+		query = getQuery(query, searchTxt, productId);
 		count = this.mongoTemplate.count(query, ProductReview.class);
 		return count;
 	}

@@ -85,7 +85,7 @@ public class ProductReviewResponse implements IResponse {
 		private String 	productId;
 		private String 	rating;
 		private String 	review;
-		private Boolean likeCount;
+		private Integer likeCount;
 		private Integer unLikeCount;
 		private int 	status;
 		private String 	userName;
@@ -139,11 +139,11 @@ public class ProductReviewResponse implements IResponse {
 			this.review = review;
 		}
 
-		public Boolean getLikeCount() {
+		public Integer getLikeCount() {
 			return likeCount;
 		}
 
-		public void setLikeCount(Boolean likeCount) {
+		public void setLikeCount(Integer likeCount) {
 			this.likeCount = likeCount;
 		}
 
