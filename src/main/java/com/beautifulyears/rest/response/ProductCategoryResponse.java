@@ -85,6 +85,7 @@ public class ProductCategoryResponse implements IResponse {
 		private boolean isEditableByUser = false;
 
 		public ProductCategoryEntity(ProductCategory productCategory, User user) {
+			this.setId(productCategory.getId());
 			this.setName(productCategory.getName());
 			
 			if (null != user

@@ -100,6 +100,7 @@ public class ProductResponse implements IResponse {
 		private boolean isEditableByUser = false;
 
 		public ProductEntity(Product product, User user) {
+			this.setId(product.getId());
 			this.setName(product.getName());
 			this.setProductCategory(product.getProductCategory());
 			this.setShortDescription(product.getShortDescription());
