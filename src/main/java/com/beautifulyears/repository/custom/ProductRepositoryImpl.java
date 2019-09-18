@@ -1,6 +1,8 @@
 package com.beautifulyears.repository.custom;
 
 import java.util.List;
+
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -32,7 +34,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 	}
 
 	private Query getQuery(Query q, String searchTxt, String category) {
-		if (null != searchTxt) {
+		if (null != searchTxt && searchTxt!= "") {
 			q.addCriteria(
 				new Criteria().orOperator(
 					Criteria.where("name").regex(searchTxt,"i"),
@@ -40,7 +42,9 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 				)
 			);
 		}
-		
+		if (null != category && category!="") {
+			q.addCriteria(Criteria.where("productCategory.$id").is(new ObjectId(category) ));
+		}
 		return q;
 	}
 
