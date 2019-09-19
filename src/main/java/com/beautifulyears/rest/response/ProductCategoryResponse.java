@@ -6,10 +6,13 @@ import java.util.List;
 import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.domain.ProductCategory;
 import com.beautifulyears.domain.User;
+import com.beautifulyears.repository.ProductRepository;
 
 public class ProductCategoryResponse implements IResponse {
 
 	private List<ProductCategoryEntity> productCategoryArray = new ArrayList<ProductCategoryEntity>();
+
+	private static ProductRepository prodRepo;
 
 	@Override
 	public List<ProductCategoryEntity> getResponse() {
@@ -82,12 +85,13 @@ public class ProductCategoryResponse implements IResponse {
 	public static class ProductCategoryEntity {
 		private String 	id;
 		private String 	name;
+		private long productCount;
 		private boolean isEditableByUser = false;
 
 		public ProductCategoryEntity(ProductCategory productCategory, User user) {
 			this.setId(productCategory.getId());
 			this.setName(productCategory.getName());
-			
+			this.setProductCount(ProductCategoryResponse.prodRepo.getCount(null, productCategory.getId()));
 			if (null != user
 					&& (BYConstants.USER_ROLE_EDITOR.equals(user.getUserRoleId())
 						|| BYConstants.USER_ROLE_SUPER_USER.equals(user.getUserRoleId())
@@ -119,6 +123,15 @@ public class ProductCategoryResponse implements IResponse {
 		public void setName(String name) {
 			this.name = name;
 		}
+
+		public long getProductCount() {
+			return productCount;
+		}
+
+		public void setProductCount(long productCount) {
+			this.productCount = productCount;
+		}
+		
 	}
 
 	public void add(List<ProductCategory> productCategoryArray) {
@@ -141,7 +154,8 @@ public class ProductCategoryResponse implements IResponse {
 		this.productCategoryArray.add(new ProductCategoryEntity(productCategory, user));
 	}
 
-	public static ProductCategoryPage getPage(PageImpl<ProductCategory> page, User user) {
+	public static ProductCategoryPage getPage(PageImpl<ProductCategory> page, User user, ProductRepository prodRepo ) {
+		ProductCategoryResponse.prodRepo = prodRepo;
 		ProductCategoryPage res = new ProductCategoryPage(page, user);
 		return res;
 	}

@@ -277,7 +277,7 @@ public class ProductController {
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
 			page = productCatRepo.getPage(searchTxt, pageable);
-			productCatPage = ProductCategoryResponse.getPage(page, currentUser);
+			productCatPage = ProductCategoryResponse.getPage(page, currentUser,productRepository);
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
