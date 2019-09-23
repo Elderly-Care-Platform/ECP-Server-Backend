@@ -293,11 +293,11 @@ public class UserController {
 				editedUser.setUserRegType(BYConstants.USER_REG_TYPE_FULL);
 				editedUser.setPassword(user.getPassword());
 			} else {
-				if (isGuestUser(editedUser)) {
-					user.setUserRegType(BYConstants.USER_REG_TYPE_GUEST);
-				} else {
-					user.setUserRegType(BYConstants.USER_REG_TYPE_FULL);
-				}
+				user.setUserRegType(BYConstants.USER_REG_TYPE_FULL);
+				// if (isGuestUser(editedUser)) {
+				// 	user.setUserRegType(BYConstants.USER_REG_TYPE_GUEST);
+				// } else {
+				// }
 			}
 
 			editedUser = userRepository.save(editedUser);
