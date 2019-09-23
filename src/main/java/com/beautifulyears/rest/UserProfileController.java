@@ -443,9 +443,10 @@ public class UserProfileController {
 			if ((userProfile != null) && (userId != null)) {
 				if (null != currentUser && SessionController.checkCurrentSessionFor(req, "SUBMIT_PROFILE")) {
 					if (userProfile.getUserId().equals(currentUser.getId())) {
-						profile = userProfileRepository.findByUserId(userId);
+						// profile = userProfileRepository.findByUserId(userId);
 
-						profile = mergeProfile(profile, userProfile, currentUser, req);
+						// profile = mergeProfile(profile, userProfile, currentUser, req);
+						profile = userProfileRepository.save(userProfile);
 
 					} else {
 						throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
@@ -676,7 +677,7 @@ public class UserProfileController {
 		Integer[] userTypes = { UserTypes.INSTITUTION_HOUSING, UserTypes.INSTITUTION_BRANCH,
 				UserTypes.INSTITUTION_PRODUCTS, UserTypes.INSTITUTION_NGO, UserTypes.INDIVIDUAL_PROFESSIONAL };
 
-		String JdsearchTerms = "care hospital clinics  nursing home";
+		String JdsearchTerms = "care hospital clinics nursing home";
 		LoggerUtil.logEntry();
 		List<ObjectId> tagIds = new ArrayList<ObjectId>();
 		User user = Util.getSessionUser(req);
