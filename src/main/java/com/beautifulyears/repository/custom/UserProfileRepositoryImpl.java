@@ -20,11 +20,41 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 	private MongoTemplate mongoTemplate;
 
 	@Override
-	public PageImpl<UserProfile> getServiceProvidersByFilterCriteria(
-			Object[] userTypes, String city, List<ObjectId> tagIds,
-			Boolean isFeatured, Pageable page, List<String> fields) {
+	public PageImpl<UserProfile> getServiceProvidersByFilterCriteria(Object[] userTypes, String city,
+			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties,
+			Pageable page, List<String> fields) {
 		List<UserProfile> userProfileList = null;
 		Query q = new Query();
+		
+		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties);
+
+		q.with(page);
+		userProfileList = mongoTemplate.find(q, UserProfile.class);
+
+		long total = this.mongoTemplate.count(q, UserProfile.class);
+		PageImpl<UserProfile> userProfilePage = new PageImpl<UserProfile>(
+				userProfileList, page, total);
+
+		return userProfilePage;
+	}
+
+	@Override
+	public long getServiceProvidersByFilterCriteriaCount(Object[] userTypes, String city,
+			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties) {
+		List<UserProfile> userProfileList = null;
+		Query q = new Query();
+		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties);
+		
+		userProfileList = mongoTemplate.find(q, UserProfile.class);
+
+		long total = this.mongoTemplate.count(q, UserProfile.class);
+		
+		return total;
+	}
+
+	private Query getQuery(Query q, Object[] userTypes, String city,
+			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties) {
+		
 		q.addCriteria(Criteria.where("status").in(
 				new Object[] { DiscussConstants.DISCUSS_STATUS_ACTIVE, null }));
 		if(null != userTypes && userTypes.length > 0){
@@ -39,6 +69,9 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 		if (null != tagIds && tagIds.size() > 0) {
 			q.addCriteria(Criteria.where("systemTags.$id").in(tagIds));
 		}
+		if (null != experties && experties.size() > 0) {
+			q.addCriteria(Criteria.where("experties.$id").in(experties));
+		}
 		if (city != null) {
 			Criteria criteria = new Criteria();
 			criteria.orOperator(
@@ -49,20 +82,10 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 
 			q.addCriteria(criteria);
 		}
-		if (null != fields && fields.size() > 0) {
-			for (String field : fields) {
-				q.fields().include(field);
-			}
+		
+		q.addCriteria(Criteria.where("basicProfileInfo.firstName").exists(true));
 
-		}
-		q.with(page);
-		userProfileList = mongoTemplate.find(q, UserProfile.class);
-
-		long total = this.mongoTemplate.count(q, UserProfile.class);
-		PageImpl<UserProfile> userProfilePage = new PageImpl<UserProfile>(
-				userProfileList, page, total);
-
-		return userProfilePage;
+		return q;
 	}
 
 	@Override

@@ -48,7 +48,9 @@ public class MenuController {
 	@ResponseBody
 	public Object getMenu(
 			@RequestParam(value = "id", required = false) String id,
-			@RequestParam(value = "parentId", required = false) String parentId) {
+			@RequestParam(value = "parentId", required = false) String parentId,
+			@RequestParam(value = "searchTxt", required = false) String searchTxt
+			) {
 		Query q = new Query();
 		if (null != id) {
 			q.addCriteria(Criteria.where("id").is(new ObjectId(id)));
@@ -58,6 +60,9 @@ public class MenuController {
 				parentId = null;
 			}
 			q.addCriteria(Criteria.where("parentMenuId").is(parentId));
+			if(searchTxt != null && !searchTxt.isEmpty()){
+				q.addCriteria(Criteria.where("displayMenuName").regex(searchTxt,"i"));
+			}
 			q.with(new Sort(Sort.Direction.ASC, "orderIdx"));
 		}
 

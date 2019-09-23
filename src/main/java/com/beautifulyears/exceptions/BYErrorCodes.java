@@ -18,6 +18,10 @@ public enum BYErrorCodes {
 	// discuss related error
 	DISCUSS_NOT_FOUND(2001, "Discuss content with provided discussId doesn't exist"),
 	DISCUSS_ALREADY_LIKED_BY_USER(2002, "Discuss content already liked by the logged in user"),
+	// product
+	PRODUCT_NOT_FOUND(6001, "Product content with provided productId doesn't exist"),
+	// ask question
+	ASK_QUESTION_NOT_FOUND(7001, "Ask Question content with provided askQuesId doesn't exist"),
 
 	// user error
 	USER_NOT_AUTHORIZED(3001, "User is not authorized to perform the selected operation"),
@@ -25,7 +29,7 @@ public enum BYErrorCodes {
 	USER_LOGIN_FAILED(3003,"User login failed. Invalid user/password combination."),
 	USER_ALREADY_EXIST(3004,"User with the same credentials already exists"),
 	INVALID_SESSION(3005,"Invalid session, please login to continue"),
-	USER_EMAIL_DOES_NOT_EXIST(3006,"User's emailId is not registered"),
+	USER_EMAIL_DOES_NOT_EXIST(3006,"User's emailId or mobile number is not registered"),
 	USER_CODE_EXPIRED(3007,"Validation code has been expired, please generate a new one"),
 	USER_CODE_DOES_NOT_EXIST(3008,"Validation code entered is invalid. Please enter a valid code."),
 	USER_LOGIN_REQUIRE_SOCIAL_SIGNIN(3009,"User is required to login using social sign in."),

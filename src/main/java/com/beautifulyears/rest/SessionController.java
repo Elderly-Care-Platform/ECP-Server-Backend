@@ -24,6 +24,7 @@ public class SessionController {
 				"session");
 		if (null != currentSession) {
 			switch (operation) {
+			case "ASK":
 			case "POST":
 			case "LIKE":
 			case "COMMENT":
@@ -38,7 +39,15 @@ public class SessionController {
 					permission = true;
 				} else if (currentSession.getSessionType() == BYConstants.SESSION_TYPE_GUEST) {
 					throw new BYException(BYErrorCodes.USER_PROFILE_INCOMPLETE);
-				} else if (currentSession.getSessionType() == BYConstants.SESSION_TYPE_PARTIAL) {
+				} 
+				// else if (currentSession.getSessionType() == BYConstants.SESSION_TYPE_PARTIAL) {
+				// 	throw new BYException(BYErrorCodes.USER_FULL_LOGIN_REQUIRED);
+				// }
+				break;
+			case "PRODUCT":
+				if (currentSession.getSessionType() == BYConstants.SESSION_TYPE_FULL) {
+					permission = true;
+				} else{
 					throw new BYException(BYErrorCodes.USER_FULL_LOGIN_REQUIRED);
 				}
 				break;

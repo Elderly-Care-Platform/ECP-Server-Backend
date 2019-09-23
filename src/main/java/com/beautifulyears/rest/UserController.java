@@ -34,6 +34,7 @@ import com.beautifulyears.domain.User;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
 import com.beautifulyears.mail.MailHandler;
+import com.beautifulyears.messages.otp.OtpHandler;
 import com.beautifulyears.repository.UserRepository;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.social.facebook.FBConnection;
@@ -58,8 +59,7 @@ public class UserController {
 	ActivityLogHandler<User> logHandler;
 
 	@Autowired
-	public UserController(UserRepository userRepository,
-			MongoTemplate mongoTemplate) {
+	public UserController(UserRepository userRepository, MongoTemplate mongoTemplate) {
 		this.mongoTemplate = mongoTemplate;
 		setUserRepository(userRepository);
 		logHandler = new UserActivityLogHandler(mongoTemplate);
@@ -70,24 +70,21 @@ public class UserController {
 	}
 
 	@RequestMapping(value = "/addGuestUser", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody Object addGuestUser(@RequestBody User user,
-			HttpServletRequest req, HttpServletResponse res) throws Exception {
+	public @ResponseBody Object addGuestUser(@RequestBody User user, HttpServletRequest req, HttpServletResponse res)
+			throws Exception {
 		LoginRequest loginRequest = new LoginRequest(user.getEmail(), null);
 		User newUser = createGuestUser(loginRequest, false, req, res);
-		Util.logStats(mongoTemplate, req, "New Guest User", newUser.getId(),
-				newUser.getEmail(), newUser.getId(), null, null, null,
-				"new guest user", "USER");
+		Util.logStats(mongoTemplate, req, "New Guest User", newUser.getId(), newUser.getEmail(), newUser.getId(), null,
+				null, null, "new guest user", "USER");
 		return null;
 	}
 
 	@RequestMapping(value = "/getUserInfoByIdForProducts", method = RequestMethod.GET)
-	public @ResponseBody Object getUserInfoByIdForProducts(
-			@RequestParam(value = "id", required = true) String id,
+	public @ResponseBody Object getUserInfoByIdForProducts(@RequestParam(value = "id", required = true) String id,
 			HttpServletRequest req, HttpServletResponse res) {
 		Query q = new Query();
 		q.addCriteria(Criteria.where("sessionId").is(id));
-		q.addCriteria(Criteria.where("status").is(
-				DiscussConstants.SESSION_STATUS_ACTIVE));
+		q.addCriteria(Criteria.where("status").is(DiscussConstants.SESSION_STATUS_ACTIVE));
 		Session session = mongoTemplate.findOne(q, Session.class);
 		User user = null;
 		if (null != session) {
@@ -99,11 +96,9 @@ public class UserController {
 	}
 
 	@RequestMapping(value = "/validateSession", method = RequestMethod.GET)
-	public @ResponseBody Object validateSession(HttpServletRequest req,
-			HttpServletResponse res) {
+	public @ResponseBody Object validateSession(HttpServletRequest req, HttpServletResponse res) {
 		Session currentSession = null;
-		if (null == Util.getSessionUser(req)
-				|| null == req.getSession().getAttribute("session")) {
+		if (null == Util.getSessionUser(req) || null == req.getSession().getAttribute("session")) {
 			throw new BYException(BYErrorCodes.INVALID_SESSION);
 		} else {
 			currentSession = (Session) req.getSession().getAttribute("session");
@@ -112,8 +107,8 @@ public class UserController {
 	}
 
 	@RequestMapping(value = "/login", method = RequestMethod.POST)
-	public @ResponseBody Object login(@RequestBody LoginRequest loginRequest,
-			HttpServletRequest req, HttpServletResponse res) throws Exception {
+	public @ResponseBody Object login(@RequestBody User loginRequest, HttpServletRequest req, HttpServletResponse res)
+			throws Exception {
 		LoggerUtil.logEntry();
 		Session session = killSession(req, res);
 		try {
@@ -121,8 +116,7 @@ public class UserController {
 			User user = null;
 			if (loginRequest.getUserIdType() == BYConstants.USER_ID_TYPE_EMAIL) {
 				if (!Util.isEmpty(loginRequest.getEmail())) {
-					Criteria criteria = Criteria.where("email").is(
-							loginRequest.getEmail());
+					Criteria criteria = Criteria.where("email").is(loginRequest.getEmail());
 
 					// if (!Util.isEmpty(loginRequest.getPassword())) {
 					// criteria = criteria.and("password").is(
@@ -130,48 +124,43 @@ public class UserController {
 					// }
 					q.addCriteria(criteria);
 					user = mongoTemplate.findOne(q, User.class);
-					if (null == user
-							&& Util.isEmpty(loginRequest.getPassword())) {
-						user = createGuestUser(loginRequest, true, req, res);
-					} else if (!Util.isEmpty(loginRequest.getPassword())) {
-						Util.isPasswordMatching(loginRequest.getPassword(),
-								user.getPassword());
-					}
+					/* Removed Guest user login */
+					// if (null == user && Util.isEmpty(loginRequest.getPassword())) {
+					// user = createGuestUser(loginRequest, true, req, res);
+					// } else if (!Util.isEmpty(loginRequest.getPassword())) {
+					// Util.isPasswordMatching(loginRequest.getPassword(), user.getPassword());
+					// }
 				} else {
 					throw new BYException(BYErrorCodes.MISSING_PARAMETER);
 				}
 			} else if (loginRequest.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE) {
-				if (!Util.isEmpty(loginRequest.getPhoneNumber())
-						&& !Util.isEmpty(loginRequest.getPassword())) {
-					q.addCriteria(Criteria.where("phoneNumber").is(
-							loginRequest.getPhoneNumber()));
+				if (!Util.isEmpty(loginRequest.getPhoneNumber())) {
+					q.addCriteria(Criteria.where("phoneNumber").is(loginRequest.getPhoneNumber()));
 					// .and("password")
 					// .is(loginRequest.getPassword()));
 					user = mongoTemplate.findOne(q, User.class);
-					if (null != user) {
-						Util.isPasswordMatching(loginRequest.getPassword(),
-								user.getPassword());
-					}
+					/* Removed poswword user login */
+					// if (null != user) {
+					// Util.isPasswordMatching(loginRequest.getPassword(), user.getPassword());
+					// }
 				} else {
 					throw new BYException(BYErrorCodes.MISSING_PARAMETER);
 				}
 			}
 
 			if (null == user) {
-				logger.debug("User login failed with user email : "
-						+ loginRequest.getEmail());
-				throw new BYException(BYErrorCodes.USER_LOGIN_FAILED);
+				logger.debug("User does not exist");
+				// throw new BYException(BYErrorCodes.USER_EMAIL_DOES_NOT_EXIST);
+				return submitUser(loginRequest, true, req, res);
 			} else if (user.getUserRegType() == BYConstants.USER_REG_TYPE_SOCIAL) {
-				throw new BYException(
-						BYErrorCodes.USER_LOGIN_REQUIRE_SOCIAL_SIGNIN);
+				throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRE_SOCIAL_SIGNIN);
 			} else {
-				logger.debug("User logged in success for user email = "
-						+ loginRequest.getEmail() != null ? loginRequest
-						.getEmail() : loginRequest.getPhoneNumber());
+				logger.debug("User logged in success for user email = " + loginRequest.getEmail() != null
+						? loginRequest.getEmail()
+						: loginRequest.getPhoneNumber());
 				session = (Session) req.getSession().getAttribute("session");
 				if (null == session) {
-					session = createSession(req, res, user,
-							!Util.isEmpty(loginRequest.getPassword()));
+					session = createSession(req, res, user, true);
 				}
 
 			}
@@ -179,19 +168,15 @@ public class UserController {
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
-		Util.logStats(mongoTemplate, req, "New Login session",
-				session.getUserId(), session.getUserEmail(),
-				session.getSessionId(), null, null, null, "New Login session",
-				"USER");
+		Util.logStats(mongoTemplate, req, "New Login session", session.getUserId(), session.getUserEmail(),
+				session.getSessionId(), null, null, null, "New Login session", "USER");
 		return BYGenericResponseHandler.getResponse(session);
 
 	}
 
-	private User createGuestUser(LoginRequest loginRequest,
-			boolean isSessionRequired, HttpServletRequest req,
+	private User createGuestUser(LoginRequest loginRequest, boolean isSessionRequired, HttpServletRequest req,
 			HttpServletResponse res) throws Exception {
-		logger.info("creating guest user with emailId = "
-				+ loginRequest.getEmail());
+		logger.info("creating guest user with emailId = " + loginRequest.getEmail());
 		User user = new User();
 		user.setEmail(loginRequest.getEmail());
 		user.setUserRegType(BYConstants.USER_REG_TYPE_GUEST);
@@ -202,8 +187,7 @@ public class UserController {
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/logout", produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody Object logout(HttpServletRequest req,
-			HttpServletResponse res) throws Exception {
+	public @ResponseBody Object logout(HttpServletRequest req, HttpServletResponse res) throws Exception {
 		LoggerUtil.logEntry();
 		Session session = null;
 		try {
@@ -212,16 +196,14 @@ public class UserController {
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
-		Util.logStats(mongoTemplate, req, "Logout", null, null, null, null,
-				null, null, "Logout", "USER");
+		Util.logStats(mongoTemplate, req, "Logout", null, null, null, null, null, null, "Logout", "USER");
 		return BYGenericResponseHandler.getResponse(session);
 	}
 
 	// create user - registration
-	@RequestMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(method = RequestMethod.POST)
 	@ResponseBody
-	public Object submitUser(
-			@RequestBody User user,
+	public Object submitUser(@RequestBody User user,
 			@RequestParam(value = "session", required = false, defaultValue = "true") boolean isSession,
 			HttpServletRequest req, HttpServletResponse res) throws Exception {
 		LoggerUtil.logEntry();
@@ -231,13 +213,10 @@ public class UserController {
 		if (null != user && (Util.isEmpty(user.getId()))) {
 			try {
 				Query q = new Query();
-				if (user.getUserIdType() == BYConstants.USER_ID_TYPE_EMAIL
-						&& null != user.getEmail()) {
+				if (user.getUserIdType() == BYConstants.USER_ID_TYPE_EMAIL && null != user.getEmail()) {
 					q.addCriteria(Criteria.where("email").is(user.getEmail()));
-				} else if (user.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE
-						&& null != user.getPhoneNumber()) {
-					q.addCriteria(Criteria.where("phoneNumber").is(
-							user.getPhoneNumber()));
+				} else if (user.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE && null != user.getPhoneNumber()) {
+					q.addCriteria(Criteria.where("phoneNumber").is(user.getPhoneNumber()));
 				} else {
 					throw new BYException(BYErrorCodes.INVALID_REQUEST);
 				}
@@ -247,66 +226,52 @@ public class UserController {
 				if (null != existingUser) {
 					isUserExists = true;
 					if (existingUser.getUserRegType() == BYConstants.USER_REG_TYPE_GUEST) {
-						userWithExtractedInformation
-								.setId(existingUser.getId());
+						userWithExtractedInformation.setId(existingUser.getId());
 						user.setId(existingUser.getId());
 						user.setCreatedAt(existingUser.getCreatedAt());
-						userWithExtractedInformation.setCreatedAt(existingUser
-								.getCreatedAt());
+						userWithExtractedInformation.setCreatedAt(existingUser.getCreatedAt());
 					} else {
-						logger.debug("user with the same credential already exist = "
-								+ user.getEmail()
-								+ " or "
+						logger.debug("user with the same credential already exist = " + user.getEmail() + " or "
 								+ user.getPhoneNumber());
 						throw new BYException(BYErrorCodes.USER_ALREADY_EXIST);
 					}
 				}
 
-				if (isGuestUser(user)) {
-					userWithExtractedInformation
-							.setUserRegType(BYConstants.USER_REG_TYPE_GUEST);
-				} else {
-					if (null != user.getId()) {
-						userWithExtractedInformation.setId(user.getId());
-					}
-					userWithExtractedInformation
-							.setUserRegType(BYConstants.USER_REG_TYPE_FULL);
-				}
+				// if (isGuestUser(user)) {
+				// userWithExtractedInformation.setUserRegType(BYConstants.USER_REG_TYPE_GUEST);
+				// } else {
+				// if (null != user.getId()) {
+				// userWithExtractedInformation.setId(user.getId());
+				// }
+				// userWithExtractedInformation.setUserRegType(BYConstants.USER_REG_TYPE_FULL);
+				// }
 
-				userWithExtractedInformation = userRepository
-						.save(userWithExtractedInformation);
-				changeUserName(userWithExtractedInformation.getId(),
-						userWithExtractedInformation.getUserName());
+				userWithExtractedInformation = userRepository.save(userWithExtractedInformation);
+				changeUserName(userWithExtractedInformation.getId(), userWithExtractedInformation.getUserName());
 				if (!isUserExists) {
 					sendWelcomeMail(userWithExtractedInformation);
-					logHandler.addLog(userWithExtractedInformation,
-							ActivityLogConstants.CRUD_TYPE_CREATE, req);
+					logHandler.addLog(userWithExtractedInformation, ActivityLogConstants.CRUD_TYPE_CREATE, req);
 				}
 
-				if (Util.isEmpty(user.getPassword())) {
-					isPasswordEntered = false;
-				}
+				// if (Util.isEmpty(user.getPassword())) {
+				// isPasswordEntered = false;
+				// }
 				if (isSession) {
-					req.getSession().setAttribute("user",
-							userWithExtractedInformation);
-					session = createSession(req, res,
-							userWithExtractedInformation, isPasswordEntered);
+					req.getSession().setAttribute("user", userWithExtractedInformation);
+					session = createSession(req, res, userWithExtractedInformation, isPasswordEntered);
 				}
 
 			} catch (Exception e) {
 				logger.error("error occured while creating the user");
 				Util.handleException(e);
 			}
-			Util.logStats(mongoTemplate, req, "Register new User",
-					session.getUserId(), session.getUserEmail(),
-					session.getSessionId(), null, null, null,
-					"Register new User", "USER");
+			Util.logStats(mongoTemplate, req, "Register new User", session.getUserId(), session.getUserEmail(),
+					session.getSessionId(), null, null, null, "Register new User", "USER");
 
 		} else {
 			logger.debug("EDIT USER");
 			User sessionUser = Util.getSessionUser(req);
-			if (sessionUser == null
-					|| !sessionUser.getId().equals(user.getId())) {
+			if (sessionUser == null || !sessionUser.getId().equals(user.getId())) {
 				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
 			}
 			boolean isUserNameChanged = false;
@@ -316,9 +281,8 @@ public class UserController {
 					&& !user.getUserName().equals(editedUser.getUserName())) {
 				isUserNameChanged = true;
 				editedUser.setUserName(user.getUserName());
-				logger.debug("trying changing the user name from "
-						+ editedUser.getUserName() + " to "
-						+ user.getUserName());
+				logger.debug(
+						"trying changing the user name from " + editedUser.getUserName() + " to " + user.getUserName());
 			}
 			if (null != editedUser && user.getPassword() != null) {
 				if (!user.getPassword().equals(editedUser.getPassword())) {
@@ -329,16 +293,15 @@ public class UserController {
 				editedUser.setUserRegType(BYConstants.USER_REG_TYPE_FULL);
 				editedUser.setPassword(user.getPassword());
 			} else {
-				if (isGuestUser(editedUser)) {
-					user.setUserRegType(BYConstants.USER_REG_TYPE_GUEST);
-				} else {
-					user.setUserRegType(BYConstants.USER_REG_TYPE_FULL);
-				}
+				user.setUserRegType(BYConstants.USER_REG_TYPE_FULL);
+				// if (isGuestUser(editedUser)) {
+				// 	user.setUserRegType(BYConstants.USER_REG_TYPE_GUEST);
+				// } else {
+				// }
 			}
 
 			editedUser = userRepository.save(editedUser);
-			logHandler.addLog(editedUser,
-					ActivityLogConstants.CRUD_TYPE_UPDATE, req);
+			logHandler.addLog(editedUser, ActivityLogConstants.CRUD_TYPE_UPDATE, req);
 			if (isUserNameChanged) {
 				changeUserName(user.getId(), user.getUserName());
 			}
@@ -349,10 +312,8 @@ public class UserController {
 				}
 				session = createSession(req, res, editedUser, isPasswordEntered);
 			}
-			Util.logStats(mongoTemplate, req, "Edit User Info",
-					session.getUserId(), session.getUserEmail(),
-					session.getSessionId(), null, null, null, "Edit User Info",
-					"USER");
+			Util.logStats(mongoTemplate, req, "Edit User Info", session.getUserId(), session.getUserEmail(),
+					session.getSessionId(), null, null, null, "Edit User Info", "USER");
 		}
 		return BYGenericResponseHandler.getResponse(session);
 	}
@@ -360,13 +321,11 @@ public class UserController {
 	@RequestMapping(value = "/getFbURL", method = RequestMethod.GET)
 	public @ResponseBody Object getFbURL(HttpServletRequest req) {
 		LoggerUtil.logEntry();
-		return BYGenericResponseHandler.getResponse(new FBConnection()
-				.getFBAuthUrl(req));
+		return BYGenericResponseHandler.getResponse(new FBConnection().getFBAuthUrl(req));
 	}
 
 	@RequestMapping(value = "/fbRes", method = RequestMethod.GET)
-	public @ResponseBody Object fbRes(
-			@RequestParam(value = "code", required = false) String code,
+	public @ResponseBody Object fbRes(@RequestParam(value = "code", required = false) String code,
 			HttpServletRequest req, HttpServletResponse res) throws Exception {
 		LoggerUtil.logEntry();
 		try {
@@ -379,31 +338,24 @@ public class UserController {
 
 			User newFbUser = null;
 			Query q = new Query();
-			q.addCriteria(Criteria.where("email")
-					.is(fbProfileData.get("email")));
+			q.addCriteria(Criteria.where("email").is(fbProfileData.get("email")));
 
 			newFbUser = mongoTemplate.findOne(q, User.class);
 			if (null == newFbUser) {
 				newFbUser = new User();
-				newFbUser
-						.setSocialSignOnPlatform(BYConstants.SOCIAL_SIGNON_PLATFORM_FACEBOOK);
+				newFbUser.setSocialSignOnPlatform(BYConstants.SOCIAL_SIGNON_PLATFORM_FACEBOOK);
 				newFbUser.setSocialSignOnId(fbProfileData.get("id"));
 				newFbUser.setEmail(fbProfileData.get("email"));
 				newFbUser.setUserName(fbProfileData.get("displayName"));
 				newFbUser.setUserRegType(BYConstants.USER_REG_TYPE_SOCIAL);
 				newFbUser.setUserIdType(BYConstants.USER_ID_TYPE_EMAIL);
-				logger.debug("creating new social sign on user : "
-						+ newFbUser.toString());
-				newFbUser = userRepository
-						.save(decorateWithInformation(newFbUser));
-				logHandler.addLog(newFbUser,
-						ActivityLogConstants.CRUD_TYPE_CREATE,
+				logger.debug("creating new social sign on user : " + newFbUser.toString());
+				newFbUser = userRepository.save(decorateWithInformation(newFbUser));
+				logHandler.addLog(newFbUser, ActivityLogConstants.CRUD_TYPE_CREATE,
 						"new user with facebook social sign on", req);
 				sendWelcomeMail(newFbUser);
-				Util.logStats(mongoTemplate, req,
-						"New Social facebook user registration",
-						newFbUser.getId(), newFbUser.getEmail(),
-						newFbUser.getId(), null, null, null,
+				Util.logStats(mongoTemplate, req, "New Social facebook user registration", newFbUser.getId(),
+						newFbUser.getEmail(), newFbUser.getId(), null, null, null,
 						"New Social facebook user registration", "USER");
 
 			}
@@ -411,14 +363,70 @@ public class UserController {
 
 			ServletOutputStream out = res.getOutputStream();
 			out.println("<script>parent.window.opener.postMessage("
-					+ mapper.writeValueAsString(BYGenericResponseHandler
-							.getResponse(session)) + ",'*');</script>");
+					+ mapper.writeValueAsString(BYGenericResponseHandler.getResponse(session)) + ",'*');</script>");
 			out.println("<script>window.close();</script>");
 			logger.debug("returning response for fbRes");
-			Util.logStats(mongoTemplate, req,
-					"New Social facebook Login session", session.getUserId(),
-					session.getUserEmail(), session.getSessionId(), null, null,
-					null, "New Social facebook Login session", "USER");
+			Util.logStats(mongoTemplate, req, "New Social facebook Login session", session.getUserId(),
+					session.getUserEmail(), session.getSessionId(), null, null, null,
+					"New Social facebook Login session", "USER");
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+
+		return null;
+	}
+
+	@RequestMapping(value = "/sendOtp", method = RequestMethod.GET)
+	public @ResponseBody Object sendOtp(@RequestParam(value = "mobile", required = true) String mobileNo,
+			HttpServletRequest req, HttpServletResponse res) throws Exception {
+		LoggerUtil.logEntry();
+		try {
+			if (!Util.isEmpty(mobileNo)) {
+				OtpHandler otpHandler = new OtpHandler();
+				return BYGenericResponseHandler.getResponse(otpHandler.sendOtp(mobileNo));
+			} else {
+				throw new BYException(BYErrorCodes.MISSING_PARAMETER);
+			}
+
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+
+		return null;
+	}
+
+	@RequestMapping(value = "/verifyOtp", method = RequestMethod.GET)
+	public @ResponseBody Object verifyOtp(@RequestParam(value = "mobile", required = true) String mobileNo,
+			@RequestParam(value = "otp", required = true) String otp, HttpServletRequest req, HttpServletResponse res)
+			throws Exception {
+		LoggerUtil.logEntry();
+		try {
+			if (!(Util.isEmpty(mobileNo) && Util.isEmpty(otp))) {
+				OtpHandler otpHandler = new OtpHandler();
+				return BYGenericResponseHandler.getResponse(otpHandler.verifyOtp(mobileNo, otp));
+			} else {
+				throw new BYException(BYErrorCodes.MISSING_PARAMETER);
+			}
+
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+
+		return null;
+	}
+
+	@RequestMapping(value = "/resendOtp", method = RequestMethod.GET)
+	public @ResponseBody Object resendOtp(@RequestParam(value = "mobile", required = true) String mobileNo,
+			HttpServletRequest req, HttpServletResponse res) throws Exception {
+		LoggerUtil.logEntry();
+		try {
+			if (!Util.isEmpty(mobileNo)) {
+				OtpHandler otpHandler = new OtpHandler();
+				return BYGenericResponseHandler.getResponse(otpHandler.resendOtp(mobileNo));
+			} else {
+				throw new BYException(BYErrorCodes.MISSING_PARAMETER);
+			}
+
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
@@ -429,13 +437,11 @@ public class UserController {
 	@RequestMapping(value = "/getGgURL", method = RequestMethod.GET)
 	public @ResponseBody Object getGgURL(HttpServletRequest req) {
 		LoggerUtil.logEntry();
-		return BYGenericResponseHandler.getResponse(new GGConnection()
-				.getGGAuthUrl(req));
+		return BYGenericResponseHandler.getResponse(new GGConnection().getGGAuthUrl(req));
 	}
 
 	@RequestMapping(value = "/ggRes", method = RequestMethod.GET)
-	public @ResponseBody Object ggRes(
-			@RequestParam(value = "code", required = false) String code,
+	public @ResponseBody Object ggRes(@RequestParam(value = "code", required = false) String code,
 			HttpServletRequest req, HttpServletResponse res) throws Exception {
 		LoggerUtil.logEntry();
 		try {
@@ -448,42 +454,33 @@ public class UserController {
 
 			User newGoogleUser = null;
 			Query q = new Query();
-			q.addCriteria(Criteria.where("email")
-					.is(ggProfileData.get("email")));
+			q.addCriteria(Criteria.where("email").is(ggProfileData.get("email")));
 
 			newGoogleUser = mongoTemplate.findOne(q, User.class);
 			if (null == newGoogleUser) {
 				newGoogleUser = new User();
-				newGoogleUser
-						.setSocialSignOnPlatform(BYConstants.SOCIAL_SIGNON_PLATFORM_GOOGLE);
+				newGoogleUser.setSocialSignOnPlatform(BYConstants.SOCIAL_SIGNON_PLATFORM_GOOGLE);
 				newGoogleUser.setSocialSignOnId(ggProfileData.get("id"));
 				newGoogleUser.setEmail(ggProfileData.get("email"));
 				newGoogleUser.setUserName(ggProfileData.get("displayName"));
 				newGoogleUser.setUserRegType(BYConstants.USER_REG_TYPE_SOCIAL);
 				newGoogleUser.setUserIdType(BYConstants.USER_ID_TYPE_EMAIL);
-				logger.debug("creating new social sign on user : "
-						+ newGoogleUser.toString());
-				newGoogleUser = userRepository
-						.save(decorateWithInformation(newGoogleUser));
-				logHandler.addLog(newGoogleUser,
-						ActivityLogConstants.CRUD_TYPE_CREATE,
+				logger.debug("creating new social sign on user : " + newGoogleUser.toString());
+				newGoogleUser = userRepository.save(decorateWithInformation(newGoogleUser));
+				logHandler.addLog(newGoogleUser, ActivityLogConstants.CRUD_TYPE_CREATE,
 						"new user with facebook social sign on", req);
 				sendWelcomeMail(newGoogleUser);
-				Util.logStats(mongoTemplate, req,
-						"New Social google user registration",
-						newGoogleUser.getId(), newGoogleUser.getEmail(),
-						newGoogleUser.getId(), null, null, null,
+				Util.logStats(mongoTemplate, req, "New Social google user registration", newGoogleUser.getId(),
+						newGoogleUser.getEmail(), newGoogleUser.getId(), null, null, null,
 						"New Social google user registration", "USER");
 			}
 			Session session = createSession(req, res, newGoogleUser, true);
-			Util.logStats(mongoTemplate, req,
-					"New Social google Login session", session.getUserId(),
-					session.getUserEmail(), session.getSessionId(), null, null,
-					null, "New Social google Login session", "USER");
+			Util.logStats(mongoTemplate, req, "New Social google Login session", session.getUserId(),
+					session.getUserEmail(), session.getSessionId(), null, null, null, "New Social google Login session",
+					"USER");
 			ServletOutputStream out = res.getOutputStream();
 			out.println("<script>parent.window.opener.postMessage("
-					+ mapper.writeValueAsString(BYGenericResponseHandler
-							.getResponse(session)) + ",'*');</script>");
+					+ mapper.writeValueAsString(BYGenericResponseHandler.getResponse(session)) + ",'*');</script>");
 			out.println("<script>window.close();</script>");
 		} catch (Exception e) {
 			Util.handleException(e);
@@ -492,8 +489,7 @@ public class UserController {
 	}
 
 	@RequestMapping(value = "/resetPassword", method = RequestMethod.GET)
-	public @ResponseBody Object getResetPasswordLink(
-			@RequestParam(value = "email", required = true) String email,
+	public @ResponseBody Object getResetPasswordLink(@RequestParam(value = "email", required = true) String email,
 			HttpServletRequest req) {
 		LoggerUtil.logEntry();
 		if (!Util.isEmpty(email)) {
@@ -503,18 +499,15 @@ public class UserController {
 			if (null != user) {
 				user.setVerificationCode(UUID.randomUUID().toString());
 				Date t = new Date();
-				user.setVerificationCodeExpiry(new Date(
-						t.getTime()
-								+ (BYConstants.FORGOT_PASSWORD_CODE_EXPIRY_IN_MIN * 60000)));
+				user.setVerificationCodeExpiry(
+						new Date(t.getTime() + (BYConstants.FORGOT_PASSWORD_CODE_EXPIRY_IN_MIN * 60000)));
 				boolean mailStatus = sendMailForResetPassword(user);
 				if (mailStatus == false) {
 					throw new BYException(BYErrorCodes.ERROR_IN_SENDING_MAIL);
 				}
 				mongoTemplate.save(user);
-				Util.logStats(mongoTemplate, req,
-						"New reset password get request", user.getId(),
-						user.getEmail(), user.getId(), null, null, null,
-						"New reset password get request", "USER");
+				Util.logStats(mongoTemplate, req, "New reset password get request", user.getId(), user.getEmail(),
+						user.getId(), null, null, null, "New reset password get request", "USER");
 			} else {
 				throw new BYException(BYErrorCodes.USER_EMAIL_DOES_NOT_EXIST);
 			}
@@ -526,23 +519,21 @@ public class UserController {
 	}
 
 	@RequestMapping(value = "/resetPassword", method = RequestMethod.POST)
-	public @ResponseBody Object getResetPasswordLink(@RequestBody User user,
-			HttpServletRequest req, HttpServletResponse res) throws Exception {
+	public @ResponseBody Object getResetPasswordLink(@RequestBody User user, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
 		LoggerUtil.logEntry();
 		User user1 = null;
-		if (null != user && !Util.isEmpty(user.getVerificationCode())
-				&& !Util.isEmpty(user.getPassword())) {
+		if (null != user && !Util.isEmpty(user.getVerificationCode()) && !Util.isEmpty(user.getPassword())) {
 			Query q = new Query();
-			q.addCriteria(Criteria.where("verificationCode").is(
-					user.getVerificationCode()));
+			q.addCriteria(Criteria.where("verificationCode").is(user.getVerificationCode()));
 			user1 = mongoTemplate.findOne(q, User.class);
 			if (null != user1) {
 				Date currentDate = new Date();
 				if (currentDate.compareTo(user1.getVerificationCodeExpiry()) <= 0) {
 					user1.setVerificationCodeExpiry(currentDate);
 					user1.setPassword(Util.getEncodedPwd(user.getPassword()));
-					logger.debug("password changed successfuully for user "
-							+ user1.getEmail() + " or " + user.getPhoneNumber());
+					logger.debug("password changed successfuully for user " + user1.getEmail() + " or "
+							+ user.getPhoneNumber());
 					// send mail on successful changing the password
 					mongoTemplate.save(user1);
 				} else {
@@ -556,10 +547,10 @@ public class UserController {
 		}
 		inValidateAllSessions(user.getId());
 		user1.setPassword(user.getPassword());
-		Util.logStats(mongoTemplate, req, "New reset password request",
-				user.getId(), user.getEmail(), user.getId(), null, null, null,
-				"New reset password request", "USER");
-		return login(new LoginRequest(user1), req, res);
+		Util.logStats(mongoTemplate, req, "New reset password request", user.getId(), user.getEmail(), user.getId(),
+				null, null, null, "New reset password request", "USER");
+		// return login(new LoginRequest(user1), req, res);
+		return null;
 	}
 
 	@RequestMapping(value = "/verifyPwdCode", method = RequestMethod.GET)
@@ -569,8 +560,7 @@ public class UserController {
 		LoggerUtil.logEntry();
 		if (!Util.isEmpty(verificationCode)) {
 			Query q = new Query();
-			q.addCriteria(Criteria.where("verificationCode").is(
-					verificationCode));
+			q.addCriteria(Criteria.where("verificationCode").is(verificationCode));
 			User user1 = mongoTemplate.findOne(q, User.class);
 			if (null != user1) {
 				Date currentDate = new Date();
@@ -591,17 +581,11 @@ public class UserController {
 	boolean sendMailForResetPassword(User user) {
 		boolean mailStatus = false;
 		try {
-			ResourceUtil resourceUtil = new ResourceUtil(
-					"mailTemplate.properties");
-			String url = System.getProperty("path") + "/users/resetPassword/"
-					+ user.getVerificationCode();
-			String userName = !Util.isEmpty(user.getUserName()) ? user
-					.getUserName() : "Anonymous User";
-			String body = MessageFormat.format(
-					resourceUtil.getResource("resetPassword"), userName, url,
-					url, url);
-			MailHandler.sendMail(user.getEmail(),
-					"Reset Beutifulyears' password", body);
+			ResourceUtil resourceUtil = new ResourceUtil("mailTemplate.properties");
+			String url = System.getProperty("path") + "/users/resetPassword/" + user.getVerificationCode();
+			String userName = !Util.isEmpty(user.getUserName()) ? user.getUserName() : "Anonymous User";
+			String body = MessageFormat.format(resourceUtil.getResource("resetPassword"), userName, url, url, url);
+			MailHandler.sendMail(user.getEmail(), "Reset Beutifulyears' password", body);
 			mailStatus = true;
 		} catch (Exception e) {
 			logger.error(BYErrorCodes.ERROR_IN_SENDING_MAIL);
@@ -612,19 +596,14 @@ public class UserController {
 	boolean sendWelcomeMail(User user) {
 		boolean mailStatus = false;
 		try {
-			ResourceUtil resourceUtil = new ResourceUtil(
-					"mailTemplate.properties");
+			ResourceUtil resourceUtil = new ResourceUtil("mailTemplate.properties");
 			String body = "";
 			if (user.getUserRegType() == BYConstants.USER_REG_TYPE_GUEST) {
-				body = MessageFormat.format(
-						resourceUtil.getResource("welcomeMailToFillProfile"),
-						"");
+				body = MessageFormat.format(resourceUtil.getResource("welcomeMailToFillProfile"), "");
 			} else {
-				body = MessageFormat.format(
-						resourceUtil.getResource("welcomeMail"), "");
+				body = MessageFormat.format(resourceUtil.getResource("welcomeMail"), "");
 			}
-			MailHandler.sendMail(user.getEmail(),
-					"Welcome to Beautifulyears.com", body);
+			MailHandler.sendMail(user.getEmail(), "Welcome to Beautifulyears.com", body);
 			mailStatus = true;
 		} catch (Exception e) {
 			logger.error(BYErrorCodes.ERROR_IN_SENDING_MAIL);
@@ -647,35 +626,33 @@ public class UserController {
 		String passwordCode = user.getPassword();
 		Date passwordCodeExpiry = user.getPasswordCodeExpiry();
 		List<String> userTags = user.getUserTags();
+		List<String> favEvents = user.getFavEvents();
 
 		// Users registered through the BY site will always have ROLE = USER
 		String userRoleId = "USER";
 
 		// TODO: Change this logic during user regitration phase 2
 		if (userRoleId != null
-				&& (userRoleId.equals(UserRolePermissions.USER) || userRoleId
-						.equals(UserRolePermissions.WRITER))) {
-			return new User(userName, userIdType, userRegType, password, email,
-					phoneNumber, verificationCode, verificationCodeExpiry,
-					socialSignOnId, socialSignOnPlatform, passwordCode,
-					passwordCodeExpiry, userRoleId, "In-Active", userTags);
+				&& (userRoleId.equals(UserRolePermissions.USER) || userRoleId.equals(UserRolePermissions.WRITER))) {
+			return new User(userName, userIdType, userRegType, password, email, phoneNumber, verificationCode,
+					verificationCodeExpiry, socialSignOnId, socialSignOnPlatform, passwordCode, passwordCodeExpiry,
+					userRoleId, "In-Active", userTags,favEvents);
 		} else {
-			return new User(userName, userIdType, userRegType, password, email,
-					phoneNumber, verificationCode, verificationCodeExpiry,
-					socialSignOnId, socialSignOnPlatform, passwordCode,
-					passwordCodeExpiry, userRoleId, "In-Active", userTags);
+			return new User(userName, userIdType, userRegType, password, email, phoneNumber, verificationCode,
+					verificationCodeExpiry, socialSignOnId, socialSignOnPlatform, passwordCode, passwordCodeExpiry,
+					userRoleId, "In-Active", userTags,favEvents);
 		}
 	}
 
-	private Session createSession(HttpServletRequest req,
-			HttpServletResponse res, User user, boolean isPasswordEntered) {
+	private Session createSession(HttpServletRequest req, HttpServletResponse res, User user,
+			boolean isPasswordEntered) {
 		LoggerUtil.logEntry();
 		Session session = new Session(user, isPasswordEntered, req);
 		mongoTemplate.save(session);
 		req.getSession().setAttribute("session", session);
 		req.getSession().setAttribute("user", user);
-		logger.debug("returning existing session for user " + user.getEmail() != null ? user
-				.getEmail() : user.getPhoneNumber());
+		logger.debug("returning existing session for user " + user.getEmail() != null ? user.getEmail()
+				: user.getPhoneNumber());
 		return session;
 	}
 
@@ -696,9 +673,19 @@ public class UserController {
 		return user;
 	}
 
+	public static User saveUser(User user){
+		LoggerUtil.logEntry();
+		User newuser = userRepository.save(user);
+		return newuser;
+	}
+
+	public static void deleteUser(User user){
+		LoggerUtil.logEntry();
+		userRepository.delete(user);
+	}
+
 	private void inValidateAllSessions(String userId) {
-		List<Session> sessionList = mongoTemplate.find(new Query(Criteria
-				.where("userId").is(userId)), Session.class);
+		List<Session> sessionList = mongoTemplate.find(new Query(Criteria.where("userId").is(userId)), Session.class);
 		for (Session session : sessionList) {
 			session.setStatus(DiscussConstants.SESSION_STATUS_INACTIVE);
 			mongoTemplate.save(session);

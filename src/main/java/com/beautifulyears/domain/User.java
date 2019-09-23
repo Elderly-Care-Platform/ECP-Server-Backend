@@ -48,6 +48,7 @@ public class User implements Serializable {
 	private Integer userRegType;
 	private String phoneNumber;
 	private List<String> userTags = new ArrayList<String>();
+	private List<String> favEvents = new ArrayList<String>();
 
 	private List<Integer> permissions = new ArrayList<Integer>();
 
@@ -125,7 +126,7 @@ public class User implements Serializable {
 			String verificationCode, Date verificationCodeExpiry,
 			String socialSignOnId, String socialSignOnPlatform,
 			String passwordCode, Date passwordCodeExpiry, String userRoleId,
-			String isActive, List<String> userTags) {
+			String isActive, List<String> userTags, List<String> favEvents) {
 		super();
 		this.userName = userName;
 		this.password = password;
@@ -143,6 +144,7 @@ public class User implements Serializable {
 		this.isActive = isActive;
 		this.permissions = UserRolePermissions.getUserPermsForRole(userRoleId);
 		this.userTags = userTags;
+		this.favEvents = favEvents;
 	}
 
 	public Date getCreatedAt() {
@@ -240,6 +242,14 @@ public class User implements Serializable {
 
 	}
 
+	public List<String> getFavEvents() {
+		return favEvents;
+	}
+
+	public void setFavEvents(List<String> favEvents) {
+		this.favEvents = favEvents;
+	}
+
 	@Override
 	public String toString() {
 		return "User [id=" + id + ", userName=" + userName + ", password="
@@ -250,7 +260,7 @@ public class User implements Serializable {
 				+ ", socialSignOnPlatform=" + socialSignOnPlatform
 				+ ", passwordCode=" + passwordCode + ", passwordCodeExpiry="
 				+ passwordCodeExpiry + ", userRoleId=" + userRoleId
-				+ ", isActive=" + isActive + ", permissions=" + permissions
+				+ ", isActive=" + isActive + ", permissions=" + permissions + ", favEvents=" + favEvents
 				+ "]";
 	}
 

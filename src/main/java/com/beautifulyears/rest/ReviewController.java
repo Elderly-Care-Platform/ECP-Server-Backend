@@ -14,6 +14,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.aggregation.TypedAggregation;
@@ -34,15 +37,20 @@ import com.beautifulyears.domain.HousingFacility;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.domain.UserRating;
+import com.beautifulyears.domain.ServiceReview;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
 import com.beautifulyears.mail.MailHandler;
 import com.beautifulyears.repository.DiscussReplyRepository;
 import com.beautifulyears.repository.HousingRepository;
+import com.beautifulyears.repository.ServiceReviewRepository;
 import com.beautifulyears.repository.UserProfileRepository;
 import com.beautifulyears.repository.UserRatingRepository;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.rest.response.DiscussDetailResponse;
+import com.beautifulyears.rest.response.PageImpl;
+import com.beautifulyears.rest.response.ServiceReviewResponse;
+import com.beautifulyears.rest.response.ServiceReviewResponse.ServiceReviewPage;
 import com.beautifulyears.util.LoggerUtil;
 import com.beautifulyears.util.ResourceUtil;
 import com.beautifulyears.util.Util;
@@ -59,16 +67,19 @@ public class ReviewController {
 	private MongoTemplate mongoTemplate;
 	private UserProfileRepository userProfileRepository;
 	private ActivityLogHandler<DiscussReply> logHandler;
-
+	private ServiceReviewRepository serviceRevRepo;
 	@Autowired
 	public ReviewController(DiscussReplyRepository discussReplyRepository,
 			UserRatingRepository userRatingRepository,
 			UserProfileRepository userProfileRepository,
-			HousingRepository housingRepository, MongoTemplate mongoTemplate) {
+			HousingRepository housingRepository, 	
+			ServiceReviewRepository serviceRevRepo,
+			MongoTemplate mongoTemplate) {
 		this.discussReplyRepository = discussReplyRepository;
 		this.userRatingRepository = userRatingRepository;
 		this.userProfileRepository = userProfileRepository;
 		this.housingRepository = housingRepository;
+		this.serviceRevRepo = serviceRevRepo;
 		this.mongoTemplate = mongoTemplate;
 		logHandler = new ReplyActivityLogHandler(mongoTemplate);
 	}
@@ -460,6 +471,81 @@ public class ReviewController {
 		} catch (Exception e) {
 			logger.error(BYErrorCodes.ERROR_IN_SENDING_MAIL);
 		}
+	}
+
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/service" }, produces = { "application/json" })
+	@ResponseBody
+	public Object getReviewPage(
+			@RequestParam(value = "searchTxt", required = false) String searchTxt,
+			@RequestParam(value = "serviceId", required = false) String serviceId,
+			@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
+			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
+			@RequestParam(value = "p", required = false, defaultValue = "0") int pageIndex,
+			@RequestParam(value = "s", required = false, defaultValue = "10") int pageSize,
+			HttpServletRequest request) throws Exception {
+		LoggerUtil.logEntry();
+		User currentUser = Util.getSessionUser(request);
+		PageImpl<ServiceReview> page = null;
+		ServiceReviewPage serviceReviewPage = null;
+		try {
+			Direction sortDirection = Direction.DESC;
+			if (dir != 0) {
+				sortDirection = Direction.ASC;
+			}
+
+			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
+			page = serviceRevRepo.getPage(searchTxt, serviceId, pageable);
+			serviceReviewPage = ServiceReviewResponse.getPage(page, currentUser);
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+		return BYGenericResponseHandler.getResponse(serviceReviewPage);
+	}
+
+	@RequestMapping(method = { RequestMethod.POST }, value = { "/addServiceReview" }, consumes = { "application/json" })
+	@ResponseBody
+	public Object submitServiceReview(@RequestBody ServiceReview serviceReview, HttpServletRequest request) throws Exception {
+		LoggerUtil.logEntry();
+		User currentUser = Util.getSessionUser(request);
+		if (null != currentUser) {
+			if (serviceReview != null && (Util.isEmpty(serviceReview.getId()))) {
+				ServiceReview serviceRevExtracted = new ServiceReview(
+					serviceReview.getServiceId(),
+					serviceReview.getRating(),
+					serviceReview.getReview(),
+					serviceReview.getLikeCount(),
+					serviceReview.getUnLikeCount(),
+					serviceReview.getStatus(),
+					serviceReview.getUserName(),
+					serviceReview.getParentReviewId()
+				);
+
+				Query query = new Query();
+				query.addCriteria(Criteria.where("id").is(serviceRevExtracted.getServiceId()));
+				UserProfile userProfile = null;
+				userProfile = mongoTemplate.findOne(query, UserProfile.class);
+
+				if(userProfile != null){
+				userProfile.getReviewedBy().add(currentUser.getId());
+				float totRating =  userProfile.getAggrRatingPercentage();
+				totRating = (totRating + serviceRevExtracted.getRating()) / userProfile.getReviewedBy().size() ;
+				userProfile.setAggrRatingPercentage(totRating);
+				mongoTemplate.save(userProfile);
+				}
+
+				serviceReview = serviceRevRepo.save(serviceRevExtracted);
+				// logHandlerRev.addLog(productReview, ActivityLogConstants.CRUD_TYPE_CREATE, request);
+				logger.info("new service review entity created with ID: " + serviceReview.getId());
+			} else {
+				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
+			}
+		} else {
+			throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
+		}
+		Util.logStats(mongoTemplate, request, "NEW Service Review added.", currentUser.getId(), currentUser.getEmail(),
+		serviceReview.getId(), null, null, null,
+				"new service review entity is added", "PRODUCT_REVIEW");
+		return BYGenericResponseHandler.getResponse(serviceReview);
 	}
 
 }

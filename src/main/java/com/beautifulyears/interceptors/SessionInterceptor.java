@@ -31,8 +31,7 @@ public class SessionInterceptor extends HandlerInterceptorAdapter {
 	public boolean preHandle(HttpServletRequest request,
 			HttpServletResponse response, Object handler) throws Exception {
 		String sessionId = request.getHeader("sess");
-		if ((!"null".equals(sessionId) && null != sessionId && !sessionId
-				.isEmpty())) {
+		if ((!"null".equals(sessionId) && null != sessionId && !sessionId.isEmpty())) {
 			if (null == request.getSession().getAttribute("session")
 					|| null == request.getSession().getAttribute("user")) {
 				logger.debug("Creating new session object");

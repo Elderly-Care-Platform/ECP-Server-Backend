@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -64,6 +65,15 @@ public class DiscussController {
 	private MongoTemplate mongoTemplate;
 	ActivityLogHandler<Discuss> logHandler;
 	ActivityLogHandler<Object> shareLogHandler;
+
+	private class TopicSummary {
+		public Long totalCount;
+		public DiscussPage discussPage;
+		public TopicSummary(Long totalCount, DiscussPage discussPage) {
+			this.totalCount = totalCount;
+			this.discussPage = discussPage;
+		}
+	}
 
 	@Autowired
 	public DiscussController(DiscussRepository discussRepository,
@@ -245,10 +255,11 @@ public class DiscussController {
 			// topicId,
 			// @RequestParam(value = "subTopicId", required = false)
 			// List<String> subTopicId,
+			@RequestParam(value = "searchTxt", required = false) String searchTxt,
 			@RequestParam(value = "userId", required = false) String userId,
 			@RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
 			@RequestParam(value = "isPromotion", required = false) Boolean isPromotion,
-			@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
+			@RequestParam(value = "sort", required = false, defaultValue = "lastModifiedAt") String sort,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
 			@RequestParam(value = "p", required = false, defaultValue = "0") int pageIndex,
 			@RequestParam(value = "s", required = false, defaultValue = "10") int pageSize,
@@ -282,7 +293,7 @@ public class DiscussController {
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize,
 					sortDirection, sort);
-			page = discussRepository.getPage(discussTypeArray, tagIds, userId,
+			page = discussRepository.getPage(searchTxt, discussTypeArray, tagIds, userId,
 					isFeatured, isPromotion, pageable);
 			discussPage = DiscussResponse.getPage(page, currentUser);
 			// page = discussRepository.getByCriteria(discussTypeArray, topicId,
@@ -310,6 +321,41 @@ public class DiscussController {
 		}
 		return BYGenericResponseHandler.getResponse(sharedDiscuss);
 	}
+	
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/summary" }, produces = { "application/json" })
+	@ResponseBody 
+	public Object getTopicsSummary(
+		@RequestParam(value = "tagsData") List<String> tagsData,
+		HttpServletRequest request
+	){
+		User currentUser = Util.getSessionUser(request);
+		ListIterator<String> iteratorTags = tagsData.listIterator();
+		Map<String, TopicSummary> obj = new HashMap<String, TopicSummary>();
+		String itemId =  null;
+		Long count = null;
+		PageImpl<Discuss> page = null;
+		DiscussPage discussPage = null;
+		Pageable pageable = new PageRequest(0, 1, Direction.DESC, "lastModifiedAt");
+		String[] tagIdsArr;
+		List<ObjectId> tagIds= new ArrayList<ObjectId>();
+		
+
+		while (iteratorTags.hasNext()) {
+			tagIdsArr = iteratorTags.next().split("_");
+			itemId = tagIdsArr[0];
+			for(int i = 1;i<tagIdsArr.length;i++){
+				tagIds.add(new ObjectId(tagIdsArr[i]));
+			}
+
+			count = discussRepository.getCount(null, null, tagIds, null, null, null);
+			page = discussRepository.getPage(null, null, tagIds, null, null, null, pageable);
+			discussPage = DiscussResponse.getPage(page, currentUser);
+			obj.put(itemId, new TopicSummary(new Long(count),discussPage));
+			tagIds.clear();
+		}
+		
+		return BYGenericResponseHandler.getResponse(obj);
+	}
 
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/count" }, produces = { "application/json" })
 	@ResponseBody
@@ -318,6 +364,7 @@ public class DiscussController {
 			// topicId,
 			// @RequestParam(value = "subTopicId", required = false)
 			// List<String> subTopicId,
+			@RequestParam(value = "searchTxt", required = false) String searchTxt,
 			@RequestParam(value = "tags", required = false) List<String> tags,
 			@RequestParam(value = "userId", required = false) String userId,
 			@RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
@@ -340,21 +387,21 @@ public class DiscussController {
 			Long postsCount = null;
 			Long featuredCount = null;
 			if (contentTypes.contains("q")) {
-				questionsCount = discussRepository.getCount(
+				questionsCount = discussRepository.getCount(searchTxt,
 						(new ArrayList<String>(Arrays.asList("Q"))), tagIds,
 						userId, isFeatured, isPromotion);
 				filterCriteria.add(" contentType = q");
 				obj.put("q", new Long(questionsCount));
 			}
 			if (contentTypes.contains("p")) {
-				postsCount = discussRepository.getCount((new ArrayList<String>(
+				postsCount = discussRepository.getCount(searchTxt, (new ArrayList<String>(
 						Arrays.asList("P"))), tagIds, userId, isFeatured,
 						isPromotion);
 				filterCriteria.add(" contentType = p");
 				obj.put("p", new Long(postsCount));
 			}
 			if (contentTypes.contains("f")) {
-				featuredCount = discussRepository.getCount(null, tagIds,
+				featuredCount = discussRepository.getCount(searchTxt, null, tagIds,
 						userId, true, isPromotion);
 				filterCriteria.add(" contentType = featured");
 				obj.put("featured", new Long(featuredCount));
@@ -362,12 +409,12 @@ public class DiscussController {
 			if (contentTypes.contains("total")) {
 				filterCriteria.add(" contentType = total");
 				if (null == questionsCount) {
-					questionsCount = discussRepository.getCount(
+					questionsCount = discussRepository.getCount(searchTxt, 
 							(new ArrayList<String>(Arrays.asList("Q"))),
 							tagIds, userId, isFeatured, isPromotion);
 				}
 				if (null == postsCount) {
-					postsCount = discussRepository.getCount(
+					postsCount = discussRepository.getCount(searchTxt,
 							(new ArrayList<String>(Arrays.asList("P"))),
 							tagIds, userId, isFeatured, isPromotion);
 				}

@@ -59,13 +59,13 @@ public class DiscussDetailResponse implements IResponse {
 		Map<String, DiscussReply> tempMap = new HashMap<String, DiscussReply>();
 		List<DiscussReply> repliesList = new ArrayList<DiscussReply>();
 		for (DiscussReply discussReply : replies) {
-			if (discussReply.getUserProfile() != null) {
-				UserProfile userProfile = new UserProfile();
-				userProfile.getBasicProfileInfo().setProfileImage(
-						discussReply.getUserProfile().getBasicProfileInfo()
-								.getProfileImage());
-				discussReply.setUserProfile(userProfile);
-			}
+			// if (discussReply.getUserProfile() != null) {
+			// 	UserProfile userProfile = new UserProfile();
+			// 	userProfile.getBasicProfileInfo().setProfileImage(
+			// 			discussReply.getUserProfile().getBasicProfileInfo()
+			// 					.getProfileImage());
+			// 	discussReply.setUserProfile(userProfile);
+			// }
 			discussReply.setLikeCount(discussReply.getLikedBy().size());
 			if (null != user
 					&& discussReply.getLikedBy().contains(user.getId())) {

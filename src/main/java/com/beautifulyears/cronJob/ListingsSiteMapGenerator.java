@@ -85,7 +85,7 @@ public class ListingsSiteMapGenerator implements Runnable {
 			MenuController menuController = new MenuController(mongoTemplate);
 			@SuppressWarnings("unchecked")
 			List<Menu> communityMenuList = (List<Menu>) menuController.getMenu(
-					null, communityMenuId);
+					null, communityMenuId,null);
 			WebSitemapUrl wsmUrl = new WebSitemapUrl.Options(communityMenuUrl)
 					.lastMod(new Date()).build();
 			listings_sitemap.addUrl(wsmUrl);
@@ -102,7 +102,7 @@ public class ListingsSiteMapGenerator implements Runnable {
 
 			@SuppressWarnings("unchecked")
 			List<Menu> directoryMenuList = (List<Menu>) menuController.getMenu(
-					null, serviceMenuId);
+					null, serviceMenuId,null);
 			wsmUrl = new WebSitemapUrl.Options(servicesMenuUrl).lastMod(
 					new Date()).build();
 			listings_sitemap.addUrl(wsmUrl);
