@@ -24,6 +24,7 @@ public class SessionController {
 				"session");
 		if (null != currentSession) {
 			switch (operation) {
+			case "ASK":
 			case "POST":
 			case "LIKE":
 			case "COMMENT":

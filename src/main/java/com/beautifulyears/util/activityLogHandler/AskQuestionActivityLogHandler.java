@@ -8,32 +8,32 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import com.beautifulyears.constants.ActivityLogConstants;
 import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.domain.ActivityLog;
-import com.beautifulyears.domain.ProductCategory;
+import com.beautifulyears.domain.AskQuestion;
 import com.beautifulyears.domain.User;
 
 /**
  * @author Nitin
  *
  */
-public class ProductCategoryActivityLogHandler extends ActivityLogHandler<ProductCategory> {
+public class AskQuestionActivityLogHandler extends ActivityLogHandler<AskQuestion> {
 
-	public ProductCategoryActivityLogHandler(MongoTemplate mongoTemplate) {
+	public AskQuestionActivityLogHandler(MongoTemplate mongoTemplate) {
 		super(mongoTemplate);
 		// TODO Auto-generated constructor stub
 	}
 
 	@Override
-	protected ActivityLog getEntityObject(ProductCategory productCat, int crudType,
+	protected ActivityLog getEntityObject(AskQuestion askQuestion, int crudType,
 			User currentUser, String details) {
 		ActivityLog log = new ActivityLog();
-		if (productCat != null) {
+		if (askQuestion != null) {
 			log.setActivityTime(new Date());
-			log.setActivityType(ActivityLogConstants.ACTIVITY_TYPE_PRODUCT_CATEGORY);
+			log.setActivityType(ActivityLogConstants.ACTIVITY_TYPE_PRODUCT);
 			log.setCrudType(crudType);
-			log.setDetails("product category id = " + productCat.getId() + "  " + (details == null ? "" : details));
-			log.setEntityId(productCat.getId());
+			log.setDetails("question id = " + askQuestion.getId() + "  " + (details == null ? "" : details));
+			log.setEntityId(askQuestion.getId());
 			log.setRead(false);
-			log.setTitleToDisplay(productCat.getName());
+			log.setTitleToDisplay(askQuestion.getQuestion());
 			if (null != currentUser) {
 				log.setUserId(currentUser.getId());
 				if(currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_EMAIL){

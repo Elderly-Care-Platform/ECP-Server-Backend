@@ -54,6 +54,13 @@ public class UserProfile {
 
 	private boolean verified;
 
+	private int age;
+	
+	private String workTitle;
+
+	@DBRef
+	private List<AskCategory> experties;
+
 	private final Date createdAt = new Date();
 
 	private Date lastModifiedAt = new Date();
@@ -248,6 +255,30 @@ public class UserProfile {
 		this.facilities = facilities;
 	}
 
+	public int getAge() {
+		return age;
+	}
+
+	public void setAge(int age) {
+		this.age = age;
+	}
+
+	public String getWorkTitle() {
+		return workTitle;
+	}
+
+	public void setWorkTitle(String workTitle) {
+		this.workTitle = workTitle;
+	}
+
+	public List<AskCategory> getExperties() {
+		return experties;
+	}
+
+	public void setExperties(List<AskCategory> experties) {
+		this.experties = experties;
+	}
+
 	@Override
 	public String toString() {
 		return "UserProfile [id=" + id + ", userId=" + userId + ", userTypes=" + userTypes + ", basicProfileInfo="
@@ -257,6 +288,7 @@ public class UserProfile {
 				+ createdAt + ", lastModifiedAt=" + lastModifiedAt + ", systemTags=" + systemTags + ", userTags="
 				+ userTags + ", status=" + status + ", reviewedBy=" + reviewedBy + ", ratedBy=" + ratedBy
 				+ ", aggrRatingPercentage=" + aggrRatingPercentage + ", isReviewedByUser=" + isReviewedByUser
+				+ ", age=" + age + ", workTitle=" + workTitle + ", experties=" + experties
 				+ ", isRatedByUser=" + isRatedByUser + "]";
 	}
 

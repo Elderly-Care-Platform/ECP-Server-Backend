@@ -20,6 +20,8 @@ public enum BYErrorCodes {
 	DISCUSS_ALREADY_LIKED_BY_USER(2002, "Discuss content already liked by the logged in user"),
 	// product
 	PRODUCT_NOT_FOUND(6001, "Product content with provided productId doesn't exist"),
+	// ask question
+	ASK_QUESTION_NOT_FOUND(7001, "Ask Question content with provided askQuesId doesn't exist"),
 
 	// user error
 	USER_NOT_AUTHORIZED(3001, "User is not authorized to perform the selected operation"),

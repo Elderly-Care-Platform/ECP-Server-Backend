@@ -222,7 +222,7 @@ public class UserProfileController {
 		filterCriteria.add("tags = " + tags);
 		filterCriteria.add("isFeatured = " + isFeatured);
 		filterCriteria.add("city = " + city);
-
+		
 		Integer[] userTypes = { UserTypes.INSTITUTION_HOUSING, UserTypes.INSTITUTION_BRANCH,
 				UserTypes.INSTITUTION_PRODUCTS, UserTypes.INSTITUTION_NGO, UserTypes.INDIVIDUAL_PROFESSIONAL };
 		LoggerUtil.logEntry();
@@ -252,7 +252,7 @@ public class UserProfileController {
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
 			profilePage = UserProfileResponse.getPage(userProfileRepository
-					.getServiceProvidersByFilterCriteria(userTypes, city, tagIds, isFeatured, pageable, fields), user);
+					.getServiceProvidersByFilterCriteria(userTypes, city, tagIds, isFeatured, null, pageable, fields), user);
 			if (profilePage.getContent().size() > 0) {
 				logger.debug("found something");
 			} else {
@@ -303,7 +303,7 @@ public class UserProfileController {
 
 			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
 			userProfilePage = UserProfileResponse.getPage(userProfileRepository
-					.getServiceProvidersByFilterCriteria(userTypes, null, null, null, pageable, fields), null);
+					.getServiceProvidersByFilterCriteria(userTypes, null, null, null, null, pageable, fields), null);
 			if (userProfilePage.getContent().size() > 0) {
 				logger.debug("did not find any service providers");
 			}
@@ -705,7 +705,7 @@ public class UserProfileController {
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
 			profilePage = UserProfileResponse.getPage(userProfileRepository
-					.getServiceProvidersByFilterCriteria(userTypes, city, tagIds, isFeatured, pageable, fields), user);
+					.getServiceProvidersByFilterCriteria(userTypes, city, tagIds, isFeatured, null, pageable, fields), user);
 
 			JSONObject justDailSearchResponse = SearchController.getJustDialSearchServicePage(page, size, JdsearchTerms,
 					req);
