@@ -126,6 +126,7 @@ public class AskController {
 				
 				AskQuestion askQuesExtracted = new AskQuestion(
 					askQues.getQuestion(),
+					askQues.getDescription(),
 					askQues.getAskCategory(),
 					askQues.getAskedBy(),
 					askQues.getAnsweredBy(),
@@ -159,6 +160,7 @@ public class AskController {
 
 					AskQuestion oldAskQues = mongoTemplate.findById(new ObjectId(askQues.getId()), AskQuestion.class);
 					oldAskQues.setAnswered(askQues.getAnswered());
+					oldAskQues.setDescription(askQues.getDescription());
 					oldAskQues.setAskCategory(askQues.getAskCategory());
 					oldAskQues.setAskedBy(askQues.getAskedBy());
 					oldAskQues.setAnsweredBy(askQues.getAnsweredBy());

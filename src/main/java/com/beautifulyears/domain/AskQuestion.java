@@ -15,6 +15,7 @@ public class AskQuestion {
 	@Id
 	private String 	id;
 	private String 	question;
+	private String 	description;
 
 	@DBRef
 	private AskCategory askCategory;
@@ -42,6 +43,14 @@ public class AskQuestion {
 
 	public void setQuestion(String question) {
 		this.question = question;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
 	}
 
 	public Date getCreatedAt() {
@@ -91,8 +100,9 @@ public class AskQuestion {
 	public AskQuestion() {
 	}
 
-	public AskQuestion(String question, AskCategory askCategory, User askedBy, User answeredBy, Boolean answered) {
+	public AskQuestion(String question, String description, AskCategory askCategory, User askedBy, User answeredBy, Boolean answered) {
 		this.question = question;
+		this.description = description;
 		this.askCategory = askCategory;
 		this.askedBy = askedBy;
 		this.answeredBy = answeredBy;

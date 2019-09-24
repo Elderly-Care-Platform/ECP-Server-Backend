@@ -84,6 +84,7 @@ public class AskQuestionResponse implements IResponse {
 	public static class AskQuestionEntity {
 		private String 	id;
 		private String 	question;
+		private String 	description;
 		private AskCategory askCategory;
 		private User	askedBy;
 		private User	answeredBy;
@@ -133,6 +134,14 @@ public class AskQuestionResponse implements IResponse {
 			this.question = question;
 		}
 
+		public String getDescription() {
+			return description;
+		}
+
+		public void setDescription(String description) {
+			this.description = description;
+		}
+
 		public AskCategory getAskCategory() {
 			return askCategory;
 		}
@@ -172,6 +181,7 @@ public class AskQuestionResponse implements IResponse {
 			this.setAnsweredBy(askQues.getAnsweredBy());
 			this.setAskedBy(askQues.getAskedBy());
 			this.setQuestion(askQues.getQuestion());
+			this.setDescription(askQues.getDescription());
 			this.setCreatedAt(askQues.getCreatedAt());
 			this.setLastModifiedAt(askQues.getLastModifiedAt());
 			
