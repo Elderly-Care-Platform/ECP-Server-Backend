@@ -30,6 +30,7 @@ import com.beautifulyears.domain.AskQuestion;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
+import com.beautifulyears.mail.MailHandler;
 import com.beautifulyears.repository.UserRepository;
 import com.beautifulyears.repository.AskCategoryRepository;
 import com.beautifulyears.repository.AskQuestionRepository;
@@ -58,7 +59,7 @@ import com.beautifulyears.util.activityLogHandler.AskQuestionActivityLogHandler;
 @RequestMapping(value = { "/ask" })
 public class AskController {
 	private static final Logger logger = Logger
-			.getLogger(ProductController.class);
+			.getLogger(AskController.class);
 	private AskQuestionRepository askQuesRepo;
 	private AskCategoryRepository askCatRepo;
 	private UserProfileRepository userProfileRepo;
@@ -136,6 +137,14 @@ public class AskController {
 				askQues = askQuesRepo.save(askQuesExtracted);
 				logHandler.addLog(askQues, ActivityLogConstants.CRUD_TYPE_CREATE, request);
 				logger.info("new ask question entity created with ID: " + askQues.getId());
+				MailHandler.sendMailToUserId(askQues.getAnsweredBy().getId(), "ECP - New Question for you", 
+				"Hi,<br/>"+
+
+				"This is to inform that a new question has been asked by one of elders who is seeking help / some informtion.<br/>"+
+				" Question Asked by is '" + askQues.getQuestion() + "'<br/>"+
+				"Requesting you to please respond.<br/><br/>"+
+				"Best Regards<br/>"+
+				"ECP Team");
 			} else {
 				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
 			}
@@ -277,7 +286,7 @@ public class AskController {
 
 	@RequestMapping(value = { "/category" }, method = { RequestMethod.POST }, consumes = { "application/json" }, produces = { "application/json" })
 	@ResponseBody
-	public Object submitProductCategory(@RequestBody AskCategory askCategory, HttpServletRequest request) throws Exception {
+	public Object submitCategory(@RequestBody AskCategory askCategory, HttpServletRequest request) throws Exception {
 		LoggerUtil.logEntry();
 		User currentUser = Util.getSessionUser(request);
 		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "ASK")) {
@@ -309,7 +318,7 @@ public class AskController {
 
 	@RequestMapping(method = { RequestMethod.PUT }, value = { "/category" }, consumes = { "application/json" })
 	@ResponseBody
-	public Object editAskCategory(@RequestBody AskCategory askCat, HttpServletRequest request) throws Exception {
+	public Object editCategory(@RequestBody AskCategory askCat, HttpServletRequest request) throws Exception {
 		LoggerUtil.logEntry();
 		User currentUser = Util.getSessionUser(request);
 		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "ASK")) {
