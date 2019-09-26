@@ -3,22 +3,29 @@ package com.beautifulyears.rest;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import com.beautifulyears.domain.FileUpload;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.util.Util;
 
 import org.imgscalr.Scalr;
+import org.springframework.data.util.StreamUtils;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 @Controller
@@ -42,13 +49,14 @@ public class FileUploadController {
 
                 long millis = System.currentTimeMillis() / 1000L;
 
-                File imageFile = new File(servletRequest.getServletContext().getRealPath("/resources"),
+                File imageFile = new File(System.getProperty("catalina.home") + "/resources",
                         Long.toString(millis) + fileName);
-                        
+
                 try {
                     multipartFile.transferTo(imageFile);
 
-                    resizeImage(imageFile, THUMBNAIL_IMG_WIDTH, THUMBNAIL_IMG_HEIGHT,fileName.substring(fileName.lastIndexOf(".") + 1));
+                    resizeImage(imageFile, THUMBNAIL_IMG_WIDTH, THUMBNAIL_IMG_HEIGHT,
+                            fileName.substring(fileName.lastIndexOf(".") + 1));
 
                     uploadedFile.add(imagePath + imageFile.getName());
                 } catch (IOException e) {
@@ -112,15 +120,15 @@ public class FileUploadController {
         } else {
             BufferedImage thumbnail = Scalr.resize(image, Scalr.Method.ULTRA_QUALITY, Scalr.Mode.FIT_TO_WIDTH,
                     imageWidth, imageHeight, Scalr.OP_ANTIALIAS);
-                    try {
+            try {
 
-                        ImageIO.write(thumbnail, extension, newFile);
-                        System.out.println(ImageIO.write(thumbnail, extension, newFile));
-                    } catch (Exception e) {
-                        // TODO: handle exception
-                        throw (e);
-                    }
-        
+                ImageIO.write(thumbnail, extension, newFile);
+                System.out.println(ImageIO.write(thumbnail, extension, newFile));
+            } catch (Exception e) {
+                // TODO: handle exception
+                throw (e);
+            }
+
         }
 
     }
