@@ -50,9 +50,9 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter {
 		return multipartResolver;
 	}
 
-	@Override
+	@Override  
 	public void addResourceHandlers(final ResourceHandlerRegistry registry) {
-		registry.addResourceHandler("/resources/**").addResourceLocations("/resources/");
+		registry.addResourceHandler("/media/**").addResourceLocations("file://" +  System.getProperty("catalina.home") + "/resources/");
 	}
 
 	@Override
