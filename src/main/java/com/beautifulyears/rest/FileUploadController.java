@@ -52,7 +52,8 @@ public class FileUploadController {
 
                     uploadedFile.add(imagePath + imageFile.getName());
                 } catch (IOException e) {
-                    Util.handleException(e);
+                    // Util.handleException(e);
+                    throw e;
                 }
             }
         }
