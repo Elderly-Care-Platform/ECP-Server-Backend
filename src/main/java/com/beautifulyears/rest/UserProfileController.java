@@ -43,11 +43,14 @@ import com.beautifulyears.constants.ActivityLogConstants;
 import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.constants.DiscussConstants;
 import com.beautifulyears.constants.UserTypes;
+import com.beautifulyears.domain.ReportService;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserAddress;
 import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
+import com.beautifulyears.mail.MailHandler;
+import com.beautifulyears.repository.ReportServiceRepository;
 import com.beautifulyears.repository.UserProfileRepository;
 import com.beautifulyears.repository.UserRepository;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
@@ -71,13 +74,16 @@ import com.beautifulyears.util.activityLogHandler.UserProfileLogHandler;
 public class UserProfileController {
 	private static Logger logger = Logger.getLogger(UserProfileController.class);
 	private static UserRepository userRepository;
+	private ReportServiceRepository reportServiceRepository;
 	private UserProfileRepository userProfileRepository;
 	private ActivityLogHandler<UserProfile> logHandler;
 	private MongoTemplate mongoTemplate;
 
 	@Autowired
-	public UserProfileController(UserProfileRepository userProfileRepository, MongoTemplate mongoTemplate) {
+	public UserProfileController(UserProfileRepository userProfileRepository,
+			ReportServiceRepository reportServiceRepository, MongoTemplate mongoTemplate) {
 		this.userProfileRepository = userProfileRepository;
+		this.reportServiceRepository = reportServiceRepository;
 		this.mongoTemplate = mongoTemplate;
 		logHandler = new UserProfileLogHandler(mongoTemplate);
 	}
@@ -222,7 +228,7 @@ public class UserProfileController {
 		filterCriteria.add("tags = " + tags);
 		filterCriteria.add("isFeatured = " + isFeatured);
 		filterCriteria.add("city = " + city);
-		
+
 		Integer[] userTypes = { UserTypes.INSTITUTION_HOUSING, UserTypes.INSTITUTION_BRANCH,
 				UserTypes.INSTITUTION_PRODUCTS, UserTypes.INSTITUTION_NGO, UserTypes.INDIVIDUAL_PROFESSIONAL };
 		LoggerUtil.logEntry();
@@ -251,8 +257,8 @@ public class UserProfileController {
 			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
-			profilePage = UserProfileResponse.getPage(userProfileRepository
-					.getServiceProvidersByFilterCriteria(userTypes, city, tagIds, isFeatured, null, pageable, fields), user);
+			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(
+					userTypes, city, tagIds, isFeatured, null, pageable, fields), user);
 			if (profilePage.getContent().size() > 0) {
 				logger.debug("found something");
 			} else {
@@ -705,8 +711,8 @@ public class UserProfileController {
 			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
-			profilePage = UserProfileResponse.getPage(userProfileRepository
-					.getServiceProvidersByFilterCriteria(userTypes, city, tagIds, isFeatured, null, pageable, fields), user);
+			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(
+					userTypes, city, tagIds, isFeatured, null, pageable, fields), user);
 
 			JSONObject justDailSearchResponse = SearchController.getJustDialSearchServicePage(page, size, JdsearchTerms,
 					req);
@@ -740,6 +746,57 @@ public class UserProfileController {
 		Util.logStats(mongoTemplate, req, "get service providers", null, null, null, null, null, filterCriteria,
 				"get service providers", "SERVICE");
 		return response.toString();
+	}
+
+	@RequestMapping(method = { RequestMethod.POST }, value = { "/reportService" }, consumes = { "application/json" })
+	@ResponseBody
+	public Object submitReportService(@RequestBody ReportService reportService, HttpServletRequest request,
+			HttpServletResponse res) throws Exception {
+		LoggerUtil.logEntry();
+		User currentUser = Util.getSessionUser(request);
+		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "POST")) {
+			if (reportService != null && (!Util.isEmpty(reportService.getServiceId()))) {
+				try {
+					UserProfile userProfile = null;
+
+					// Get service
+					Query query = new Query();
+					query.addCriteria(Criteria.where("id").is(reportService.getServiceId()));
+					userProfile = mongoTemplate.findOne(query, UserProfile.class);
+
+					if (userProfile != null) {
+						ReportService reportServiceExtra = new ReportService(reportService.getServiceId(),
+								currentUser.getId(), reportService.getCause(), reportService.getComment());
+
+						reportService = reportServiceRepository.save(reportServiceExtra);
+
+						String body = reportService.getComment() + "\r\nService Contact\r\n"
+								+ userProfile.getBasicProfileInfo().getPrimaryEmail() + "\r\n"
+								+ userProfile.getBasicProfileInfo().getPrimaryPhoneNo();
+						MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
+								"Service Provider Reported: Name: " + userProfile.getBasicProfileInfo().getFirstName()
+										+ ", cause: " + reportService.getCause(),
+								body);
+
+					}
+				} catch (Exception e) {
+					Util.handleException(e);
+				}
+
+				logger.info("new service report entity created with ID: " + reportService.getId() + " by User "
+						+ reportService.getUserId());
+
+			} else {
+				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
+			}
+		} else {
+			throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
+		}
+		Util.logStats(mongoTemplate, request, "NEW " + reportService.getServiceId() + " added.",
+				reportService.getUserId(), currentUser.getEmail(), reportService.getId(), null, null, null,
+				"new  service report entity is added", "SERVICE");
+		return BYGenericResponseHandler.getResponse(reportService);
+
 	}
 
 	private UserProfile mergeProfile(UserProfile oldProfile, UserProfile newProfile, User currentUser,
