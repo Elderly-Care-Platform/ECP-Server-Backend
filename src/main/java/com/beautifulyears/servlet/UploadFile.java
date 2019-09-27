@@ -169,8 +169,7 @@ public class UploadFile extends HttpServlet {
 					if (!item.isFormField()) {
 						UUID fname = UUID.randomUUID();
 						String name = new File(item.getName()).getName();
-						String extension = name
-								.substring(name.lastIndexOf(".") + 1);
+						String extension = name.substring(name.lastIndexOf(".") + 1);
 						File newFile = File.createTempFile("orig", ".jpg");
 
 						item.write(newFile);

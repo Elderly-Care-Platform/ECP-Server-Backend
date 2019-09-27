@@ -13,7 +13,7 @@ public class IndividualProfileInfo {
 
 	private String salutation;
 
-	@TextIndexed(weight=1)
+	@TextIndexed(weight = 1)
 	private String lastName;
 
 	private int gender; // 0: female, 1: male.
@@ -24,32 +24,32 @@ public class IndividualProfileInfo {
 
 	private String occupation;// working, not working, retired, studying
 
-	@TextIndexed(weight=2)
+	@TextIndexed(weight = 2)
 	private List<String> emotionalIssues;
 
-	@TextIndexed(weight=3)
-	@DBRef
-	private List<Menu> medicalIssues;
+	// @TextIndexed(weight = 3)
+	// @DBRef
+	private List<String> medicalIssues;
 
-	@TextIndexed(weight=4)
+	@TextIndexed(weight = 4)
 	private List<String> otherIssues;
 
 	private String maritalStatus;
 
 	private List<Language> spokenLanguage;
 
-	@TextIndexed(weight=5)
-	@DBRef
-	private List<Menu> hobbies;
+	// @TextIndexed(weight = 5)
+	// @DBRef
+	private List<String> hobbies;
 
-	@TextIndexed(weight=6)
+	@TextIndexed(weight = 6)
 	private List<String> otherHobbies;
 
-	@TextIndexed(weight=7)
+	@TextIndexed(weight = 7)
 	@DBRef
 	private List<Menu> interests;
 
-	@TextIndexed(weight=8)
+	@TextIndexed(weight = 8)
 	private List<String> otherInterests;
 
 	public String getSalutation() {
@@ -108,11 +108,11 @@ public class IndividualProfileInfo {
 		this.emotionalIssues = emotionalIssues;
 	}
 
-	public List<Menu> getMedicalIssues() {
+	public List<String> getMedicalIssues() {
 		return medicalIssues;
 	}
 
-	public void setMedicalIssues(List<Menu> medicalIssues) {
+	public void setMedicalIssues(List<String> medicalIssues) {
 		this.medicalIssues = medicalIssues;
 	}
 
@@ -140,11 +140,11 @@ public class IndividualProfileInfo {
 		this.spokenLanguage = spokenLanguage;
 	}
 
-	public List<Menu> getHobbies() {
+	public List<String> getHobbies() {
 		return hobbies;
 	}
 
-	public void setHobbies(List<Menu> hobbies) {
+	public void setHobbies(List<String> hobbies) {
 		this.hobbies = hobbies;
 	}
 
@@ -174,28 +174,19 @@ public class IndividualProfileInfo {
 
 	@Override
 	public String toString() {
-		return "IndividualProfileInfo [salutation=" + salutation
-				+ ", lastName=" + lastName + ", gender=" + gender + ", dob="
-				+ dob + ", otherDates=" + otherDates + ", occupation="
-				+ occupation + ", emotionalIssues=" + emotionalIssues
-				+ ", medicalIssues=" + medicalIssues + ", otherIssues="
-				+ otherIssues + ", maritalStatus=" + maritalStatus
-				+ ", language=" + spokenLanguage + ", hobbies=" + hobbies
-				+ ", otherHobbies=" + otherHobbies + ", interests=" + interests
-				+ ", otherInterests=" + otherInterests + ", getSalutation()="
-				+ getSalutation() + ", getLastName()=" + getLastName()
-				+ ", getGender()=" + getGender() + ", getDob()=" + getDob()
-				+ ", getOtherDates()=" + getOtherDates() + ", getOccupation()="
-				+ getOccupation() + ", getEmotionalIssues()="
-				+ getEmotionalIssues() + ", getMedicalIssues()="
-				+ getMedicalIssues() + ", getOtherIssues()=" + getOtherIssues()
-				+ ", getMaritalStatus()=" + getMaritalStatus()
-				+ ", getLanguage()=" + getLanguage() + ", getHobbies()="
-				+ getHobbies() + ", getOtherHobbies()=" + getOtherHobbies()
-				+ ", getInterests()=" + getInterests()
-				+ ", getOtherInterests()=" + getOtherInterests()
-				+ ", getClass()=" + getClass() + ", hashCode()=" + hashCode()
-				+ ", toString()=" + super.toString() + "]";
+		return "IndividualProfileInfo [salutation=" + salutation + ", lastName=" + lastName + ", gender=" + gender
+				+ ", dob=" + dob + ", otherDates=" + otherDates + ", occupation=" + occupation + ", emotionalIssues="
+				+ emotionalIssues + ", medicalIssues=" + medicalIssues + ", otherIssues=" + otherIssues
+				+ ", maritalStatus=" + maritalStatus + ", language=" + spokenLanguage + ", hobbies=" + hobbies
+				+ ", otherHobbies=" + otherHobbies + ", interests=" + interests + ", otherInterests=" + otherInterests
+				+ ", getSalutation()=" + getSalutation() + ", getLastName()=" + getLastName() + ", getGender()="
+				+ getGender() + ", getDob()=" + getDob() + ", getOtherDates()=" + getOtherDates() + ", getOccupation()="
+				+ getOccupation() + ", getEmotionalIssues()=" + getEmotionalIssues() + ", getMedicalIssues()="
+				+ getMedicalIssues() + ", getOtherIssues()=" + getOtherIssues() + ", getMaritalStatus()="
+				+ getMaritalStatus() + ", getLanguage()=" + getLanguage() + ", getHobbies()=" + getHobbies()
+				+ ", getOtherHobbies()=" + getOtherHobbies() + ", getInterests()=" + getInterests()
+				+ ", getOtherInterests()=" + getOtherInterests() + ", getClass()=" + getClass() + ", hashCode()="
+				+ hashCode() + ", toString()=" + super.toString() + "]";
 	}
 
 }
