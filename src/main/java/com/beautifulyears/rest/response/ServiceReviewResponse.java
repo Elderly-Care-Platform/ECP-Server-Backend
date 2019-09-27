@@ -81,20 +81,22 @@ public class ServiceReviewResponse implements IResponse {
 	}
 
 	public static class ServiceReviewEntity {
-		private String 	id;
-		private String 	serviceId;
-		private Float 	rating;
-		private String 	review;
+		private String id;
+		private String serviceId;
+		private String userId;
+		private Float rating;
+		private String review;
 		private Integer likeCount;
 		private Integer unLikeCount;
-		private int 	status;
-		private String 	userName;
-		private String  parentReviewId;
+		private int status;
+		private String userName;
+		private String parentReviewId;
 		private Date createdAt;
 		private Date lastModifiedAt;
 
 		public ServiceReviewEntity(ServiceReview serviceReview, User user) {
 			this.setServiceId(serviceReview.getServiceId());
+			this.setUserId(serviceReview.getUserId());
 			this.setRating(serviceReview.getRating());
 			this.setReview(serviceReview.getReview());
 			this.setLikeCount(serviceReview.getLikeCount());
@@ -104,7 +106,7 @@ public class ServiceReviewResponse implements IResponse {
 			this.setParentReviewId(serviceReview.getParentReviewId());
 			this.setCreatedAt(serviceReview.getCreatedAt());
 			this.setLastModifiedAt(serviceReview.getLastModifiedAt());
-			
+
 		}
 
 		public String getId() {
@@ -193,6 +195,14 @@ public class ServiceReviewResponse implements IResponse {
 
 		public void setLastModifiedAt(Date lastModifiedAt) {
 			this.lastModifiedAt = lastModifiedAt;
+		}
+
+		public String getUserId() {
+			return userId;
+		}
+
+		public void setUserId(String userId) {
+			this.userId = userId;
 		}
 	}
 
