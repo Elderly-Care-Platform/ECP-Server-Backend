@@ -27,20 +27,24 @@ import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.constants.UserTypes;
 import com.beautifulyears.domain.AskCategory;
 import com.beautifulyears.domain.AskQuestion;
+import com.beautifulyears.domain.AskQuestionReply;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
 import com.beautifulyears.mail.MailHandler;
 import com.beautifulyears.repository.UserRepository;
 import com.beautifulyears.repository.AskCategoryRepository;
+import com.beautifulyears.repository.AskQuestionReplyRepository;
 import com.beautifulyears.repository.AskQuestionRepository;
 import com.beautifulyears.repository.UserProfileRepository;
 import com.beautifulyears.rest.response.AskCategoryResponse;
+import com.beautifulyears.rest.response.AskQuestionReplyResponse;
 import com.beautifulyears.rest.response.AskQuestionResponse;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.rest.response.PageImpl;
 import com.beautifulyears.rest.response.UserProfileResponse;
 import com.beautifulyears.rest.response.AskCategoryResponse.AskCategoryPage;
+import com.beautifulyears.rest.response.AskQuestionReplyResponse.AskQuestionReplyPage;
 import com.beautifulyears.rest.response.AskQuestionResponse.AskQuestionPage;
 import com.beautifulyears.rest.response.UserProfileResponse.UserProfilePage;
 import com.beautifulyears.util.LoggerUtil;
@@ -63,23 +67,23 @@ public class AskController {
 	private AskQuestionRepository askQuesRepo;
 	private AskCategoryRepository askCatRepo;
 	private UserProfileRepository userProfileRepo;
-	// private ProductReviewRepository productRevRepo;
+	private AskQuestionReplyRepository quesReplyRepo;
 	private MongoTemplate mongoTemplate;
 	ActivityLogHandler<AskQuestion> logHandler;
 	ActivityLogHandler<AskCategory> logHandlerCat;
-	// ActivityLogHandler<ProductReview> logHandlerRev;
+	ActivityLogHandler<AskQuestionReply> logHandlerRev;
 	// ActivityLogHandler<Object> shareLogHandler;
 
 	@Autowired
 	public AskController(AskQuestionRepository askQuesRepo, UserRepository userRepository, 
 			AskCategoryRepository askCatRepo,
 			UserProfileRepository userProfileRepo,
-			// ProductReviewRepository productRevRepo,
+			AskQuestionReplyRepository quesReplyRepo,
 			MongoTemplate mongoTemplate) {
 		this.askQuesRepo = askQuesRepo;
 		this.askCatRepo = askCatRepo;
 		this.userProfileRepo = userProfileRepo;
-		//this.productRevRepo = productRevRepo;
+		this.quesReplyRepo = quesReplyRepo;
 		this.mongoTemplate = mongoTemplate;
 		logHandler = new AskQuestionActivityLogHandler(mongoTemplate);
 		logHandlerCat = new AskCategoryActivityLogHandler(mongoTemplate);
@@ -355,67 +359,59 @@ public class AskController {
 		return BYGenericResponseHandler.getResponse(askCat);
 	}
 
-	// @RequestMapping(method = { RequestMethod.GET }, value = { "/review/page" }, produces = { "application/json" })
-	// @ResponseBody
-	// public Object getReviewPage(
-	// 		@RequestParam(value = "searchTxt", required = false) String searchTxt,
-	// 		@RequestParam(value = "productId", required = false) String productId,
-	// 		@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
-	// 		@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
-	// 		@RequestParam(value = "p", required = false, defaultValue = "0") int pageIndex,
-	// 		@RequestParam(value = "s", required = false, defaultValue = "10") int pageSize,
-	// 		HttpServletRequest request) throws Exception {
-	// 	LoggerUtil.logEntry();
-	// 	User currentUser = Util.getSessionUser(request);
-	// 	PageImpl<ProductReview> page = null;
-	// 	ProductReviewPage productRevPage = null;
-	// 	try {
-	// 		Direction sortDirection = Direction.DESC;
-	// 		if (dir != 0) {
-	// 			sortDirection = Direction.ASC;
-	// 		}
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/reply/page" }, produces = { "application/json" })
+	@ResponseBody
+	public Object getReviewPage(
+			@RequestParam(value = "searchTxt", required = false) String searchTxt,
+			@RequestParam(value = "questionId", required = false) String questionId,
+			@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
+			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
+			@RequestParam(value = "p", required = false, defaultValue = "0") int pageIndex,
+			@RequestParam(value = "s", required = false, defaultValue = "10") int pageSize,
+			HttpServletRequest request) throws Exception {
+		LoggerUtil.logEntry();
+		User currentUser = Util.getSessionUser(request);
+		PageImpl<AskQuestionReply> page = null;
+		AskQuestionReplyPage quesReplyPage = null;
+		try {
+			Direction sortDirection = Direction.DESC;
+			if (dir != 0) {
+				sortDirection = Direction.ASC;
+			}
 
-	// 		Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
-	// 		page = productRevRepo.getPage(searchTxt, productId, pageable);
-	// 		productRevPage = ProductReviewResponse.getPage(page, currentUser);
-	// 	} catch (Exception e) {
-	// 		Util.handleException(e);
-	// 	}
-	// 	return BYGenericResponseHandler.getResponse(productRevPage);
-	// }
+			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
+			page = quesReplyRepo.getPage(searchTxt, questionId, pageable);
+			quesReplyPage = AskQuestionReplyResponse.getPage(page, currentUser);
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+		return BYGenericResponseHandler.getResponse(quesReplyPage);
+	}
 
-	// @RequestMapping(method = { RequestMethod.POST }, value = { "/review" }, consumes = { "application/json" })
-	// @ResponseBody
-	// public Object submitProductReview(@RequestBody ProductReview productReview, HttpServletRequest request) throws Exception {
-	// 	LoggerUtil.logEntry();
-	// 	User currentUser = Util.getSessionUser(request);
-	// 	if (null != currentUser && SessionController.checkCurrentSessionFor(request, "PRODUCT")) {
-	// 		if (productReview != null && (Util.isEmpty(productReview.getId()))) {
-	// 			ProductReview productRevExtracted = new ProductReview(
-	// 				productReview.getProductId(),
-	// 				productReview.getRating(),
-	// 				productReview.getReview(),
-	// 				productReview.getLikeCount(),
-	// 				productReview.getUnLikeCount(),
-	// 				productReview.getStatus(),
-	// 				productReview.getUserName(),
-	// 				productReview.getParentReviewId()
-	// 			);
+	@RequestMapping(method = { RequestMethod.POST }, value = { "/review" }, consumes = { "application/json" })
+	@ResponseBody
+	public Object submitAskQuestionReply(@RequestBody AskQuestionReply askQuestionReply, HttpServletRequest request) throws Exception {
+		LoggerUtil.logEntry();
+		User currentUser = Util.getSessionUser(request);
+		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "ASK")) {
+			if (askQuestionReply != null && (Util.isEmpty(askQuestionReply.getId()))) {
+				AskQuestionReply askQuestionReplyExtracted = new AskQuestionReply(
+				);
 
-	// 			productReview = productRevRepo.save(productRevExtracted);
-	// 			logHandlerRev.addLog(productReview, ActivityLogConstants.CRUD_TYPE_CREATE, request);
-	// 			logger.info("new product review entity created with ID: " + productReview.getId());
-	// 		} else {
-	// 			throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
-	// 		}
-	// 	} else {
-	// 		throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
-	// 	}
-	// 	Util.logStats(mongoTemplate, request, "NEW Product Review added.", currentUser.getId(), currentUser.getEmail(),
-	// 		productReview.getId(), null, null, null,
-	// 			"new product review entity is added", "PRODUCT_REVIEW");
-	// 	return BYGenericResponseHandler.getResponse(productReview);
-	// }
+				askQuestionReply = quesReplyRepo.save(askQuestionReplyExtracted);
+				logHandlerRev.addLog(askQuestionReply, ActivityLogConstants.CRUD_TYPE_CREATE, request);
+				logger.info("new ask question reply entity created with ID: " + askQuestionReply.getId());
+			} else {
+				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
+			}
+		} else {
+			throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
+		}
+		Util.logStats(mongoTemplate, request, "NEW Ask question reply added.", currentUser.getId(), currentUser.getEmail(),
+			askQuestionReply.getId(), null, null, null,
+				"new ask question reply entity is added", "ASK_QUESTION_REPLY");
+		return BYGenericResponseHandler.getResponse(askQuestionReply);
+	}
 
 	// @RequestMapping(method = { RequestMethod.PUT }, value = { "/review" }, consumes = { "application/json" })
 	// @ResponseBody
