@@ -14,6 +14,7 @@ public class ServiceReview {
     @Id
     private String id;
     private String serviceId;
+    private String userId;
     private Float rating;
     private String review;
     private Integer likeCount;
@@ -108,9 +109,18 @@ public class ServiceReview {
         this.serviceId = serviceId;
     }
 
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
     public ServiceReview(String serviceId, Float rating, String review, Integer likeCount, Integer unLikeCount,
-            int status, String userName, String parentReviewId) {
+            int status, String userName, String userId, String parentReviewId) {
         this.serviceId = serviceId;
+        this.userId = userId;
         this.rating = rating;
         this.review = review;
         this.likeCount = likeCount;

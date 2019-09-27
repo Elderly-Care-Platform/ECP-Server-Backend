@@ -517,6 +517,7 @@ public class ReviewController {
 					serviceReview.getUnLikeCount(),
 					serviceReview.getStatus(),
 					serviceReview.getUserName(),
+					currentUser.getId(),
 					serviceReview.getParentReviewId()
 				);
 

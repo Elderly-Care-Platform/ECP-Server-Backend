@@ -33,7 +33,6 @@ public class FileUploadController {
 
     private static final int THUMBNAIL_IMG_WIDTH = 200;
     private static final int THUMBNAIL_IMG_HEIGHT = 200;
-    private static final String imagePath = "/resources/";
 
     @RequestMapping(value = "/fileupload", headers = ("content-type=multipart/*"), method = RequestMethod.POST)
     public Object uploadResources(HttpServletRequest servletRequest, @ModelAttribute FileUpload userFile)
@@ -58,7 +57,7 @@ public class FileUploadController {
                     resizeImage(imageFile, THUMBNAIL_IMG_WIDTH, THUMBNAIL_IMG_HEIGHT,
                             fileName.substring(fileName.lastIndexOf(".") + 1));
 
-                    uploadedFile.add(imagePath + imageFile.getName());
+                    uploadedFile.add(imageFile.getName());
                 } catch (IOException e) {
                     // Util.handleException(e);
                     throw e;
