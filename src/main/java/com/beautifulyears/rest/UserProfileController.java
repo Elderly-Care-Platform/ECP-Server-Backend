@@ -102,9 +102,7 @@ public class UserProfileController {
 				Query q = new Query();
 				q.addCriteria(Criteria.where("userId").is(userId));
 				userProfile = mongoTemplate.findOne(q, UserProfile.class);
-				// if(userProfiles.size() > 0){
-				// userProfile = userProfiles.get(0);
-				// }
+
 				if (userProfile == null) {
 					logger.error("did not find any profile matching ID");
 					userProfile = new UserProfile();
