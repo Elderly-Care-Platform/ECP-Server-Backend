@@ -3,6 +3,7 @@ package com.beautifulyears.domain;
 import java.util.Date;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -15,6 +16,8 @@ public class AskQuestionReply {
 	private String 	id;
 	private String 	askQuestionId;
 	private String 	reply;
+	
+	@DBRef
 	private User 	user;
 	private final Date createdAt = new Date();
 	private Date lastModifiedAt = new Date();

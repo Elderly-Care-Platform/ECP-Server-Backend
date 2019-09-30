@@ -124,6 +124,32 @@ public class UserProfileController {
 		}
 		return BYGenericResponseHandler.getResponse(UserProfileResponse.getUserProfileEntity(userProfile, userInfo));
 	}
+	
+	@RequestMapping(method = { RequestMethod.GET }, value = { "profile/{profileId}" }, produces = { "application/json" })
+	@ResponseBody
+	public Object getUserProfile(@PathVariable(value = "profileId") String profileId, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
+		LoggerUtil.logEntry();
+		// User sessionUser = Util.getSessionUser(req);
+		UserProfile userProfile = null;
+		User userInfo = null;
+
+		try {
+			if (profileId != null) {
+				Query q = new Query();
+				q.addCriteria(Criteria.where("id").is(profileId));
+				userProfile = mongoTemplate.findOne(q, UserProfile.class);
+				userInfo = UserController.getUser(userProfile.getUserId());
+				logger.debug(userProfile.toString());
+			} else {
+				logger.error("invalid parameter");
+				throw new BYException(BYErrorCodes.MISSING_PARAMETER);
+			}
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+		return BYGenericResponseHandler.getResponse(UserProfileResponse.getUserProfileEntity(userProfile, userInfo));
+	}
 
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/serviceProvider/{userId}" }, produces = {
 			"application/json" })

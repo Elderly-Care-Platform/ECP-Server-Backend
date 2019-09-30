@@ -52,6 +52,7 @@ import com.beautifulyears.util.Util;
 import com.beautifulyears.util.activityLogHandler.ActivityLogHandler;
 import com.beautifulyears.util.activityLogHandler.AskCategoryActivityLogHandler;
 import com.beautifulyears.util.activityLogHandler.AskQuestionActivityLogHandler;
+import com.beautifulyears.util.activityLogHandler.AskQuestionReplyActivityLogHandler;
 
 /**
  * The REST based service for managing "product"
@@ -71,7 +72,7 @@ public class AskController {
 	private MongoTemplate mongoTemplate;
 	ActivityLogHandler<AskQuestion> logHandler;
 	ActivityLogHandler<AskCategory> logHandlerCat;
-	ActivityLogHandler<AskQuestionReply> logHandlerRev;
+	ActivityLogHandler<AskQuestionReply> logHandlerRep;
 	// ActivityLogHandler<Object> shareLogHandler;
 
 	@Autowired
@@ -87,7 +88,7 @@ public class AskController {
 		this.mongoTemplate = mongoTemplate;
 		logHandler = new AskQuestionActivityLogHandler(mongoTemplate);
 		logHandlerCat = new AskCategoryActivityLogHandler(mongoTemplate);
-		// logHandlerRev = new ProductReviewActivityLogHandler(mongoTemplate);
+		logHandlerRep = new AskQuestionReplyActivityLogHandler(mongoTemplate);
 		// shareLogHandler = new SharedActivityLogHandler(mongoTemplate);
 	}
 
@@ -229,7 +230,7 @@ public class AskController {
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
 			page = askQuesRepo.getPage(searchTxt, askCategory, askedBy, answeredBy, pageable);
-			askQuesPage = AskQuestionResponse.getPage(page, currentUser);
+			askQuesPage = AskQuestionResponse.getPage(page, currentUser,quesReplyRepo);
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
@@ -388,7 +389,7 @@ public class AskController {
 		return BYGenericResponseHandler.getResponse(quesReplyPage);
 	}
 
-	@RequestMapping(method = { RequestMethod.POST }, value = { "/review" }, consumes = { "application/json" })
+	@RequestMapping(method = { RequestMethod.POST }, value = { "/reply" }, consumes = { "application/json" })
 	@ResponseBody
 	public Object submitAskQuestionReply(@RequestBody AskQuestionReply askQuestionReply, HttpServletRequest request) throws Exception {
 		LoggerUtil.logEntry();
@@ -396,10 +397,13 @@ public class AskController {
 		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "ASK")) {
 			if (askQuestionReply != null && (Util.isEmpty(askQuestionReply.getId()))) {
 				AskQuestionReply askQuestionReplyExtracted = new AskQuestionReply(
+					askQuestionReply.getAskQuestionId(), 
+					askQuestionReply.getReply(), 
+					askQuestionReply.getUser()
 				);
 
 				askQuestionReply = quesReplyRepo.save(askQuestionReplyExtracted);
-				logHandlerRev.addLog(askQuestionReply, ActivityLogConstants.CRUD_TYPE_CREATE, request);
+				logHandlerRep.addLog(askQuestionReply, ActivityLogConstants.CRUD_TYPE_CREATE, request);
 				logger.info("new ask question reply entity created with ID: " + askQuestionReply.getId());
 			} else {
 				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);

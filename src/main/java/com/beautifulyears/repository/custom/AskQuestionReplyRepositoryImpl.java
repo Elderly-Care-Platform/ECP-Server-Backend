@@ -34,7 +34,7 @@ public class AskQuestionReplyRepositoryImpl implements AskQuestionReplyRepositor
 			q.addCriteria(Criteria.where("name").regex(searchTxt,"i"));
 		}
 		if(questionId!= null  && questionId != ""){
-			q.addCriteria(Criteria.where("questionId").is(questionId));
+			q.addCriteria(Criteria.where("askQuestionId").is(questionId));
 		}
 		return q;
 	}
