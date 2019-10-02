@@ -213,6 +213,7 @@ public class AskController {
 			@RequestParam(value = "askCategory", required = false) String askCategory,
 			@RequestParam(value = "askedBy", required = false) String askedBy,
 			@RequestParam(value = "answeredBy", required = false) String answeredBy,
+			@RequestParam(value = "answered", required = false) Boolean answered,
 			@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
 			@RequestParam(value = "p", required = false, defaultValue = "0") int pageIndex,
@@ -229,7 +230,7 @@ public class AskController {
 			}
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
-			page = askQuesRepo.getPage(searchTxt, askCategory, askedBy, answeredBy, pageable);
+			page = askQuesRepo.getPage(searchTxt, askCategory, askedBy, answeredBy, answered , pageable);
 			askQuesPage = AskQuestionResponse.getPage(page, currentUser,quesReplyRepo);
 		} catch (Exception e) {
 			Util.handleException(e);
@@ -244,13 +245,14 @@ public class AskController {
 			@RequestParam(value = "askCategory", required = false) String askCategory,
 			@RequestParam(value = "askedBy", required = false) String askedBy,
 			@RequestParam(value = "answeredBy", required = false) String answeredBy,
+			@RequestParam(value = "answered", required = false) Boolean answered,
 			HttpServletRequest request) throws Exception {
 		LoggerUtil.logEntry();
 		Map<String, Long> obj = new HashMap<String, Long>();
 		List<String> filterCriteria = new ArrayList<String>();
 		try {
 			Long allCount = null;
-			allCount = askQuesRepo.getCount(searchTxt, askCategory, askedBy, answeredBy);
+			allCount = askQuesRepo.getCount(searchTxt, askCategory, askedBy, answeredBy, answered);
 			obj.put("all", new Long(allCount));
 		} catch (Exception e) {
 			Util.handleException(e);
