@@ -114,6 +114,9 @@ public class SearchController {
 		return BYGenericResponseHandler.getResponse(discussPage);
 	}
 
+	/**
+	 * Search Service (autocomplete)
+	 */
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/servicePageSearch" }, produces = { "application/json" })
 	@ResponseBody
 	public Object getServicePage(@RequestParam(value = "term", required = true) String term,
@@ -244,6 +247,9 @@ public class SearchController {
 		return BYGenericResponseHandler.getResponse(housingPage);
 	}
 
+	/**
+	 * Get all service
+	 */
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/justdialService" }, produces = { "application/json" })
 	@ResponseBody
 	public Object getJustDialServicePage(
@@ -304,6 +310,9 @@ public class SearchController {
 		return response.toString();
 	}
 
+	/**
+	 * JD service detail
+	 */
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/justdialServiceDetail" }, produces = {
 			"application/json" })
 	@ResponseBody
@@ -349,6 +358,9 @@ public class SearchController {
 		return response;
 	}
 
+	/**
+	 * JD service search
+	 */
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/justdialSearchService" }, produces = {
 			"application/json" })
 	@ResponseBody
@@ -407,6 +419,9 @@ public class SearchController {
 		return response;
 	}
 
+	/**
+	 * JD categories list
+	 */
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/justdailCategories" }, produces = {
 			"application/json" })
 	@ResponseBody

@@ -88,6 +88,9 @@ public class UserProfileController {
 		logHandler = new UserProfileLogHandler(mongoTemplate);
 	}
 
+	/**
+	 * Get user profile by ID
+	 */
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/{userId}" }, produces = { "application/json" })
 	@ResponseBody
 	public Object getUserProfilebyID(@PathVariable(value = "userId") String userId, HttpServletRequest req,
@@ -346,7 +349,10 @@ public class UserProfileController {
 		return BYGenericResponseHandler.getResponse(userProfilePage);
 	}
 
-	/* This method allows the creation of a user profile */
+	/**
+	 * User profile creation
+	 * This method allows the creation of a user profile 
+	 * */
 	@RequestMapping(method = { RequestMethod.POST }, value = { "" }, consumes = { "application/json" })
 	@ResponseBody
 	public Object submitUserProfile(@RequestBody UserProfile userProfile, HttpServletRequest req,
@@ -460,7 +466,10 @@ public class UserProfileController {
 		return BYGenericResponseHandler.getResponse(UserProfileResponse.getUserProfileEntity(profile, currentUser));
 	}
 
-	/* @PathVariable(value = "userId") String userId */
+	/* 
+	 * Update user profile
+	 * @PathVariable(value = "userId") String userId 
+	 * */
 	@RequestMapping(method = { RequestMethod.PUT }, value = { "/{userId}" }, consumes = { "application/json" })
 	@ResponseBody
 	public Object updateUserProfile(@RequestBody UserProfile userProfile, @PathVariable(value = "userId") String userId,
@@ -772,6 +781,9 @@ public class UserProfileController {
 		return response.toString();
 	}
 
+	/**
+	 * Report service provider
+	 */
 	@RequestMapping(method = { RequestMethod.POST }, value = { "/reportService" }, consumes = { "application/json" })
 	@ResponseBody
 	public Object submitReportService(@RequestBody ReportService reportService, HttpServletRequest request,
