@@ -195,7 +195,7 @@ public class EventController {
 			@RequestParam(value = "eventType", required = false) Integer eventType,
 			@RequestParam(value = "pastEvents", required = false) Integer pastEvents,
 			@RequestParam(value = "startDatetime", required = false) Long startDatetime,
-			@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
+			@RequestParam(value = "sort", required = false, defaultValue = "datetime") String sort,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
 			@RequestParam(value = "p", required = false, defaultValue = "0") int pageIndex,
 			@RequestParam(value = "s", required = false, defaultValue = "10") int pageSize,
