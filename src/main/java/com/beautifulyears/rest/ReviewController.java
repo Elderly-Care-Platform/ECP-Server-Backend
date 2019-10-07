@@ -473,6 +473,9 @@ public class ReviewController {
 		}
 	}
 
+	/**
+	 * Get reviews for services
+	 */
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/service" }, produces = { "application/json" })
 	@ResponseBody
 	public Object getReviewPage(
@@ -502,6 +505,9 @@ public class ReviewController {
 		return BYGenericResponseHandler.getResponse(serviceReviewPage);
 	}
 
+	/**
+	 * Add service rating and reviews
+	 */
 	@RequestMapping(method = { RequestMethod.POST }, value = { "/addServiceReview" }, consumes = { "application/json" })
 	@ResponseBody
 	public Object submitServiceReview(@RequestBody ServiceReview serviceReview, HttpServletRequest request) throws Exception {
