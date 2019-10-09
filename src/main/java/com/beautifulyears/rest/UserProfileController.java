@@ -124,8 +124,9 @@ public class UserProfileController {
 		}
 		return BYGenericResponseHandler.getResponse(UserProfileResponse.getUserProfileEntity(userProfile, userInfo));
 	}
-	
-	@RequestMapping(method = { RequestMethod.GET }, value = { "profile/{profileId}" }, produces = { "application/json" })
+
+	@RequestMapping(method = { RequestMethod.GET }, value = { "profile/{profileId}" }, produces = {
+			"application/json" })
 	@ResponseBody
 	public Object getUserProfile(@PathVariable(value = "profileId") String profileId, HttpServletRequest req,
 			HttpServletResponse res) throws Exception {
@@ -707,7 +708,18 @@ public class UserProfileController {
 		Integer[] userTypes = { UserTypes.INSTITUTION_HOUSING, UserTypes.INSTITUTION_BRANCH,
 				UserTypes.INSTITUTION_PRODUCTS, UserTypes.INSTITUTION_NGO, UserTypes.INDIVIDUAL_PROFESSIONAL };
 
-		String JdsearchTerms = "care hospital clinics nursing home";
+		// String[] JdsearchTerms = { "care hospital clinics nursing home" };
+
+		ArrayList<String>  JdsearchTerms = new ArrayList<String>(); 
+        JdsearchTerms.add("care"); 
+        JdsearchTerms.add("hospital"); 
+        JdsearchTerms.add("clinics"); 
+        JdsearchTerms.add("nursing"); 
+        JdsearchTerms.add("medical"); 
+		JdsearchTerms.add("service");
+
+		Collections.shuffle(JdsearchTerms); 
+		
 		LoggerUtil.logEntry();
 		List<ObjectId> tagIds = new ArrayList<ObjectId>();
 		User user = Util.getSessionUser(req);
@@ -738,7 +750,7 @@ public class UserProfileController {
 			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(
 					userTypes, city, tagIds, isFeatured, null, pageable, fields), user);
 
-			JSONObject justDailSearchResponse = SearchController.getJustDialSearchServicePage(page, size, JdsearchTerms,
+			JSONObject justDailSearchResponse = SearchController.getJustDialSearchServicePage(page, size, JdsearchTerms.get(0),
 					req);
 			JSONArray JDresult = justDailSearchResponse.getJSONArray("services");
 			JSONArray DbserviceList = new JSONArray(profilePage.getContent());
