@@ -22,6 +22,7 @@ public final class BYConstants {
 	public static final String USER_ROLE_EDITOR = "EDITOR";
 	public static final String USER_ROLE_WRITER = "WRITER";
 	public static final String USER_ROLE_USER = "USER"; 
+	public static final String USER_ROLE_EXPERT = "EXPERT"; 
 	
 	public static final int USER_REG_TYPE_FULL = 0;
 	public static final int USER_REG_TYPE_GUEST = 1;
