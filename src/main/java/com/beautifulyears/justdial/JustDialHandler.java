@@ -94,7 +94,7 @@ public class JustDialHandler {
             sbPostData.append("city=" + this.city);
             sbPostData.append("&case=" + this.JDcase);
             sbPostData.append("&stype=" + this.stype);
-            sbPostData.append("&search=" + category);
+            sbPostData.append("&search=" + URLEncoder.encode(category, "UTF-8"));
             sbPostData.append("&national_catid=" + catID);
             sbPostData.append("&max=" + max);
             sbPostData.append("&pg_no=" + pageNo);

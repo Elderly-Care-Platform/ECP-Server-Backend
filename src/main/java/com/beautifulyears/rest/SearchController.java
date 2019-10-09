@@ -120,6 +120,7 @@ public class SearchController {
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/servicePageSearch" }, produces = { "application/json" })
 	@ResponseBody
 	public Object getServicePage(@RequestParam(value = "term", required = true) String term,
+			@RequestParam(value = "catid", required = false,defaultValue="0") int catId,
 			@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
 			@RequestParam(value = "p", required = false, defaultValue = "0") int pageIndex,
@@ -159,7 +160,16 @@ public class SearchController {
 
 			List<UserProfile> profiles = this.mongoTemplate.find(query, UserProfile.class);
 
-			JSONObject justDailSearchResponse = getJustDialSearchServicePage(pageIndex, pageSize, term, request);
+			JSONObject justDailSearchResponse = new JSONObject();
+
+			if(catId != 0){
+				justDailSearchResponse = getJustDialCategoryServices(term, catId, pageSize, pageIndex, request);
+			}else{
+				justDailSearchResponse	= getJustDialSearchServicePage(pageIndex, pageSize, term, request);
+			}
+			
+
+
 			JSONArray JDresult = justDailSearchResponse.getJSONArray("services");
 			JSONArray DbserviceList = new JSONArray(profiles);
 			for (int i = 0; i < DbserviceList.length(); i++) {
@@ -172,7 +182,7 @@ public class SearchController {
 			for (int i = 0; i < JDresult.length(); i++) {
 				JSONObject jsonObject = JDresult.getJSONObject(i);
 				String totReviews = jsonObject.getString("totalReviews");
-				if(totReviews.equals("")){
+				if (totReviews.equals("")) {
 					totReviews = "0";
 				}
 				jsonObject.put("reviewCount", Integer.parseInt(totReviews));
@@ -392,6 +402,74 @@ public class SearchController {
 			}
 
 			JSONObject JDResponse = JDHandler.getSearchServiceList(JDtoken.getToken(), search, max, pageNo);
+			JSONObject resultsObject = JDResponse.getJSONObject("results");
+			JSONArray columns = resultsObject.getJSONArray("columns");
+			JSONArray dataList = resultsObject.getJSONArray("data");
+			JSONArray newDataList = new JSONArray();
+			for (int i = 0; i < dataList.length(); i++) {
+				JSONArray dataInfoList = dataList.getJSONArray(i);
+				JSONObject dataInfoMap = new JSONObject();
+				for (int j = 0; j < dataInfoList.length(); j++) {
+					dataInfoMap.put(columns.getString(j), dataInfoList.get(j));
+				}
+				newDataList.put(dataInfoMap);
+			}
+			response.put("services", newDataList);
+			// response.put("JDResponse", JDResponse);
+		} catch (Exception e) {
+			// throw e;
+			Util.handleException(e);
+			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
+		}
+		// Util.logStats(mongoTemplate, request, "search services", null, null, null,
+		// null, term, filterCriteria,
+		// "search services for term = " + term, "SEARCH");
+		// String newResponse = response.toString();
+		// return BYGenericResponseHandler.getResponse(response.toString());
+		return response;
+	}
+
+	/**
+	 * Search JD services by categories
+	 * @param category
+	 * @param catID
+	 * @param max
+	 * @param pageNo
+	 * @param request
+	 * @return
+	 * @throws Exception
+	 */
+	public JSONObject getJustDialCategoryServices(
+			// String category, Integer catID, Integer max, int pageNo
+			@RequestParam(value = "category", required = true) String category,
+			@RequestParam(value = "catID", required = true) int catID,
+			@RequestParam(value = "max", required = false, defaultValue = "10") int max,
+			@RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo,
+			HttpServletRequest request) throws Exception {
+		JSONObject response = new JSONObject();
+		try {
+
+			JustdialToken JDtoken = null;
+			List<JustdialToken> JDtokenList = null;
+			JDtokenList = justDialTokenRepository.findAll();
+			if (JDtokenList.size() > 0) {
+				JDtoken = JDtokenList.get(0);
+			}
+			// TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+			Date cuurentdate = new Date();
+			// Date expireDate = new Date(JDtoken.getExpires()*1000);
+			// int comp = cuurentdate.compareTo(expireDate);
+			JustDialHandler JDHandler = new JustDialHandler();
+			Long currentTime = cuurentdate.getTime() / 1000;
+
+			if (null == JDtoken || currentTime >= JDtoken.getExpires()) {
+				JustdialToken JDNewtoken = JDHandler.getNewToken();
+				JDtoken.setToken(JDNewtoken.getToken());
+				JDtoken.setExpires(JDNewtoken.getExpires());
+				justDialTokenRepository.save(JDtoken);
+			}
+
+			JSONObject JDResponse = JDHandler.getServiceList(JDtoken.getToken(), category, catID, max, pageNo);
 			JSONObject resultsObject = JDResponse.getJSONObject("results");
 			JSONArray columns = resultsObject.getJSONArray("columns");
 			JSONArray dataList = resultsObject.getJSONArray("data");
