@@ -86,8 +86,8 @@ public class ServiceReviewResponse implements IResponse {
 		private String userId;
 		private Float rating;
 		private String review;
-		private Integer likeCount;
-		private Integer unLikeCount;
+		private List<String> likeCount;
+		private List<String> unLikeCount;
 		private int status;
 		private String userName;
 		private String parentReviewId;
@@ -95,6 +95,7 @@ public class ServiceReviewResponse implements IResponse {
 		private Date lastModifiedAt;
 
 		public ServiceReviewEntity(ServiceReview serviceReview, User user) {
+			this.setId(serviceReview.getId());
 			this.setServiceId(serviceReview.getServiceId());
 			this.setUserId(serviceReview.getUserId());
 			this.setRating(serviceReview.getRating());
@@ -141,21 +142,7 @@ public class ServiceReviewResponse implements IResponse {
 			this.review = review;
 		}
 
-		public Integer getLikeCount() {
-			return likeCount;
-		}
 
-		public void setLikeCount(Integer likeCount) {
-			this.likeCount = likeCount;
-		}
-
-		public Integer getUnLikeCount() {
-			return unLikeCount;
-		}
-
-		public void setUnLikeCount(Integer unLikeCount) {
-			this.unLikeCount = unLikeCount;
-		}
 
 		public int getStatus() {
 			return status;
@@ -203,6 +190,22 @@ public class ServiceReviewResponse implements IResponse {
 
 		public void setUserId(String userId) {
 			this.userId = userId;
+		}
+
+		public List<String> getLikeCount() {
+			return likeCount;
+		}
+
+		public void setLikeCount(List<String> likeCount) {
+			this.likeCount = likeCount;
+		}
+
+		public List<String> getUnLikeCount() {
+			return unLikeCount;
+		}
+
+		public void setUnLikeCount(List<String> unLikeCount) {
+			this.unLikeCount = unLikeCount;
 		}
 	}
 

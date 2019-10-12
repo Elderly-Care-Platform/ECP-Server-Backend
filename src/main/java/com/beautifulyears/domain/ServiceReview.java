@@ -1,6 +1,7 @@
 package com.beautifulyears.domain;
 
 import java.util.Date;
+import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -13,12 +14,13 @@ public class ServiceReview {
 
     @Id
     private String id;
+    
     private String serviceId;
     private String userId;
     private Float rating;
     private String review;
-    private Integer likeCount;
-    private Integer unLikeCount;
+    private List<String> likeCount;
+    private List<String> unLikeCount;
     private int status;
     private String userName;
     private String parentReviewId;
@@ -47,22 +49,6 @@ public class ServiceReview {
 
     public void setReview(String review) {
         this.review = review;
-    }
-
-    public Integer getLikeCount() {
-        return likeCount;
-    }
-
-    public void setLikeCount(Integer likeCount) {
-        this.likeCount = likeCount;
-    }
-
-    public Integer getUnLikeCount() {
-        return unLikeCount;
-    }
-
-    public void setUnLikeCount(Integer unLikeCount) {
-        this.unLikeCount = unLikeCount;
     }
 
     public int getStatus() {
@@ -117,7 +103,23 @@ public class ServiceReview {
         this.userId = userId;
     }
 
-    public ServiceReview(String serviceId, Float rating, String review, Integer likeCount, Integer unLikeCount,
+    public List<String> getLikeCount() {
+        return likeCount;
+    }
+
+    public void setLikeCount(List<String> likeCount) {
+        this.likeCount = likeCount;
+    }
+
+    public List<String> getUnLikeCount() {
+        return unLikeCount;
+    }
+
+    public void setUnLikeCount(List<String> unLikeCount) {
+        this.unLikeCount = unLikeCount;
+    }
+
+    public ServiceReview(String serviceId, Float rating, String review, List<String> likeCount, List<String> unLikeCount,
             int status, String userName, String userId, String parentReviewId) {
         this.serviceId = serviceId;
         this.userId = userId;
