@@ -432,7 +432,7 @@ public class ReviewController {
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
 			page = serviceRevRepo.getPage(searchTxt, serviceId, pageable);
-			serviceReviewPage = ServiceReviewResponse.getPage(page, currentUser);
+			serviceReviewPage = ServiceReviewResponse.getPage(page, currentUser,mongoTemplate);
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
