@@ -3,10 +3,18 @@ package com.beautifulyears.rest.response;
 import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.domain.ServiceReview;
 import com.beautifulyears.domain.User;
+import com.beautifulyears.domain.UserProfile;
+import com.beautifulyears.repository.UserProfileRepository;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 
 public class ServiceReviewResponse implements IResponse {
 
@@ -17,22 +25,42 @@ public class ServiceReviewResponse implements IResponse {
 		return this.serviceReviewArray;
 	}
 
+	// private MongoTemplate mongoTemplate;
+	// private UserProfileRepository userProfileRepository;
+
+	// @Autowired
+	// ServiceReviewResponse(UserProfileRepository userProfileRepository) {
+	// this.userProfileRepository = userProfileRepository;
+	// // setUserRepository(userProfileRepository);
+	// }
+
+	// private static void setUserRepository(UserProfileRepository
+	// userProfileRepository) {
+	// ServiceReviewResponse.userProfileRepository = userProfileRepository;
+	// }
+
 	public static class ServiceReviewPage {
 		private List<ServiceReviewEntity> content = new ArrayList<ServiceReviewEntity>();
 		private boolean lastPage;
 		private long number;
 		private long size;
 		private long total;
+		private MongoTemplate mongoTemplate;
 
 		public ServiceReviewPage() {
 			super();
 		}
 
-		public ServiceReviewPage(PageImpl<ServiceReview> page, User user) {
+		public ServiceReviewPage(PageImpl<ServiceReview> page, User user, MongoTemplate mongoTemplate) {
 			this.lastPage = page.isLastPage();
 			this.number = page.getNumber();
+			this.mongoTemplate = mongoTemplate;
 			for (ServiceReview serviceReview : page.getContent()) {
-				this.content.add(new ServiceReviewEntity(serviceReview, user));
+				UserProfile reviewUser = new UserProfile();
+				if(serviceReview.getUserId() != null){
+					reviewUser = getUserProfile(serviceReview.getUserId());
+				}
+				this.content.add(new ServiceReviewEntity(serviceReview, user,reviewUser));
 			}
 			this.size = page.getSize();
 			this.total = page.getTotal();
@@ -78,6 +106,17 @@ public class ServiceReviewResponse implements IResponse {
 			this.number = number;
 		}
 
+		public UserProfile getUserProfile(String userId) {
+			UserProfile userProfile = null;
+
+			Query q = new Query();
+			q.addCriteria(Criteria.where("userId").is(userId));
+			userProfile = this.mongoTemplate.findOne(q, UserProfile.class);
+			// userProfile = userProfileRepository.findByUserId(userId);
+			return userProfile;
+
+		}
+
 	}
 
 	public static class ServiceReviewEntity {
@@ -93,8 +132,9 @@ public class ServiceReviewResponse implements IResponse {
 		private String parentReviewId;
 		private Date createdAt;
 		private Date lastModifiedAt;
+		private Map<String, String> userImage;
 
-		public ServiceReviewEntity(ServiceReview serviceReview, User user) {
+		public ServiceReviewEntity(ServiceReview serviceReview, User user,UserProfile reviewUser) {
 			this.setId(serviceReview.getId());
 			this.setServiceId(serviceReview.getServiceId());
 			this.setUserId(serviceReview.getUserId());
@@ -107,7 +147,7 @@ public class ServiceReviewResponse implements IResponse {
 			this.setParentReviewId(serviceReview.getParentReviewId());
 			this.setCreatedAt(serviceReview.getCreatedAt());
 			this.setLastModifiedAt(serviceReview.getLastModifiedAt());
-
+			this.setUserImage(reviewUser.getBasicProfileInfo().getProfileImage());
 		}
 
 		public String getId() {
@@ -141,8 +181,6 @@ public class ServiceReviewResponse implements IResponse {
 		public void setReview(String review) {
 			this.review = review;
 		}
-
-
 
 		public int getStatus() {
 			return status;
@@ -207,35 +245,44 @@ public class ServiceReviewResponse implements IResponse {
 		public void setUnLikeCount(List<String> unLikeCount) {
 			this.unLikeCount = unLikeCount;
 		}
+
+		public Map<String, String> getUserImage() {
+			return userImage;
+		}
+
+		public void setUserImage(Map<String, String> userImage) {
+			this.userImage = userImage;
+		}
+
 	}
 
 	public void add(List<ServiceReview> serviceReviewArray) {
 		for (ServiceReview serviceReview : serviceReviewArray) {
-			this.serviceReviewArray.add(new ServiceReviewEntity(serviceReview, null));
+			this.serviceReviewArray.add(new ServiceReviewEntity(serviceReview, null,null));
 		}
 	}
 
 	public void add(ServiceReview serviceReview) {
-		this.serviceReviewArray.add(new ServiceReviewEntity(serviceReview, null));
+		this.serviceReviewArray.add(new ServiceReviewEntity(serviceReview, null,null));
 	}
 
 	public void add(List<ServiceReview> serviceReviewArray, User user) {
 		for (ServiceReview serviceReview : serviceReviewArray) {
-			this.serviceReviewArray.add(new ServiceReviewEntity(serviceReview, user));
+			this.serviceReviewArray.add(new ServiceReviewEntity(serviceReview, user,null));
 		}
 	}
 
 	public void add(ServiceReview serviceReview, User user) {
-		this.serviceReviewArray.add(new ServiceReviewEntity(serviceReview, user));
+		this.serviceReviewArray.add(new ServiceReviewEntity(serviceReview, user,null));
 	}
 
-	public static ServiceReviewPage getPage(PageImpl<ServiceReview> page, User user) {
-		ServiceReviewPage res = new ServiceReviewPage(page, user);
+	public static ServiceReviewPage getPage(PageImpl<ServiceReview> page, User user,MongoTemplate mongoTemplate) {
+		ServiceReviewPage res = new ServiceReviewPage(page, user,mongoTemplate);
 		return res;
 	}
 
 	public ServiceReviewEntity getServiceReviewEntity(ServiceReview serviceReview, User user) {
-		return new ServiceReviewEntity(serviceReview, user);
+		return new ServiceReviewEntity(serviceReview, user,null);
 	}
 
 }
