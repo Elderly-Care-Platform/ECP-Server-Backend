@@ -6,38 +6,20 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.newA
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort.Direction;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
-import org.springframework.data.mongodb.core.aggregation.TypedAggregation;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.beautifulyears.constants.ActivityLogConstants;
 import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.constants.DiscussConstants;
 import com.beautifulyears.domain.DiscussReply;
 import com.beautifulyears.domain.HousingFacility;
+import com.beautifulyears.domain.ServiceReview;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.domain.UserRating;
-import com.beautifulyears.domain.ServiceReview;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
 import com.beautifulyears.mail.MailHandler;
@@ -56,6 +38,23 @@ import com.beautifulyears.util.ResourceUtil;
 import com.beautifulyears.util.Util;
 import com.beautifulyears.util.activityLogHandler.ActivityLogHandler;
 import com.beautifulyears.util.activityLogHandler.ReplyActivityLogHandler;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.aggregation.TypedAggregation;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 @RequestMapping("/reviewRate")
@@ -432,7 +431,7 @@ public class ReviewController {
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
 			page = serviceRevRepo.getPage(searchTxt, serviceId, pageable);
-			serviceReviewPage = ServiceReviewResponse.getPage(page, currentUser,mongoTemplate);
+			serviceReviewPage = ServiceReviewResponse.getPage(page, currentUser, mongoTemplate);
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
@@ -460,10 +459,21 @@ public class ReviewController {
 				UserProfile userProfile = null;
 				userProfile = mongoTemplate.findOne(query, UserProfile.class);
 
+				List<ServiceReview> allServiceReviews = new ArrayList<ServiceReview>();
+				allServiceReviews = serviceRevRepo.findByServiceId(serviceRevExtracted.getServiceId());
+				allServiceReviews.add(serviceRevExtracted);
+
 				if (userProfile != null) {
+
 					userProfile.getReviewedBy().add(currentUser.getId());
-					float totRating = userProfile.getAggrRatingPercentage();
-					totRating = (totRating + serviceRevExtracted.getRating()) / userProfile.getReviewedBy().size();
+					float totRating = 0;
+
+					for (ServiceReview review : allServiceReviews) {
+						totRating += review.getRating();
+					}
+
+					totRating = totRating / allServiceReviews.size();
+
 					userProfile.setAggrRatingPercentage(totRating);
 					mongoTemplate.save(userProfile);
 				}
