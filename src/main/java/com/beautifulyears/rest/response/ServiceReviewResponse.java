@@ -25,20 +25,6 @@ public class ServiceReviewResponse implements IResponse {
 		return this.serviceReviewArray;
 	}
 
-	// private MongoTemplate mongoTemplate;
-	// private UserProfileRepository userProfileRepository;
-
-	// @Autowired
-	// ServiceReviewResponse(UserProfileRepository userProfileRepository) {
-	// this.userProfileRepository = userProfileRepository;
-	// // setUserRepository(userProfileRepository);
-	// }
-
-	// private static void setUserRepository(UserProfileRepository
-	// userProfileRepository) {
-	// ServiceReviewResponse.userProfileRepository = userProfileRepository;
-	// }
-
 	public static class ServiceReviewPage {
 		private List<ServiceReviewEntity> content = new ArrayList<ServiceReviewEntity>();
 		private boolean lastPage;
