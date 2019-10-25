@@ -16,6 +16,7 @@ import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.constants.DiscussConstants;
 import com.beautifulyears.domain.DiscussReply;
 import com.beautifulyears.domain.HousingFacility;
+import com.beautifulyears.domain.ServiceRatings;
 import com.beautifulyears.domain.ServiceReview;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserProfile;
@@ -25,6 +26,7 @@ import com.beautifulyears.exceptions.BYException;
 import com.beautifulyears.mail.MailHandler;
 import com.beautifulyears.repository.DiscussReplyRepository;
 import com.beautifulyears.repository.HousingRepository;
+import com.beautifulyears.repository.ServiceRatingsRepository;
 import com.beautifulyears.repository.ServiceReviewRepository;
 import com.beautifulyears.repository.UserProfileRepository;
 import com.beautifulyears.repository.UserRatingRepository;
@@ -50,6 +52,7 @@ import org.springframework.data.mongodb.core.aggregation.TypedAggregation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -67,16 +70,19 @@ public class ReviewController {
 	private UserProfileRepository userProfileRepository;
 	private ActivityLogHandler<DiscussReply> logHandler;
 	private ServiceReviewRepository serviceRevRepo;
+	private ServiceRatingsRepository serviceRateRepo;
 
 	@Autowired
 	public ReviewController(DiscussReplyRepository discussReplyRepository, UserRatingRepository userRatingRepository,
 			UserProfileRepository userProfileRepository, HousingRepository housingRepository,
-			ServiceReviewRepository serviceRevRepo, MongoTemplate mongoTemplate) {
+			ServiceReviewRepository serviceRevRepo, ServiceRatingsRepository serviceRateRepo,
+			MongoTemplate mongoTemplate) {
 		this.discussReplyRepository = discussReplyRepository;
 		this.userRatingRepository = userRatingRepository;
 		this.userProfileRepository = userProfileRepository;
 		this.housingRepository = housingRepository;
 		this.serviceRevRepo = serviceRevRepo;
+		this.serviceRateRepo = serviceRateRepo;
 		this.mongoTemplate = mongoTemplate;
 		logHandler = new ReplyActivityLogHandler(mongoTemplate);
 	}
@@ -439,6 +445,25 @@ public class ReviewController {
 	}
 
 	/**
+	 * Get ratings for services
+	 */
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/serviceRatings/{serviceId}" }, produces = {
+			"application/json" })
+	@ResponseBody
+	public Object getServiceRatings(@PathVariable(value = "serviceId") String serviceId, HttpServletRequest request)
+			throws Exception {
+		LoggerUtil.logEntry();
+
+		List<ServiceRatings> serviceRating = null;
+		try {
+			serviceRating = serviceRateRepo.findByServiceId(serviceId);
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+		return BYGenericResponseHandler.getResponse(serviceRating);
+	}
+
+	/**
 	 * Add service rating and reviews
 	 */
 	@RequestMapping(method = { RequestMethod.POST }, value = { "/addServiceReview" }, consumes = { "application/json" })
@@ -459,11 +484,11 @@ public class ReviewController {
 				UserProfile userProfile = null;
 				userProfile = mongoTemplate.findOne(query, UserProfile.class);
 
-				List<ServiceReview> allServiceReviews = new ArrayList<ServiceReview>();
-				allServiceReviews = serviceRevRepo.findByServiceId(serviceRevExtracted.getServiceId());
-				allServiceReviews.add(serviceRevExtracted);
-
 				if (userProfile != null) {
+
+					List<ServiceReview> allServiceReviews = new ArrayList<ServiceReview>();
+					allServiceReviews = serviceRevRepo.findByServiceId(serviceRevExtracted.getServiceId());
+					allServiceReviews.add(serviceRevExtracted);
 
 					userProfile.getReviewedBy().add(currentUser.getId());
 					float totRating = 0;
@@ -491,6 +516,70 @@ public class ReviewController {
 		Util.logStats(mongoTemplate, request, "NEW Service Review added.", currentUser.getId(), currentUser.getEmail(),
 				serviceReview.getId(), null, null, null, "new service review entity is added", "SERVICE_REVIEW");
 		return BYGenericResponseHandler.getResponse(serviceReview);
+	}
+
+	/**
+	 * Add new service rating
+	 */
+	@RequestMapping(method = { RequestMethod.POST }, value = { "/addServiceRating" }, consumes = { "application/json" })
+	@ResponseBody
+	public Object addServiceRating(@RequestBody ServiceRatings serviceRating, HttpServletRequest request)
+			throws Exception {
+		LoggerUtil.logEntry();
+		User currentUser = Util.getSessionUser(request);
+		if (null != currentUser) {
+			if (serviceRating != null && (Util.isEmpty(serviceRating.getId()))) {
+
+				ServiceRatings serviceRateExtracted = new ServiceRatings(serviceRating.getServiceId(),
+						currentUser.getId(), serviceRating.getRating());
+
+				Query query = new Query();
+				query.addCriteria(Criteria.where("userId").is(currentUser.getId()));
+				query.addCriteria(Criteria.where("serviceId").is(serviceRateExtracted.getServiceId()));
+				ServiceRatings existingRating = null;
+				existingRating = mongoTemplate.findOne(query, ServiceRatings.class);
+
+				if (existingRating == null) {
+
+					Query serviceQuery = new Query();
+					serviceQuery.addCriteria(Criteria.where("id").is(serviceRateExtracted.getServiceId()));
+					UserProfile userProfile = null;
+					userProfile = mongoTemplate.findOne(serviceQuery, UserProfile.class);
+
+					if (userProfile != null) {
+
+						List<ServiceRatings> allServiceRating = new ArrayList<ServiceRatings>();
+						allServiceRating = serviceRateRepo.findByServiceId(serviceRateExtracted.getServiceId());
+						allServiceRating.add(serviceRateExtracted);
+
+						userProfile.getRatedBy().add(currentUser.getId());
+						float totRating = 0;
+
+						for (ServiceRatings rating : allServiceRating) {
+							totRating += rating.getRating();
+						}
+
+						totRating = totRating / allServiceRating.size();
+
+						userProfile.setAggrRatingPercentage(totRating);
+						mongoTemplate.save(userProfile);
+					}
+
+					serviceRating = serviceRateRepo.save(serviceRateExtracted);
+				} else {
+					throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
+				}
+
+				logger.info("new service rating entity created with ID: " + serviceRating.getId());
+			} else {
+				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
+			}
+		} else {
+			throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
+		}
+		Util.logStats(mongoTemplate, request, "NEW Service Review added.", currentUser.getId(), currentUser.getEmail(),
+				serviceRating.getId(), null, null, null, "new service review entity is added", "SERVICE_REVIEW");
+		return BYGenericResponseHandler.getResponse(serviceRating);
 	}
 
 	/**
