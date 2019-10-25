@@ -447,11 +447,10 @@ public class ReviewController {
 	/**
 	 * Get ratings for services
 	 */
-	@RequestMapping(method = { RequestMethod.GET }, value = { "/serviceRatings/{serviceId}" }, produces = {
-			"application/json" })
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/serviceRatings" }, produces = { "application/json" })
 	@ResponseBody
-	public Object getServiceRatings(@PathVariable(value = "serviceId") String serviceId, HttpServletRequest request)
-			throws Exception {
+	public Object getServiceRatings(@RequestParam(value = "serviceId", required = true) String serviceId,
+			HttpServletRequest request) throws Exception {
 		LoggerUtil.logEntry();
 
 		List<ServiceRatings> serviceRating = null;
