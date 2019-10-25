@@ -539,12 +539,12 @@ public class ReviewController {
 				ServiceRatings existingRating = null;
 				existingRating = mongoTemplate.findOne(query, ServiceRatings.class);
 
-				if (existingRating == null) {
+				Query serviceQuery = new Query();
+				serviceQuery.addCriteria(Criteria.where("id").is(serviceRateExtracted.getServiceId()));
+				UserProfile userProfile = null;
+				userProfile = mongoTemplate.findOne(serviceQuery, UserProfile.class);
 
-					Query serviceQuery = new Query();
-					serviceQuery.addCriteria(Criteria.where("id").is(serviceRateExtracted.getServiceId()));
-					UserProfile userProfile = null;
-					userProfile = mongoTemplate.findOne(serviceQuery, UserProfile.class);
+				if (existingRating == null) {
 
 					if (userProfile != null) {
 
@@ -567,7 +567,28 @@ public class ReviewController {
 
 					serviceRating = serviceRateRepo.save(serviceRateExtracted);
 				} else {
-					throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
+					// Update User Rating
+					existingRating.setRating(serviceRateExtracted.getRating());
+					existingRating.setLastModifiedAt(serviceRateExtracted.getLastModifiedAt());
+					serviceRating = serviceRateRepo.save(existingRating);
+
+					if (userProfile != null) {
+						// Recount average rating for DB service
+						List<ServiceRatings> allServiceRating = new ArrayList<ServiceRatings>();
+						allServiceRating = serviceRateRepo.findByServiceId(serviceRateExtracted.getServiceId());
+
+						float totRating = 0;
+
+						for (ServiceRatings rating : allServiceRating) {
+							totRating += rating.getRating();
+						}
+
+						totRating = totRating / allServiceRating.size();
+
+						userProfile.setAggrRatingPercentage(totRating);
+						mongoTemplate.save(userProfile);
+					}
+					// throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
 				}
 
 				logger.info("new service rating entity created with ID: " + serviceRating.getId());
