@@ -260,8 +260,7 @@ public class User implements Serializable {
 				+ ", socialSignOnPlatform=" + socialSignOnPlatform
 				+ ", passwordCode=" + passwordCode + ", passwordCodeExpiry="
 				+ passwordCodeExpiry + ", userRoleId=" + userRoleId
-				+ ", isActive=" + isActive + ", permissions=" + permissions + ", favEvents=" + favEvents
-				+ "]";
+				+ ", isActive=" + isActive + ", permissions=" + permissions + "]";
 	}
 
 }
