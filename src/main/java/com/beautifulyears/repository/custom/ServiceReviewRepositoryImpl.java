@@ -36,6 +36,7 @@ public class ServiceReviewRepositoryImpl implements ServiceReviewRepositoryCusto
 		if(serviceId!= null  && serviceId != ""){
 			q.addCriteria(Criteria.where("serviceId").is(serviceId));
 		}
+		q.addCriteria(Criteria.where("isDeleted").is(false));
 		return q;
 	}
 

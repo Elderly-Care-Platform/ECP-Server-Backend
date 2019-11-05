@@ -474,40 +474,29 @@ public class ReviewController {
 		if (null != currentUser) {
 			if (serviceReview != null && (Util.isEmpty(serviceReview.getId()))) {
 				ServiceReview serviceRevExtracted = new ServiceReview(serviceReview.getServiceId(),
-						serviceReview.getRating(), serviceReview.getReview(), serviceReview.getLikeCount(),
-						serviceReview.getUnLikeCount(), serviceReview.getStatus(), currentUser.getUserName(),
-						currentUser.getId(), serviceReview.getParentReviewId());
-
-				Query query = new Query();
-				query.addCriteria(Criteria.where("id").is(serviceRevExtracted.getServiceId()));
-				UserProfile userProfile = null;
-				userProfile = mongoTemplate.findOne(query, UserProfile.class);
-
-				if (userProfile != null) {
-
-					List<ServiceReview> allServiceReviews = new ArrayList<ServiceReview>();
-					allServiceReviews = serviceRevRepo.findByServiceId(serviceRevExtracted.getServiceId());
-					allServiceReviews.add(serviceRevExtracted);
-
-					userProfile.getReviewedBy().add(currentUser.getId());
-					float totRating = 0;
-
-					for (ServiceReview review : allServiceReviews) {
-						totRating += review.getRating();
-					}
-
-					totRating = totRating / allServiceReviews.size();
-
-					userProfile.setAggrRatingPercentage(totRating);
-					mongoTemplate.save(userProfile);
-				}
+						serviceReview.getReview(), serviceReview.getLikeCount(), serviceReview.getUnLikeCount(),
+						currentUser.getId(), serviceReview.getParentReviewId(), serviceReview.getTitle(), false);
 
 				serviceReview = serviceRevRepo.save(serviceRevExtracted);
 				// logHandlerRev.addLog(productReview, ActivityLogConstants.CRUD_TYPE_CREATE,
 				// request);
 				logger.info("new service review entity created with ID: " + serviceReview.getId());
 			} else {
-				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
+
+				Query query = new Query();
+				query.addCriteria(Criteria.where("id").is(serviceReview.getId()));
+				ServiceReview serviceReviewExtracted = null;
+				serviceReviewExtracted = mongoTemplate.findOne(query, ServiceReview.class);
+				if (serviceReviewExtracted != null) {
+
+					serviceReviewExtracted.setTitle(serviceReview.getTitle());
+					serviceReviewExtracted.setReview(serviceReview.getReview());
+					serviceReview = serviceRevRepo.save(serviceReviewExtracted);
+					logger.info("service review entity updated with ID: " + serviceReview.getId());
+
+				} else {
+					throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
+				}
 			}
 		} else {
 			throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
@@ -515,6 +504,31 @@ public class ReviewController {
 		Util.logStats(mongoTemplate, request, "NEW Service Review added.", currentUser.getId(), currentUser.getEmail(),
 				serviceReview.getId(), null, null, null, "new service review entity is added", "SERVICE_REVIEW");
 		return BYGenericResponseHandler.getResponse(serviceReview);
+	}
+
+	@RequestMapping(method = { RequestMethod.DELETE }, value = { "/deleteServiceReview/{reviewId}" }, produces = {
+			"application/json" })
+	@ResponseBody
+	public Object deleteServiceReview(@PathVariable(value = "reviewId") String reviewId, HttpServletRequest request)
+			throws Exception {
+		LoggerUtil.logEntry();
+		User currentUser = Util.getSessionUser(request);
+		ServiceReview reviewDeleted = null;
+		if (null != currentUser) {
+			Query query = new Query();
+			query.addCriteria(Criteria.where("id").is(reviewId));
+			ServiceReview serviceReviewExtracted = null;
+			serviceReviewExtracted = mongoTemplate.findOne(query, ServiceReview.class);
+			if (serviceReviewExtracted != null) {
+				serviceReviewExtracted.setDeleted(true);
+				reviewDeleted = serviceRevRepo.save(serviceReviewExtracted);
+				logger.info("service review entity deleted with ID: " + reviewDeleted.getId());
+			}
+
+		} else {
+			throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
+		}
+		return BYGenericResponseHandler.getResponse(reviewDeleted);
 	}
 
 	/**
@@ -609,8 +623,7 @@ public class ReviewController {
 			"application/json" })
 	@ResponseBody
 	public Object serviceLikeUnlikeReview(@RequestParam(value = "reviewId", required = true) String reviewId,
-			@RequestParam(value = "like", required = true) Boolean isLike, HttpServletRequest request)
-			throws Exception {
+			HttpServletRequest request) throws Exception {
 		LoggerUtil.logEntry();
 		User currentUser = Util.getSessionUser(request);
 		ServiceReview reviewUpdated = null;
@@ -623,29 +636,33 @@ public class ReviewController {
 			List<String> users = new ArrayList<String>();
 			if (serviceRevExtracted != null) {
 
-				if (isLike) {
-					if (serviceRevExtracted.getLikeCount() != null
-							&& serviceRevExtracted.getLikeCount().contains(currentUser.getId())) {
-						throw new BYException(BYErrorCodes.USER_ALREADY_EXIST);
-					} else {
-						if (serviceRevExtracted.getLikeCount() != null) {
-							users = serviceRevExtracted.getLikeCount();
-						}
-						users.add(currentUser.getId());
-						serviceRevExtracted.setLikeCount(users);
-					}
+				// if (isLike) {
+				if (serviceRevExtracted.getLikeCount() != null
+						&& serviceRevExtracted.getLikeCount().contains(currentUser.getId())) {
+					users = serviceRevExtracted.getLikeCount();
+					users.remove(currentUser.getId());
+					serviceRevExtracted.setLikeCount(users);
+					// throw new BYException(BYErrorCodes.USER_ALREADY_EXIST);
 				} else {
-					if (serviceRevExtracted.getUnLikeCount() != null
-							&& serviceRevExtracted.getUnLikeCount().contains(currentUser.getId())) {
-						throw new BYException(BYErrorCodes.USER_ALREADY_EXIST);
-					} else {
-						if (serviceRevExtracted.getUnLikeCount() != null) {
-							users = serviceRevExtracted.getUnLikeCount();
-						}
-						users.add(currentUser.getId());
-						serviceRevExtracted.setUnLikeCount(users);
+					if (serviceRevExtracted.getLikeCount() != null) {
+						users = serviceRevExtracted.getLikeCount();
 					}
+					users.add(currentUser.getId());
+					serviceRevExtracted.setLikeCount(users);
 				}
+				// }
+				// else {
+				// if (serviceRevExtracted.getUnLikeCount() != null
+				// && serviceRevExtracted.getUnLikeCount().contains(currentUser.getId())) {
+				// throw new BYException(BYErrorCodes.USER_ALREADY_EXIST);
+				// } else {
+				// if (serviceRevExtracted.getUnLikeCount() != null) {
+				// users = serviceRevExtracted.getUnLikeCount();
+				// }
+				// users.add(currentUser.getId());
+				// serviceRevExtracted.setUnLikeCount(users);
+				// }
+				// }
 
 				reviewUpdated = serviceRevRepo.save(serviceRevExtracted);
 			} else {

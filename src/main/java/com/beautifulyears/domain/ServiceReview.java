@@ -14,15 +14,14 @@ public class ServiceReview {
 
     @Id
     private String id;
-    
+
     private String serviceId;
     private String userId;
-    private Float rating;
     private String review;
     private List<String> likeCount;
     private List<String> unLikeCount;
-    private int status;
-    private String userName;
+    private boolean isDeleted;
+    private String title;
     private String parentReviewId;
     private final Date createdAt = new Date();
     private Date lastModifiedAt = new Date();
@@ -35,36 +34,12 @@ public class ServiceReview {
         this.id = id;
     }
 
-    public Float getRating() {
-        return rating;
-    }
-
-    public void setRating(Float rating) {
-        this.rating = rating;
-    }
-
     public String getReview() {
         return review;
     }
 
     public void setReview(String review) {
         this.review = review;
-    }
-
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
     }
 
     public String getParentReviewId() {
@@ -119,16 +94,31 @@ public class ServiceReview {
         this.unLikeCount = unLikeCount;
     }
 
-    public ServiceReview(String serviceId, Float rating, String review, List<String> likeCount, List<String> unLikeCount,
-            int status, String userName, String userId, String parentReviewId) {
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public ServiceReview(String serviceId, String review, List<String> likeCount, List<String> unLikeCount,
+            String userId, String parentReviewId, String title, boolean isDeleted) {
         this.serviceId = serviceId;
         this.userId = userId;
-        this.rating = rating;
         this.review = review;
         this.likeCount = likeCount;
         this.unLikeCount = unLikeCount;
-        this.status = status;
-        this.userName = userName;
+        this.title = title;
+        this.isDeleted = isDeleted;
         this.parentReviewId = parentReviewId;
         this.lastModifiedAt = new Date();
     }
