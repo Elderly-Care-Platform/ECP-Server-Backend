@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.beautifulyears.constants.BYConstants;
+import com.beautifulyears.domain.ServiceRatings;
 import com.beautifulyears.domain.ServiceReview;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserProfile;
@@ -43,10 +44,16 @@ public class ServiceReviewResponse implements IResponse {
 			this.mongoTemplate = mongoTemplate;
 			for (ServiceReview serviceReview : page.getContent()) {
 				UserProfile reviewUser = new UserProfile();
-				if(serviceReview.getUserId() != null){
+				ServiceRatings userRating = new ServiceRatings();
+				float rating = 0;
+				if (serviceReview.getUserId() != null) {
 					reviewUser = getUserProfile(serviceReview.getUserId());
+					userRating = getUserRating(serviceReview.getUserId(), serviceReview.getServiceId());
+					if (userRating != null) {
+						rating = userRating.getRating();
+					}
 				}
-				this.content.add(new ServiceReviewEntity(serviceReview, user,reviewUser));
+				this.content.add(new ServiceReviewEntity(serviceReview, user, reviewUser, rating));
 			}
 			this.size = page.getSize();
 			this.total = page.getTotal();
@@ -103,6 +110,17 @@ public class ServiceReviewResponse implements IResponse {
 
 		}
 
+		public ServiceRatings getUserRating(String userId, String serviceId) {
+			ServiceRatings userRating = null;
+
+			Query q = new Query();
+			q.addCriteria(Criteria.where("userId").is(userId));
+			q.addCriteria(Criteria.where("serviceId").is(serviceId));
+			userRating = this.mongoTemplate.findOne(q, ServiceRatings.class);
+			// userProfile = userProfileRepository.findByUserId(userId);
+			return userRating;
+		}
+
 	}
 
 	public static class ServiceReviewEntity {
@@ -113,23 +131,23 @@ public class ServiceReviewResponse implements IResponse {
 		private String review;
 		private List<String> likeCount;
 		private List<String> unLikeCount;
-		private int status;
+		private String title;
 		private String userName;
 		private String parentReviewId;
 		private Date createdAt;
 		private Date lastModifiedAt;
 		private Map<String, String> userImage;
 
-		public ServiceReviewEntity(ServiceReview serviceReview, User user,UserProfile reviewUser) {
+		public ServiceReviewEntity(ServiceReview serviceReview, User user, UserProfile reviewUser, Float userRating) {
 			this.setId(serviceReview.getId());
 			this.setServiceId(serviceReview.getServiceId());
 			this.setUserId(serviceReview.getUserId());
-			this.setRating(serviceReview.getRating());
+			this.setRating(userRating);
 			this.setReview(serviceReview.getReview());
 			this.setLikeCount(serviceReview.getLikeCount());
 			this.setUnLikeCount(serviceReview.getUnLikeCount());
-			this.setStatus(serviceReview.getStatus());
-			this.setUserName(serviceReview.getUserName());
+			this.setTitle(serviceReview.getTitle());
+			this.setUserName(reviewUser.getBasicProfileInfo().getFirstName());
 			this.setParentReviewId(serviceReview.getParentReviewId());
 			this.setCreatedAt(serviceReview.getCreatedAt());
 			this.setLastModifiedAt(serviceReview.getLastModifiedAt());
@@ -166,14 +184,6 @@ public class ServiceReviewResponse implements IResponse {
 
 		public void setReview(String review) {
 			this.review = review;
-		}
-
-		public int getStatus() {
-			return status;
-		}
-
-		public void setStatus(int status) {
-			this.status = status;
 		}
 
 		public String getUserName() {
@@ -240,35 +250,43 @@ public class ServiceReviewResponse implements IResponse {
 			this.userImage = userImage;
 		}
 
+		public String getTitle() {
+			return title;
+		}
+
+		public void setTitle(String title) {
+			this.title = title;
+		}
+
 	}
 
 	public void add(List<ServiceReview> serviceReviewArray) {
 		for (ServiceReview serviceReview : serviceReviewArray) {
-			this.serviceReviewArray.add(new ServiceReviewEntity(serviceReview, null,null));
+			this.serviceReviewArray.add(new ServiceReviewEntity(serviceReview, null, null, null));
 		}
 	}
 
 	public void add(ServiceReview serviceReview) {
-		this.serviceReviewArray.add(new ServiceReviewEntity(serviceReview, null,null));
+		this.serviceReviewArray.add(new ServiceReviewEntity(serviceReview, null, null, null));
 	}
 
 	public void add(List<ServiceReview> serviceReviewArray, User user) {
 		for (ServiceReview serviceReview : serviceReviewArray) {
-			this.serviceReviewArray.add(new ServiceReviewEntity(serviceReview, user,null));
+			this.serviceReviewArray.add(new ServiceReviewEntity(serviceReview, user, null, null));
 		}
 	}
 
 	public void add(ServiceReview serviceReview, User user) {
-		this.serviceReviewArray.add(new ServiceReviewEntity(serviceReview, user,null));
+		this.serviceReviewArray.add(new ServiceReviewEntity(serviceReview, user, null, null));
 	}
 
-	public static ServiceReviewPage getPage(PageImpl<ServiceReview> page, User user,MongoTemplate mongoTemplate) {
-		ServiceReviewPage res = new ServiceReviewPage(page, user,mongoTemplate);
+	public static ServiceReviewPage getPage(PageImpl<ServiceReview> page, User user, MongoTemplate mongoTemplate) {
+		ServiceReviewPage res = new ServiceReviewPage(page, user, mongoTemplate);
 		return res;
 	}
 
 	public ServiceReviewEntity getServiceReviewEntity(ServiceReview serviceReview, User user) {
-		return new ServiceReviewEntity(serviceReview, user,null);
+		return new ServiceReviewEntity(serviceReview, user, null, null);
 	}
 
 }
