@@ -99,6 +99,7 @@ public class DiscussResponse implements IResponse {
 		private String discussType; // Q, P and A (Question, Post and Article)
 		private String text;
 		private int aggrReplyCount;
+		private int viewCount;
 		private int directReplyCount;
 		private String shortSynopsis;
 		private Date createdAt = new Date();
@@ -131,6 +132,7 @@ public class DiscussResponse implements IResponse {
 			}
 			this.setShortSynopsis(discuss.getShortSynopsis());
 			this.setAggrReplyCount(discuss.getAggrReplyCount());
+			this.setViewCount(discuss.getViewCount());
 			this.setDirectReplyCount(discuss.getDirectReplyCount());
 			this.setCreatedAt(discuss.getCreatedAt());
 			this.setSystemTags(discuss.getSystemTags());
@@ -311,6 +313,14 @@ public class DiscussResponse implements IResponse {
 
 		public void setAggrReplyCount(int aggrReplyCount) {
 			this.aggrReplyCount = aggrReplyCount;
+		}
+
+		public int getViewCount() {
+			return viewCount;
+		}
+
+		public void setViewCount(int viewCount) {
+			this.viewCount = viewCount;
 		}
 
 		public List<String> getTopicId() {

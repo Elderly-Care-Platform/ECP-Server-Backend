@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 //The discuss_comment collection represents comments
 @Document(collection = "discuss_replies")
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DiscussReply {
+public class DiscussReply implements Comparable<DiscussReply> {
 
 	@Id
 	private String id;
@@ -294,4 +294,9 @@ public class DiscussReply {
 		this.likedBy = likedBy;
 	}
 
+	@Override     
+	public int compareTo(DiscussReply reply) {          
+		return (this.getCreatedAt().before(reply.getCreatedAt()) ? -1 : 
+				(this.getCreatedAt() == reply.getCreatedAt() ? 0 : 1));     
+	} 
 }

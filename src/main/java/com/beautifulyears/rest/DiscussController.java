@@ -455,9 +455,10 @@ public class DiscussController {
 					UserProfile.class);
 
 			int aggrReplyCount = 0;
+			int viewCount = 0;
 			newDiscuss = new Discuss(discuss.getUserId(),
 					discuss.getUsername(), discussType, topicId, title, text,
-					discussStatus, aggrReplyCount, systemTags,
+					discussStatus, aggrReplyCount, viewCount, systemTags,
 					discuss.getShareCount(), discuss.getUserTags(),
 					discuss.getDiscussType().equals("P") ? discuss
 							.getArticlePhotoFilename() : null, false, false,

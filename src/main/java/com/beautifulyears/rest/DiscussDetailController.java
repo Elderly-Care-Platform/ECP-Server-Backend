@@ -1,8 +1,16 @@
 package com.beautifulyears.rest;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -52,16 +60,14 @@ import com.beautifulyears.util.activityLogHandler.ReplyActivityLogHandler;
 @Controller
 @RequestMapping("/discussDetail")
 public class DiscussDetailController {
-	private static final Logger logger = Logger
-			.getLogger(DiscussDetailController.class);
+	private static final Logger logger = Logger.getLogger(DiscussDetailController.class);
 	private MongoTemplate mongoTemplate;
 	private DiscussRepository discussRepository;
 	private DiscussReplyRepository discussReplyRepository;
 	private ActivityLogHandler<DiscussReply> logHandler;
 
 	@Autowired
-	public DiscussDetailController(MongoTemplate mongoTemplate,
-			DiscussRepository discussRepository,
+	public DiscussDetailController(MongoTemplate mongoTemplate, DiscussRepository discussRepository,
 			DiscussReplyRepository discussReplyRepository) {
 		this.discussRepository = discussRepository;
 		this.mongoTemplate = mongoTemplate;
@@ -80,17 +86,17 @@ public class DiscussDetailController {
 	 */
 	@RequestMapping(method = { RequestMethod.GET }, value = { "" }, produces = { "application/json" })
 	@ResponseBody
-	public Object getDiscussDetail(HttpServletRequest req,
-			HttpServletResponse res,
-			@RequestParam(value = "discussId", required = true) String discussId)
-			throws Exception {
+	public Object getDiscussDetail(HttpServletRequest req, HttpServletResponse res,
+			@RequestParam(value = "discussId", required = true) String discussId) throws Exception {
 		LoggerUtil.logEntry();
-		Util.logStats(mongoTemplate, req, "get detail of discuss item", null,
-				null, discussId, null, null,
-				Arrays.asList("discussId = " + discussId),
-				"get detail page for discussId " + discussId, "COMMUNITY");
-		return BYGenericResponseHandler.getResponse(getDiscussDetailById(
-				discussId, req));
+		Discuss discuss = discussRepository.findOne(discussId);
+		if(discuss != null){
+			discuss.setViewCount(discuss.getViewCount() + 1);
+			this.discussRepository.save(discuss);
+		}
+		Util.logStats(mongoTemplate, req, "get detail of discuss item", null, null, discussId, null, null,
+				Arrays.asList("discussId = " + discussId), "get detail page for discussId " + discussId, "COMMUNITY");
+		return BYGenericResponseHandler.getResponse(getDiscussDetailById(discussId, req));
 
 	}
 
@@ -105,8 +111,8 @@ public class DiscussDetailController {
 	 */
 	@RequestMapping(method = { RequestMethod.POST }, params = "type=0", consumes = { "application/json" })
 	@ResponseBody
-	public Object submitComment(@RequestBody DiscussReply comment,
-			HttpServletRequest req, HttpServletResponse res) throws Exception {
+	public Object submitComment(@RequestBody DiscussReply comment, HttpServletRequest req, HttpServletResponse res)
+			throws Exception {
 		LoggerUtil.logEntry();
 		String discussId = comment.getDiscussId();
 		User user = null;
@@ -116,42 +122,33 @@ public class DiscussDetailController {
 			List<DiscussReply> ancestors = null;
 			if (null != discuss) {
 				comment.setDiscussId(discuss.getId());
-				comment.setContentType(Util.getDiscussContentType(discuss
-						.getDiscussType()));
+				comment.setContentType(Util.getDiscussContentType(discuss.getDiscussType()));
 				comment.setReplyType(DiscussConstants.REPLY_TYPE_COMMENT);
 				user = Util.getSessionUser(req);
-				if (null != user
-						&& SessionController.checkCurrentSessionFor(req,
-								"COMMENT")) {
+				if (null != user && SessionController.checkCurrentSessionFor(req, "COMMENT")) {
 					comment.setUserId(user.getId());
 					comment.setUserName(user.getUserName());
 					Query query = new Query();
 					query.addCriteria(Criteria.where("userId").is(user.getId()));
-					UserProfile profile = mongoTemplate.findOne(query,
-							UserProfile.class);
+					UserProfile profile = mongoTemplate.findOne(query, UserProfile.class);
 					comment.setUserProfile(profile);
 				} else {
 					throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
 				}
 				if (!Util.isEmpty(comment.getParentReplyId())) {
 					// if nested comment
-					parentComment = discussReplyRepository.findOne(comment
-							.getParentReplyId());
+					parentComment = discussReplyRepository.findOne(comment.getParentReplyId());
 					if (null != parentComment) {
 						parentComment.setUrl(comment.getUrl());
-						parentComment.setDirectChildrenCount(parentComment
-								.getDirectChildrenCount() + 1);
-						comment.getAncestorsId().addAll(
-								parentComment.getAncestorsId());
+						parentComment.setDirectChildrenCount(parentComment.getDirectChildrenCount() + 1);
+						comment.getAncestorsId().addAll(parentComment.getAncestorsId());
 						comment.getAncestorsId().add(parentComment.getId());
 						comment.setParentReplyId(parentComment.getId());
 						mongoTemplate.save(parentComment);
 					}
 					Query query = new Query();
-					query.addCriteria(Criteria.where("id").in(
-							comment.getAncestorsId()));
-					ancestors = this.mongoTemplate.find(query,
-							DiscussReply.class);
+					query.addCriteria(Criteria.where("id").in(comment.getAncestorsId()));
+					ancestors = this.mongoTemplate.find(query, DiscussReply.class);
 					for (DiscussReply ancestor : ancestors) {
 						ancestor.setChildrenCount(ancestor.getChildrenCount() + 1);
 						mongoTemplate.save(ancestor);
@@ -166,71 +163,58 @@ public class DiscussDetailController {
 				discuss.setAggrReplyCount(discuss.getAggrReplyCount() + 1);
 				mongoTemplate.save(discuss);
 				mongoTemplate.save(comment);
-				Util.logStats(mongoTemplate, req, "new Comment", user.getId(),
-						user.getEmail(), discuss.getId(),
-						parentComment != null ? parentComment.getId() : null,
-						null, null, "new comment added", "COMMUNITY");
-				logHandler.addLog(comment,
-						ActivityLogConstants.CRUD_TYPE_CREATE, req);
+				Util.logStats(mongoTemplate, req, "new Comment", user.getId(), user.getEmail(), discuss.getId(),
+						parentComment != null ? parentComment.getId() : null, null, null, "new comment added",
+						"COMMUNITY");
+				logHandler.addLog(comment, ActivityLogConstants.CRUD_TYPE_CREATE, req);
 
-				logger.debug("new answer posted successfully with replyId = "
-						+ comment.getId());
+				logger.debug("new answer posted successfully with replyId = " + comment.getId());
 			} else {
 				throw new BYException(BYErrorCodes.DISCUSS_NOT_FOUND);
 			}
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
-		return BYGenericResponseHandler.getResponse(getDiscussDetailById(
-				discussId, req));
+		return BYGenericResponseHandler.getResponse(getDiscussDetailById(discussId, req));
 
 	}
 
 	@RequestMapping(method = { RequestMethod.PUT }, value = { "/editReply" }, consumes = { "application/json" })
 	@ResponseBody
-	public Object editReply(@RequestBody DiscussReply comment,
-			HttpServletRequest req, HttpServletResponse res) throws Exception {
+	public Object editReply(@RequestBody DiscussReply comment, HttpServletRequest req, HttpServletResponse res)
+			throws Exception {
 		LoggerUtil.logEntry();
 		User user = Util.getSessionUser(req);
-		DiscussReply oldComment = mongoTemplate.findById(
-				new ObjectId(comment.getId()), DiscussReply.class);
+		DiscussReply oldComment = mongoTemplate.findById(new ObjectId(comment.getId()), DiscussReply.class);
 		if (null == oldComment) {
 			throw new BYException(BYErrorCodes.NO_CONTENT_FOUND);
 		}
-		if (null == user
-				|| (!BYConstants.USER_ROLE_EDITOR.equals(user.getUserRoleId())
-						&& !BYConstants.USER_ROLE_SUPER_USER.equals(user
-								.getUserRoleId()) && !oldComment.getUserId()
-						.equals(user.getId()))) {
+		if (null == user || (!BYConstants.USER_ROLE_EDITOR.equals(user.getUserRoleId())
+				&& !BYConstants.USER_ROLE_SUPER_USER.equals(user.getUserRoleId())
+				&& !oldComment.getUserId().equals(user.getId()))) {
 			throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
 		}
 		try {
 			if (SessionController.checkCurrentSessionFor(req, "COMMENT")) {
 				Query query = new Query();
 				query.addCriteria(Criteria.where("userId").is(user.getId()));
-				UserProfile profile = mongoTemplate.findOne(query,
-						UserProfile.class);
+				UserProfile profile = mongoTemplate.findOne(query, UserProfile.class);
 				// oldComment.setUserProfile(profile);
 				oldComment.setText(comment.getText());
 			} else {
 				throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
 			}
 
-			Util.logStats(mongoTemplate, req, "Edit comment",
-					oldComment.getId(), user.getEmail(),
-					comment.getDiscussId(), null, null, null,
-					"editing the comment", "COMMUNITY");
+			Util.logStats(mongoTemplate, req, "Edit comment", oldComment.getId(), user.getEmail(),
+					comment.getDiscussId(), null, null, null, "editing the comment", "COMMUNITY");
 			mongoTemplate.save(oldComment);
-			logHandler.addLog(oldComment,
-					ActivityLogConstants.CRUD_TYPE_UPDATE, req);
+			logHandler.addLog(oldComment, ActivityLogConstants.CRUD_TYPE_UPDATE, req);
 
-			logger.debug("new answer posted successfully with replyId = "
-					+ comment.getId());
+			logger.debug("new answer posted successfully with replyId = " + comment.getId());
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
-		return BYGenericResponseHandler.getResponse(getDiscussDetailById(
-				oldComment.getDiscussId(), req));
+		return BYGenericResponseHandler.getResponse(getDiscussDetailById(oldComment.getDiscussId(), req));
 	}
 
 	/**
@@ -244,8 +228,8 @@ public class DiscussDetailController {
 	 */
 	@RequestMapping(method = { RequestMethod.POST }, params = "type=1", consumes = { "application/json" })
 	@ResponseBody
-	public Object submitAnswer(@RequestBody DiscussReply answer,
-			HttpServletRequest req, HttpServletResponse res) throws Exception {
+	public Object submitAnswer(@RequestBody DiscussReply answer, HttpServletRequest req, HttpServletResponse res)
+			throws Exception {
 		LoggerUtil.logEntry();
 		String discussId = answer.getDiscussId();
 		try {
@@ -253,19 +237,15 @@ public class DiscussDetailController {
 			if (null != discuss) {
 				answer.setDiscussId(discuss.getId());
 				answer.setReplyType(DiscussConstants.REPLY_TYPE_ANSWER);
-				answer.setContentType(Util.getDiscussContentType(discuss
-						.getDiscussType()));
+				answer.setContentType(Util.getDiscussContentType(discuss.getDiscussType()));
 				answer.setParentReplyId(null);
 				User user = Util.getSessionUser(req);
-				if (null != user
-						&& SessionController.checkCurrentSessionFor(req,
-								"ANSWER")) {
+				if (null != user && SessionController.checkCurrentSessionFor(req, "ANSWER")) {
 					answer.setUserId(user.getId());
 					answer.setUserName(user.getUserName());
 					Query query = new Query();
 					query.addCriteria(Criteria.where("userId").is(user.getId()));
-					UserProfile profile = mongoTemplate.findOne(query,
-							UserProfile.class);
+					UserProfile profile = mongoTemplate.findOne(query, UserProfile.class);
 					answer.setUserProfile(profile);
 				} else {
 					throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
@@ -274,26 +254,23 @@ public class DiscussDetailController {
 				discuss.setDirectReplyCount(discuss.getDirectReplyCount() + 1);
 				mongoTemplate.save(discuss);
 				mongoTemplate.save(answer);
-				Util.logStats(mongoTemplate, req, "Add new answer",
-						user.getId(), user.getEmail(), discuss.getId(), null,
-						null, null, "adding new answer", "COMMUNITY");
-				logHandler.addLog(answer,
-						ActivityLogConstants.CRUD_TYPE_CREATE, req);
+				Util.logStats(mongoTemplate, req, "Add new answer", user.getId(), user.getEmail(), discuss.getId(),
+						null, null, null, "adding new answer", "COMMUNITY");
+				logHandler.addLog(answer, ActivityLogConstants.CRUD_TYPE_CREATE, req);
 				sendMailForReplyOnDiscuss(discuss, user, answer);
-				logger.debug("new answer posted successfully with replyId = "
-						+ answer.getId());
+				logger.debug("new answer posted successfully with replyId = " + answer.getId());
 			} else {
 				throw new BYException(BYErrorCodes.DISCUSS_NOT_FOUND);
 			}
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
-		return BYGenericResponseHandler.getResponse(getDiscussDetailById(
-				discussId, req));
+		return BYGenericResponseHandler.getResponse(getDiscussDetailById(discussId, req));
 	}
 
 	private DiscussDetailResponse getDiscussDetailById(String discussId,
 			HttpServletRequest req) throws Exception {
+		
 		DiscussDetailResponse response = new DiscussDetailResponse();
 		try {
 			Discuss discuss = discussRepository.findOne(discussId);
@@ -310,7 +287,46 @@ public class DiscussDetailController {
 				List<DiscussReply> replies = this.mongoTemplate.find(query,
 						DiscussReply.class);
 
-				response.addReplies(replies, Util.getSessionUser(req));
+
+				// Convert all replies into groups as per parent id 
+				Map<String, List<DiscussReply>> replyGroup = replies.stream()
+						  .collect(Collectors.groupingBy(DiscussReply::getParentReplyId));
+				// Since group is based on parent ids, all top level replies will be in a seprate group
+				List<DiscussReply> topLevelReplies = replyGroup.get("");
+
+				if(topLevelReplies != null){
+					// Add top level replies in there respective groups and if there are no sub replies 
+					// then create a new group for those top level replies and add then in that group 
+					for(DiscussReply topReply : topLevelReplies){
+						if( replyGroup.get(topReply.getId()) !=null){
+							replyGroup.get(topReply.getId()).add(topReply);
+							Collections.sort(replyGroup.get(topReply.getId()));
+						}
+						else{
+							List<DiscussReply> tempList = new ArrayList<DiscussReply>();
+							tempList.add(topReply);
+							replyGroup.put(topReply.getId(), tempList);
+						}
+					}
+					// Since all replies are added in respective groups,
+					// now we can delete top level replies to remove duplicacy
+					replyGroup.remove("");
+					
+					Map<String, List <DiscussReply> > repliesSorted = replyGroup.entrySet().stream()
+					.sorted(Collections.reverseOrder( new Comparator< Map.Entry< String, List<DiscussReply> > >() { 
+						@Override
+						public int compare(Entry<String, List<DiscussReply>> o1, Entry<String, List<DiscussReply>> o2) {
+							DiscussReply reply1 = o1.getValue().get( o1.getValue().size() - 1);
+							DiscussReply reply2 = o2.getValue().get( o2.getValue().size() - 1);
+							return reply1.compareTo(reply2);
+						} 
+					}))
+					.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+							(oldValue, newValue) -> oldValue, LinkedHashMap::new));
+
+					response.addReplies(replies, Util.getSessionUser(req));
+					response.addSortedReplies(repliesSorted, Util.getSessionUser(req));
+				}
 			} else {
 				throw new BYException(BYErrorCodes.DISCUSS_NOT_FOUND);
 			}

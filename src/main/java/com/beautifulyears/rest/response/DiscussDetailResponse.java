@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class DiscussDetailResponse implements IResponse {
 
 	private List<DiscussReply> replies = new ArrayList<DiscussReply>();
+	private Map<String,List<DiscussReply>> sortedReplies = new HashMap<>();
 	private DiscussResponse.DiscussEntity discuss;
 
 	public DiscussResponse.DiscussEntity getDiscuss() {
@@ -37,6 +38,14 @@ public class DiscussDetailResponse implements IResponse {
 
 	public void setReplies(List<DiscussReply> replies) {
 		this.replies = replies;
+	}
+
+	public Map<String,List<DiscussReply>> getSortedReplies() {
+		return sortedReplies;
+	}
+
+	public void setSortedReplies(Map<String,List<DiscussReply>> sortedReplies) {
+		this.sortedReplies = sortedReplies;
 	}
 
 	@Override
@@ -91,5 +100,26 @@ public class DiscussDetailResponse implements IResponse {
 
 		}
 		setReplies(repliesList);
+	}
+
+	public void addSortedReplies(Map<String,List<DiscussReply>> sortedReplies, User user) {
+		for (Map.Entry<String,List<DiscussReply>> entry : sortedReplies.entrySet()){
+			for (DiscussReply discussReply : entry.getValue()) {
+				discussReply.setLikeCount(discussReply.getLikedBy().size());
+				if (null != user
+						&& discussReply.getLikedBy().contains(user.getId())) {
+					discussReply.setLikedByUser(true);
+				}
+				if (null != user
+						&& (BYConstants.USER_ROLE_EDITOR.equals(user
+								.getUserRoleId())
+								|| BYConstants.USER_ROLE_SUPER_USER.equals(user
+										.getUserRoleId()) || discussReply.getUserId()
+								.equals(user.getId()))) {
+					discussReply.setEditableByUser(true);
+				}
+			}
+		}
+		setSortedReplies(sortedReplies);
 	}
 }
