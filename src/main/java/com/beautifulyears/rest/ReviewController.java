@@ -482,7 +482,7 @@ public class ReviewController {
 				// request);
 				logger.info("new service review entity created with ID: " + serviceReview.getId());
 			} else {
-
+				// Edit review
 				Query query = new Query();
 				query.addCriteria(Criteria.where("id").is(serviceReview.getId()));
 				ServiceReview serviceReviewExtracted = null;
@@ -506,6 +506,15 @@ public class ReviewController {
 		return BYGenericResponseHandler.getResponse(serviceReview);
 	}
 
+
+	/**
+	 * Delete Service review
+	 * 
+	 * @param reviewId
+	 * @param request
+	 * @return
+	 * @throws Exception
+	 */
 	@RequestMapping(method = { RequestMethod.DELETE }, value = { "/deleteServiceReview/{reviewId}" }, produces = {
 			"application/json" })
 	@ResponseBody

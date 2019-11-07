@@ -73,7 +73,7 @@ import com.beautifulyears.util.activityLogHandler.UserProfileLogHandler;
 @RequestMapping("/userProfile")
 public class UserProfileController {
 	private static Logger logger = Logger.getLogger(UserProfileController.class);
-	private static UserRepository userRepository;
+	private UserRepository userRepository;
 	private ReportServiceRepository reportServiceRepository;
 	private UserProfileRepository userProfileRepository;
 	private ActivityLogHandler<UserProfile> logHandler;
@@ -81,9 +81,10 @@ public class UserProfileController {
 
 	@Autowired
 	public UserProfileController(UserProfileRepository userProfileRepository,
-			ReportServiceRepository reportServiceRepository, MongoTemplate mongoTemplate) {
+			ReportServiceRepository reportServiceRepository,UserRepository userRepository ,MongoTemplate mongoTemplate) {
 		this.userProfileRepository = userProfileRepository;
 		this.reportServiceRepository = reportServiceRepository;
+		this.userRepository = userRepository;
 		this.mongoTemplate = mongoTemplate;
 		logHandler = new UserProfileLogHandler(mongoTemplate);
 	}
