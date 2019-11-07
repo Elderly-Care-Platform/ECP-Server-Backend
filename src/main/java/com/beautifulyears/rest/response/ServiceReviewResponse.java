@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.beautifulyears.constants.BYConstants;
+import com.beautifulyears.domain.ProductReview;
 import com.beautifulyears.domain.ServiceRatings;
 import com.beautifulyears.domain.ServiceReview;
 import com.beautifulyears.domain.User;
@@ -52,6 +53,7 @@ public class ServiceReviewResponse implements IResponse {
 					if (userRating != null) {
 						rating = userRating.getRating();
 					}
+					reviewUser.setAggrRatingPercentage(getAllUserReviews(serviceReview.getUserId()));
 				}
 				this.content.add(new ServiceReviewEntity(serviceReview, user, reviewUser, rating));
 			}
@@ -121,6 +123,20 @@ public class ServiceReviewResponse implements IResponse {
 			return userRating;
 		}
 
+		public float getAllUserReviews(String userId) {
+			List<ServiceReview> userReviews = null;
+			List<ProductReview> userProdReviews= null;
+			Query q = new Query();
+			q.addCriteria(Criteria.where("userId").is(userId));
+			userReviews = this.mongoTemplate.find(q, ServiceReview.class);
+			userProdReviews = this.mongoTemplate.find(q, ProductReview.class);
+			if (userReviews != null || userProdReviews != null) {
+				return userReviews.size() + userProdReviews.size();
+			} else {
+				return 0;
+			}
+		}
+
 	}
 
 	public static class ServiceReviewEntity {
@@ -134,6 +150,7 @@ public class ServiceReviewResponse implements IResponse {
 		private String title;
 		private String userName;
 		private String parentReviewId;
+		private float contributors;
 		private Date createdAt;
 		private Date lastModifiedAt;
 		private Map<String, String> userImage;
@@ -149,6 +166,7 @@ public class ServiceReviewResponse implements IResponse {
 			this.setTitle(serviceReview.getTitle());
 			this.setUserName(reviewUser.getBasicProfileInfo().getFirstName());
 			this.setParentReviewId(serviceReview.getParentReviewId());
+			this.setContributors(reviewUser.getAggrRatingPercentage());
 			this.setCreatedAt(serviceReview.getCreatedAt());
 			this.setLastModifiedAt(serviceReview.getLastModifiedAt());
 			this.setUserImage(reviewUser.getBasicProfileInfo().getProfileImage());
@@ -256,6 +274,14 @@ public class ServiceReviewResponse implements IResponse {
 
 		public void setTitle(String title) {
 			this.title = title;
+		}
+
+		public float getContributors() {
+			return contributors;
+		}
+
+		public void setContributors(float contributors) {
+			this.contributors = contributors;
 		}
 
 	}

@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.beautifulyears.repository.HousingRepository;
 import com.beautifulyears.repository.UserProfileRepository;
+import com.beautifulyears.repository.UserRepository;
 import com.beautifulyears.util.Util;
 import com.redfin.sitemapgenerator.SitemapIndexGenerator;
 
@@ -79,14 +80,16 @@ public class SiteMapGenerator {
 
 	private MongoTemplate mongoTemplate;
 	private UserProfileRepository userProfileRepository;
+	private UserRepository userRepository;
 	private HousingRepository housingRepository;
 
 	@Autowired
 	public SiteMapGenerator(HousingRepository housingRepository,
 			MongoTemplate mongoTemplate,
-			UserProfileRepository userProfileRepository) {
+			UserProfileRepository userProfileRepository,UserRepository userRepository) {
 		this.mongoTemplate = mongoTemplate;
 		this.userProfileRepository = userProfileRepository;
+		this.userRepository = userRepository;
 		this.housingRepository = housingRepository;
 
 	}
@@ -166,7 +169,7 @@ public class SiteMapGenerator {
 		communitySMG = new CommunitiesSiteMapGenerator(selfUrl, sitemapPath,
 				mongoTemplate);
 		servicesSMG = new ServicesSiteMapGenerator(selfUrl, sitemapPath,
-				mongoTemplate, servicesTags, userProfileRepository);
+				mongoTemplate, servicesTags, userProfileRepository,userRepository);
 		listingsSMG = new ListingsSiteMapGenerator(selfUrl, sitemapPath,
 				mongoTemplate, communityMenuId, communityMenuUrl,
 				communityUrlPrefix, servicesMenuUrl, MODULE_ID_DISCUSS,
