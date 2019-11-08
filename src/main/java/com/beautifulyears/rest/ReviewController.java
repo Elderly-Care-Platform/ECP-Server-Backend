@@ -478,6 +478,13 @@ public class ReviewController {
 						currentUser.getId(), serviceReview.getParentReviewId(), serviceReview.getTitle(), false);
 
 				serviceReview = serviceRevRepo.save(serviceRevExtracted);
+
+				Query serviceQuery = new Query();
+				serviceQuery.addCriteria(Criteria.where("id").is(serviceRevExtracted.getServiceId()));
+				UserProfile userProfile = null;
+				userProfile = mongoTemplate.findOne(serviceQuery, UserProfile.class);
+				userProfile.getReviewedBy().add(currentUser.getId());
+				mongoTemplate.save(userProfile);
 				// logHandlerRev.addLog(productReview, ActivityLogConstants.CRUD_TYPE_CREATE,
 				// request);
 				logger.info("new service review entity created with ID: " + serviceReview.getId());

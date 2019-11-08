@@ -374,6 +374,11 @@ public class ProductController {
 						productReview.getUnLikeCount(), productReview.getTitle(), productReview.getParentReviewId());
 
 				productReview = productRevRepo.save(productRevExtracted);
+
+				Product product = null;
+				product = productRepository.findOne(productRevExtracted.getProductId());
+				product.setReviews(product.getReviews()+1);
+				productRepository.save(product);
 				logHandlerRev.addLog(productReview, ActivityLogConstants.CRUD_TYPE_CREATE, request);
 				logger.info("new product review entity created with ID: " + productReview.getId());
 			} else {
