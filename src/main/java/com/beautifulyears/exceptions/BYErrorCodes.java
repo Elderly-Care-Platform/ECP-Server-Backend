@@ -18,6 +18,7 @@ public enum BYErrorCodes {
 	// discuss related error
 	DISCUSS_NOT_FOUND(2001, "Discuss content with provided discussId doesn't exist"),
 	DISCUSS_ALREADY_LIKED_BY_USER(2002, "Discuss content already liked by the logged in user"),
+	DISCUSS_ALREADY_UNLIKED_BY_USER(2002, "Discuss content already unliked by the logged in user"),
 	// product
 	PRODUCT_NOT_FOUND(6001, "Product content with provided productId doesn't exist"),
 	// ask question

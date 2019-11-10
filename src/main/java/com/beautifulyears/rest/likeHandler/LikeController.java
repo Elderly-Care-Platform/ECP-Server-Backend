@@ -38,7 +38,19 @@ public abstract class LikeController<T> {
 		try {
 			discussLike = new DiscussLike(user, contentId, contentType);
 			discussLikeRepository.save(discussLike);
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+		return discussLike;
+	}
 
+	public Object submitUnLike(User user, String contentId, int contentType)
+			throws Exception {
+		LoggerUtil.logEntry();
+		DiscussLike discussLike = null;
+		try {
+			discussLike = discussLikeRepository.findByContentIdAndUserId(contentId,user.getId()).get(0);
+			discussLikeRepository.delete(discussLike.getId());
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
@@ -46,6 +58,9 @@ public abstract class LikeController<T> {
 	}
 
 	abstract Object likeContent(String id, String type, String url,
+			HttpServletRequest req, HttpServletResponse res) throws Exception;
+
+	abstract Object unlikeContent(String id, String type,
 			HttpServletRequest req, HttpServletResponse res) throws Exception;
 
 	abstract void sendMailForLike(T LikedEntity, User user, String url);
