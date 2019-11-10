@@ -273,6 +273,10 @@ public class DiscussDetailController {
 		
 		DiscussDetailResponse response = new DiscussDetailResponse();
 		try {
+			List<DiscussReply> replies = null;
+			List<DiscussReply> topLevelReplies = null;
+			Map<String, List<DiscussReply>> replyGroup = null;
+
 			Discuss discuss = discussRepository.findOne(discussId);
 			if (null != discuss) {
 				response.addDiscuss(discuss, Util.getSessionUser(req));
@@ -284,16 +288,16 @@ public class DiscussDetailController {
 										DiscussConstants.REPLY_STATUS_ACTIVE));
 				query.with(new Sort(Sort.Direction.ASC,
 						new String[] { "createdAt" }));
-				List<DiscussReply> replies = this.mongoTemplate.find(query,
+				replies = this.mongoTemplate.find(query,
 						DiscussReply.class);
 
-
-				// Convert all replies into groups as per parent id 
-				Map<String, List<DiscussReply>> replyGroup = replies.stream()
-						  .collect(Collectors.groupingBy(DiscussReply::getParentReplyId));
-				// Since group is based on parent ids, all top level replies will be in a seprate group
-				List<DiscussReply> topLevelReplies = replyGroup.get("");
-
+				if(replies.size() > 0){
+					// Convert all replies into groups as per parent id 
+					replyGroup = replies.stream()
+							.collect(Collectors.groupingBy(DiscussReply::getParentReplyId));
+					// Since group is based on parent ids, all top level replies will be in a seprate group
+					topLevelReplies = replyGroup.get("");
+				}
 				if(topLevelReplies != null){
 					// Add top level replies in there respective groups and if there are no sub replies 
 					// then create a new group for those top level replies and add then in that group 
