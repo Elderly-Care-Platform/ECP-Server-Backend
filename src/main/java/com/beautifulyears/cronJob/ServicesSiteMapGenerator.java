@@ -12,6 +12,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.ResponseEntity;
 
 import com.beautifulyears.repository.UserProfileRepository;
+import com.beautifulyears.repository.UserRepository;
 import com.beautifulyears.rest.UserProfileController;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.rest.response.UserProfileResponse;
@@ -29,16 +30,18 @@ public class ServicesSiteMapGenerator implements Runnable {
 	private String sitemapPath = "";
 	private MongoTemplate mongoTemplate;
 	private UserProfileRepository userProfileRepository;
+	private UserRepository userRepository;
 	private List<String> servicesTags;
 
 	public ServicesSiteMapGenerator(String selfUrl, String sitemapPath,
 			MongoTemplate mongoTemplate, List<String> servicesTags,
-			UserProfileRepository userProfileRepository) {
+			UserProfileRepository userProfileRepository,UserRepository userRepository) {
 		this.selfUrl = selfUrl;
 		this.sitemapPath = sitemapPath;
 		this.mongoTemplate = mongoTemplate;
 		this.servicesTags = servicesTags;
 		this.userProfileRepository = userProfileRepository;
+		this.userRepository = userRepository;
 	}
 
 	@Override
@@ -54,7 +57,7 @@ public class ServicesSiteMapGenerator implements Runnable {
 			// ------------------------for all professional and institution
 			// profiles
 			UserProfileController profileCtrl = new UserProfileController(
-					userProfileRepository, null,mongoTemplate);
+					userProfileRepository, null,userRepository,mongoTemplate);
 
 			@SuppressWarnings("unchecked")
 			ResponseEntity<BYGenericResponseHandler.ByGenericResponse> profileResponse = (ResponseEntity<BYGenericResponseHandler.ByGenericResponse>) profileCtrl
