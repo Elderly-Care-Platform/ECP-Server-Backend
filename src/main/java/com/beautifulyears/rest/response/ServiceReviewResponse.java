@@ -130,11 +130,15 @@ public class ServiceReviewResponse implements IResponse {
 			q.addCriteria(Criteria.where("userId").is(userId));
 			userReviews = this.mongoTemplate.find(q, ServiceReview.class);
 			userProdReviews = this.mongoTemplate.find(q, ProductReview.class);
-			if (userReviews != null || userProdReviews != null) {
-				return userReviews.size() + userProdReviews.size();
-			} else {
-				return 0;
+			float total = 0;
+			if (userReviews != null && userProdReviews != null) {
+				total = userReviews.size() + userProdReviews.size();
+			} else if(userReviews != null){
+				total =  userReviews.size();
+			}else if(userProdReviews != null){
+				total = userProdReviews.size();
 			}
+			return total;
 		}
 
 	}
