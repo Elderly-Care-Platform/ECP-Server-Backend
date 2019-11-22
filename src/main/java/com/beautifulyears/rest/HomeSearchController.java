@@ -303,7 +303,7 @@ public class HomeSearchController {
 	// List<String> fields = new ArrayList<String>();
 	// fields = UserProfilePrivacyHandler.getPublicFields(-1);
 	// profilePage = UserProfileResponse.getPage(userProfileRepository
-	// .getServiceProvidersByFilterCriteria(userTypes, city, tagIds, isFeatured,
+	// .getServiceProvidersByFilterCriteria(null, userTypes, city, tagIds, isFeatured,
 	// null, pageable, fields), currentUser);
 
 	// JSONObject justDailSearchResponse =

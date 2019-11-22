@@ -472,6 +472,7 @@ public class AskController {
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/experts/page" }, produces = { "application/json" })
 	@ResponseBody
 	public Object getExperts(
+		@RequestParam(value = "searchTxt", required = false) String searchTxt,
 		@RequestParam(value = "experties", required = false, defaultValue = "") List<ObjectId> experties,
 		@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
 		@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
@@ -496,19 +497,13 @@ public class AskController {
 			if (dir != 0) {
 				sortDirection = Direction.ASC;
 			}
+
 			List<String> fields = null;
-			// List<String> fields = new ArrayList<String>();
-			// fields.add("userId");
-			// fields.add("age");
-			// fields.add("workTitle");
-			// fields.add("experties");
-			// fields.add("userTypes");
-			// fields.add("basicProfileInfo");
-			
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
 			userProfilePage = UserProfileResponse.getPage(
-				userProfileRepo.getServiceProvidersByFilterCriteria(userTypes, null, null, null, experties, pageable, fields),
-				null
+					userProfileRepo.getServiceProvidersByFilterCriteria(
+						searchTxt, userTypes, null, null, null, experties, pageable, fields),
+					null
 				);
 			if (userProfilePage.getContent().size() > 0) {
 				logger.debug("did not find any ask question expert");

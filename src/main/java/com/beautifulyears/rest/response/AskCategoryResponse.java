@@ -98,7 +98,7 @@ public class AskCategoryResponse implements IResponse {
 			Integer[] userTypes = { UserTypes.ASK_EXPERT};
 			List<ObjectId> experties = new ArrayList<ObjectId>();
 			experties.add( new ObjectId(askCategory.getId()));
-			this.setQuestionCount(AskCategoryResponse.userProfileRepo.getServiceProvidersByFilterCriteriaCount(userTypes, null, null, null, experties));
+			this.setQuestionCount(AskCategoryResponse.userProfileRepo.getServiceProvidersByFilterCriteriaCount(null, userTypes, null, null, null, experties));
 			if (null != user
 					&& (BYConstants.USER_ROLE_EDITOR.equals(user.getUserRoleId())
 						|| BYConstants.USER_ROLE_SUPER_USER.equals(user.getUserRoleId())
