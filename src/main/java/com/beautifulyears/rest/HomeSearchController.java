@@ -263,7 +263,7 @@ public class HomeSearchController {
 
 			List<UserProfile> profiles = this.mongoTemplate.find(query, UserProfile.class);
 
-			JSONObject justDailSearchResponse = SearchController.getJustDialSearchServicePage(pageIndex, pageSize, term,
+			JSONObject justDailSearchResponse = SearchController.getJustDialSearchServicePage(pageIndex, 50, term,
 					request);
 			JSONArray JDresult = justDailSearchResponse.getJSONArray("services");
 			JSONArray DbserviceList = new JSONArray(profiles);
@@ -286,7 +286,7 @@ public class HomeSearchController {
 			JSONArray sortedArray = UserProfileController.sortJsonArray("reviewCount", DbserviceList);
 
 			long total = this.mongoTemplate.count(query, UserProfile.class);
-			total += 50;
+			total += JDresult.length();
 			response.put("total", total);
 			response.put("pageIndex", pageIndex);
 			response.put("content", sortedArray);
