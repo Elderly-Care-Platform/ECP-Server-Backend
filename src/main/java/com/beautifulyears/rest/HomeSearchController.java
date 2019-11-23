@@ -28,26 +28,22 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.beautifulyears.constants.DiscussConstants;
 import com.beautifulyears.constants.UserTypes;
-import com.beautifulyears.domain.AskQuestion;
+import com.beautifulyears.domain.AskCategory;
 import com.beautifulyears.domain.Discuss;
 import com.beautifulyears.domain.Event;
 import com.beautifulyears.domain.Product;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserProfile;
-import com.beautifulyears.repository.AskQuestionReplyRepository;
-import com.beautifulyears.repository.AskQuestionRepository;
 import com.beautifulyears.repository.DiscussRepository;
 import com.beautifulyears.repository.EventRepository;
 import com.beautifulyears.repository.ProductRepository;
 import com.beautifulyears.repository.UserProfileRepository;
-import com.beautifulyears.rest.response.AskQuestionResponse;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.rest.response.DiscussResponse;
 import com.beautifulyears.rest.response.EventResponse;
 import com.beautifulyears.rest.response.PageImpl;
 import com.beautifulyears.rest.response.ProductResponse;
 import com.beautifulyears.rest.response.UserProfileResponse;
-import com.beautifulyears.rest.response.AskQuestionResponse.AskQuestionPage;
 import com.beautifulyears.rest.response.DiscussResponse.DiscussPage;
 import com.beautifulyears.rest.response.EventResponse.EventPage;
 import com.beautifulyears.rest.response.ProductResponse.ProductPage;
@@ -69,8 +65,7 @@ public class HomeSearchController {
 	private EventRepository eventRepo;
 	private ProductRepository productRepo;
 	private UserProfileRepository userProfileRepository;
-	private AskQuestionRepository askQuesRepo;
-	private AskQuestionReplyRepository quesReplyRepo;
+
 	private MongoTemplate mongoTemplate;
 
 	private class SearchSummary {
@@ -78,28 +73,25 @@ public class HomeSearchController {
 		public ProductPage productPage;
 		public EventPage eventPage;
 		public String servicePage;
-		public AskQuestionPage askQuestionPage;
+		public UserProfilePage expertPage;
 
 		public SearchSummary(DiscussPage discussPage, ProductPage productPage, EventPage eventPage, String servicePage,
-				AskQuestionPage askQuestionPage) {
+				UserProfilePage expertPage) {
 			this.discussPage = discussPage;
 			this.productPage = productPage;
 			this.eventPage = eventPage;
 			this.servicePage = servicePage;
-			this.askQuestionPage = askQuestionPage;
+			this.expertPage = expertPage;
 		}
 	}
 
 	@Autowired
 	public HomeSearchController(DiscussRepository discussRepo, EventRepository eventRepo, ProductRepository productRepo,
-			UserProfileRepository userProfileRepository, AskQuestionRepository askQuesRepo,
-			AskQuestionReplyRepository quesReplyRepo, MongoTemplate mongoTemplate) {
+			UserProfileRepository userProfileRepository,MongoTemplate mongoTemplate) {
 		this.mongoTemplate = mongoTemplate;
 		this.discussRepo = discussRepo;
 		this.eventRepo = eventRepo;
 		this.productRepo = productRepo;
-		this.askQuesRepo = askQuesRepo;
-		this.quesReplyRepo = quesReplyRepo;
 		this.userProfileRepository = userProfileRepository;
 	}
 
@@ -118,40 +110,63 @@ public class HomeSearchController {
 				null, currentUser);
 		EventPage eventPage = this.getEventPage(searchTxt, 0, -1, null, sort, dir, pageIndex, pageSize, currentUser);
 		String ServicePage = this.getServicePage(searchTxt, sort, dir, pageIndex, pageSize, request);
-		AskQuestionPage askQuestionPage = this.getAskQuestionPage(searchTxt, null, null, null, null, sort, dir,
-				pageIndex, pageSize, request);
+		UserProfilePage expertPage = this.getExperts(searchTxt,  sort, dir, pageIndex, pageSize);
 
 		return BYGenericResponseHandler
-				.getResponse(new SearchSummary(discussPage, productPage, eventPage, ServicePage, askQuestionPage));
+				.getResponse(new SearchSummary(discussPage, productPage, eventPage, ServicePage, expertPage));
 	}
 
-	public AskQuestionPage getAskQuestionPage(@RequestParam(value = "searchTxt", required = false) String searchTxt,
-			@RequestParam(value = "askCategory", required = false) String askCategory,
-			@RequestParam(value = "askedBy", required = false) String askedBy,
-			@RequestParam(value = "answeredBy", required = false) String answeredBy,
-			@RequestParam(value = "answered", required = false) Boolean answered,
+	public UserProfilePage getExperts(@RequestParam(value = "term", required = false) String searchTxt,
 			@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
 			@RequestParam(value = "p", required = false, defaultValue = "0") int pageIndex,
-			@RequestParam(value = "s", required = false, defaultValue = "10") int pageSize, HttpServletRequest request)
-			throws Exception {
-		LoggerUtil.logEntry();
-		User currentUser = Util.getSessionUser(request);
-		PageImpl<AskQuestion> page = null;
-		AskQuestionPage askQuesPage = null;
+			@RequestParam(value = "s", required = false, defaultValue = "10") int pageSize) throws Exception {
+		UserProfilePage userProfilePage = null;
+		// List<String> filterCriteria = new ArrayList<String>();
+		// filterCriteria.add("experties = " + experties);
+		// filterCriteria.add("page = " + pageIndex);
+		// filterCriteria.add("size = " + pageSize);
+		// filterCriteria.add("sort = " + sort);
+		// filterCriteria.add("dir = " + dir);
+		Integer[] userTypes = { UserTypes.ASK_EXPERT };
+
 		try {
+			/* setting page and sort criteria */
 			Direction sortDirection = Direction.DESC;
 			if (dir != 0) {
 				sortDirection = Direction.ASC;
 			}
+			List<String> fields = null;
+
+			Query q = new Query();
+			q.addCriteria(Criteria.where("name").regex(searchTxt, "i"));
+			List<AskCategory> expertCategories = null;
+			expertCategories = this.mongoTemplate.find(q, AskCategory.class);
+			List<ObjectId> experts = null;
+
+			if (expertCategories != null) {
+				for (AskCategory askCategory : expertCategories) {
+					experts.add(new ObjectId(askCategory.getId()));
+				}
+			}
+			// List<String> fields = new ArrayList<String>();
+			// fields.add("userId");
+			// fields.add("age");
+			// fields.add("workTitle");
+			// fields.add("experties");
+			// fields.add("userTypes");
+			// fields.add("basicProfileInfo");
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
-			page = askQuesRepo.getPage(searchTxt, askCategory, askedBy, answeredBy, answered, pageable);
-			askQuesPage = AskQuestionResponse.getPage(page, currentUser, quesReplyRepo);
+			userProfilePage = UserProfileResponse.getPage(userProfileRepository
+					.getServiceProvidersByFilterCriteria(userTypes, null, null, null, experts, pageable, fields), null);
+			if (userProfilePage.getContent().size() > 0) {
+			}
+
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
-		return askQuesPage;
+		return userProfilePage;
 	}
 
 	public DiscussPage getDiscussPage(String discussType, String searchTxt, String userId, Boolean isFeatured,
