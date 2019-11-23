@@ -159,7 +159,7 @@ public class HomeSearchController {
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
 			userProfilePage = UserProfileResponse.getPage(userProfileRepository
-					.getServiceProvidersByFilterCriteria(userTypes, null, null, null, experts, pageable, fields), null);
+					.getServiceProvidersByFilterCriteria(null,userTypes, null, null, null, experts, pageable, fields), null);
 			if (userProfilePage.getContent().size() > 0) {
 			}
 
