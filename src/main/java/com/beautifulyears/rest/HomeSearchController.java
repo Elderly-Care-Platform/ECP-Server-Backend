@@ -142,7 +142,7 @@ public class HomeSearchController {
 			q.addCriteria(Criteria.where("name").regex(searchTxt, "i"));
 			List<AskCategory> expertCategories = null;
 			expertCategories = this.mongoTemplate.find(q, AskCategory.class);
-			List<ObjectId> experts = null;
+			List<ObjectId> experts = new ArrayList<ObjectId>();
 
 			if (expertCategories != null) {
 				for (AskCategory askCategory : expertCategories) {
