@@ -36,10 +36,10 @@ public class AskQuestionRepositoryImpl implements AskQuestionRepositoryCustom {
 			q.addCriteria(Criteria.where("name").regex(searchTxt,"i"));
 		}
 		if (null != askedBy && askedBy!="") {
-			q.addCriteria(Criteria.where("askedBy.$id").is(askedBy));
+			q.addCriteria(Criteria.where("askedBy.$id").is( new ObjectId(askedBy) ));
 		}
 		if (null != answeredBy && answeredBy!="") {
-			q.addCriteria(Criteria.where("answeredBy.$id").is(answeredBy));
+			q.addCriteria(Criteria.where("answeredBy.$id").is( new ObjectId(answeredBy) ));
 		}
 		if (null != answered) {
 			q.addCriteria(Criteria.where("answered").is(answered));
