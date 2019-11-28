@@ -405,6 +405,15 @@ public class AskController {
 				);
 
 				askQuestionReply = quesReplyRepo.save(askQuestionReplyExtracted);
+
+				AskQuestion question = askQuesRepo.findOne(askQuestionReply.getAskQuestionId());
+				if(question.getAskedBy().getId().equals(askQuestionReplyExtracted.getUser().getId())){
+					question.setAnswered(false);
+				}
+				else{
+					question.setAnswered(true);
+				}
+				askQuesRepo.save(question);
 				logHandlerRep.addLog(askQuestionReply, ActivityLogConstants.CRUD_TYPE_CREATE, request);
 				logger.info("new ask question reply entity created with ID: " + askQuestionReply.getId());
 			} else {
@@ -419,56 +428,6 @@ public class AskController {
 		return BYGenericResponseHandler.getResponse(askQuestionReply);
 	}
 
-	// @RequestMapping(method = { RequestMethod.PUT }, value = { "/review" }, consumes = { "application/json" })
-	// @ResponseBody
-	// public Object editProductReview(@RequestBody ProductReview productRev, HttpServletRequest request) throws Exception {
-	// 	LoggerUtil.logEntry();
-	// 	User currentUser = Util.getSessionUser(request);
-	// 	if (null != currentUser && SessionController.checkCurrentSessionFor(request, "PRODUCT")) {
-	// 		if (productRev != null && (!Util.isEmpty(productRev.getId()))) {
-	// 			if (BYConstants.USER_ROLE_EDITOR.equals(currentUser.getUserRoleId())
-	// 					|| BYConstants.USER_ROLE_SUPER_USER.equals(currentUser.getUserRoleId()) ) {
-
-	// 				ProductReview oldProductRev = mongoTemplate.findById(new ObjectId(productRev.getId()), ProductReview.class);
-	// 				oldProductRev.setProductId(productRev.getProductId());
-	// 				oldProductRev.setRating(productRev.getRating());
-	// 				oldProductRev.setReview(productRev.getReview());
-	// 				oldProductRev.setLikeCount(productRev.getLikeCount());
-	// 				oldProductRev.setUnLikeCount(productRev.getUnLikeCount());
-	// 				oldProductRev.setStatus(productRev.getStatus());
-	// 				oldProductRev.setUserName(productRev.getUserName());
-	// 				oldProductRev.setParentReviewId(productRev.getParentReviewId());
-
-	// 				productRev = productRevRepo.save(oldProductRev);
-	// 				logHandlerRev.addLog(productRev,
-	// 						ActivityLogConstants.CRUD_TYPE_UPDATE, request);
-	// 				logger.info("old product review entity updated for ID: "
-	// 						+ productRev.getId() + " by User "
-	// 						+ currentUser.getId());
-
-	// 				Util.logStats(mongoTemplate, request,
-	// 						"EDIT " + productRev.getId()
-	// 								+ " product review content.", currentUser.getId(),
-	// 						currentUser.getEmail(), productRev.getId(), null,
-	// 						null, null, "old product review entity updated",
-	// 						"PRODUCT");
-	// 			} else {
-	// 				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
-	// 			}
-	// 		} else {
-	// 			throw new BYException(BYErrorCodes.NO_CONTENT_FOUND);
-	// 		}
-	// 	} else {
-	// 		throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
-	// 	}
-	// 	return BYGenericResponseHandler.getResponse(productRev);
-	// }
-
-	/*
-	 * this method allows to get a page of userProfiles who are service providers
-	 * based on page number and size. Service providers can be institution as well
-	 * as individuals.
-	 */
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/experts/page" }, produces = { "application/json" })
 	@ResponseBody
 	public Object getExperts(
