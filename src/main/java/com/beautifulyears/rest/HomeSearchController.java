@@ -87,7 +87,7 @@ public class HomeSearchController {
 
 	@Autowired
 	public HomeSearchController(DiscussRepository discussRepo, EventRepository eventRepo, ProductRepository productRepo,
-			UserProfileRepository userProfileRepository,MongoTemplate mongoTemplate) {
+			UserProfileRepository userProfileRepository, MongoTemplate mongoTemplate) {
 		this.mongoTemplate = mongoTemplate;
 		this.discussRepo = discussRepo;
 		this.eventRepo = eventRepo;
@@ -110,7 +110,7 @@ public class HomeSearchController {
 				null, currentUser);
 		EventPage eventPage = this.getEventPage(searchTxt, 0, -1, null, sort, dir, pageIndex, pageSize, currentUser);
 		String ServicePage = this.getServicePage(searchTxt, sort, dir, pageIndex, pageSize, request);
-		UserProfilePage expertPage = this.getExperts(searchTxt,  sort, dir, pageIndex, pageSize);
+		UserProfilePage expertPage = this.getExperts(searchTxt, sort, dir, pageIndex, pageSize);
 
 		return BYGenericResponseHandler
 				.getResponse(new SearchSummary(discussPage, productPage, eventPage, ServicePage, expertPage));
@@ -147,8 +147,8 @@ public class HomeSearchController {
 			// fields.add("basicProfileInfo");
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
-			userProfilePage = UserProfileResponse.getPage(userProfileRepository
-					.getServiceProvidersByFilterCriteria(searchTxt,userTypes, null, null, null, null, pageable, fields), null);
+			userProfilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(
+					searchTxt, userTypes, null, null, null, null, pageable, fields), null);
 			if (userProfilePage.getContent().size() > 0) {
 			}
 
@@ -269,7 +269,9 @@ public class HomeSearchController {
 
 			JSONObject justDailSearchResponse = SearchController.getJustDialSearchServicePage(pageIndex, 50, term,
 					request);
-			JSONArray JDresult = justDailSearchResponse.getJSONArray("services");
+
+			JSONArray JDresult = null;
+			// JSONArray JDresult = justDailSearchResponse.getJSONArray("services");
 			JSONArray DbserviceList = new JSONArray(profiles);
 			for (int i = 0; i < DbserviceList.length(); i++) {
 				JSONObject jsonDBObject = DbserviceList.getJSONObject(i);
@@ -277,20 +279,27 @@ public class HomeSearchController {
 				jsonDBObject.put("reviewCount", totReviews.length());
 				DbserviceList.put(i, jsonDBObject);
 			}
+			// JD services
+			if (justDailSearchResponse != null && justDailSearchResponse.length() > 0) {
+				
+				JDresult = justDailSearchResponse.getJSONArray("services");
 
-			for (int i = 0; i < JDresult.length(); i++) {
-				JSONObject jsonObject = JDresult.getJSONObject(i);
-				String totReviews = jsonObject.getString("totalReviews");
-				if (totReviews.equals("")) {
-					totReviews = "0";
+				for (int i = 0; i < JDresult.length(); i++) {
+					JSONObject jsonObject = JDresult.getJSONObject(i);
+					String totReviews = jsonObject.getString("totalReviews");
+					if (totReviews.equals("")) {
+						totReviews = "0";
+					}
+					jsonObject.put("reviewCount", Integer.parseInt(totReviews));
+					DbserviceList.put(jsonObject);
 				}
-				jsonObject.put("reviewCount", Integer.parseInt(totReviews));
-				DbserviceList.put(jsonObject);
 			}
 			JSONArray sortedArray = UserProfileController.sortJsonArray("reviewCount", DbserviceList);
 
 			long total = this.mongoTemplate.count(query, UserProfile.class);
-			total += JDresult.length();
+			if (justDailSearchResponse != null && justDailSearchResponse.length() > 0) {
+				total += JDresult.length();
+			}
 			response.put("total", total);
 			response.put("pageIndex", pageIndex);
 			response.put("content", sortedArray);
@@ -350,7 +359,8 @@ public class HomeSearchController {
 	// List<String> fields = new ArrayList<String>();
 	// fields = UserProfilePrivacyHandler.getPublicFields(-1);
 	// profilePage = UserProfileResponse.getPage(userProfileRepository
-	// .getServiceProvidersByFilterCriteria(null, userTypes, city, tagIds, isFeatured,
+	// .getServiceProvidersByFilterCriteria(null, userTypes, city, tagIds,
+	// isFeatured,
 	// null, pageable, fields), currentUser);
 
 	// JSONObject justDailSearchResponse =
