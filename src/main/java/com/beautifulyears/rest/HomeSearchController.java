@@ -138,19 +138,6 @@ public class HomeSearchController {
 			}
 			List<String> fields = null;
 
-			Query q = new Query();
-			q.addCriteria(Criteria.where("name").regex(searchTxt, "i"));
-			List<AskCategory> expertCategories = null;
-			expertCategories = this.mongoTemplate.find(q, AskCategory.class);
-			List<ObjectId> experts = new ArrayList<ObjectId>();
-			String expertName= null; 
-			if (expertCategories != null) {
-				for (AskCategory askCategory : expertCategories) {
-					experts.add(new ObjectId(askCategory.getId()));
-				}
-			}else {
-				expertName = searchTxt;
-			}
 			// List<String> fields = new ArrayList<String>();
 			// fields.add("userId");
 			// fields.add("age");
@@ -161,7 +148,7 @@ public class HomeSearchController {
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
 			userProfilePage = UserProfileResponse.getPage(userProfileRepository
-					.getServiceProvidersByFilterCriteria(expertName,userTypes, null, null, null, experts, pageable, fields), null);
+					.getServiceProvidersByFilterCriteria(searchTxt,userTypes, null, null, null, null, pageable, fields), null);
 			if (userProfilePage.getContent().size() > 0) {
 			}
 
