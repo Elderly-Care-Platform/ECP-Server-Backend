@@ -165,7 +165,7 @@ public class SearchController {
 			if(catId != 0){
 				justDailSearchResponse = getJustDialCategoryServices(term, catId, pageSize, pageIndex, request);
 			}else{
-				justDailSearchResponse	= getJustDialSearchServicePage(pageIndex, pageSize, term, request);
+				justDailSearchResponse	= getJustDialSearchServicePage(pageIndex, 50, term, request);
 			}
 			
 
@@ -191,7 +191,7 @@ public class SearchController {
 			JSONArray sortedArray = UserProfileController.sortJsonArray("reviewCount", DbserviceList);
 
 			long total = this.mongoTemplate.count(query, UserProfile.class);
-			total += 50;
+			total += JDresult.length();
 			response.put("total", total);
 			response.put("pageIndex", pageIndex);
 			response.put("data", sortedArray);
