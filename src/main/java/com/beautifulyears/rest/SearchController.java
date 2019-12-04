@@ -120,7 +120,7 @@ public class SearchController {
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/servicePageSearch" }, produces = { "application/json" })
 	@ResponseBody
 	public Object getServicePage(@RequestParam(value = "term", required = true) String term,
-			@RequestParam(value = "catid", required = false,defaultValue="0") int catId,
+			@RequestParam(value = "catid", required = false, defaultValue = "0") int catId,
 			@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
 			@RequestParam(value = "p", required = false, defaultValue = "0") int pageIndex,
@@ -162,15 +162,12 @@ public class SearchController {
 
 			JSONObject justDailSearchResponse = new JSONObject();
 
-			if(catId != 0){
+			if (catId != 0) {
 				justDailSearchResponse = getJustDialCategoryServices(term, catId, pageSize, pageIndex, request);
-			}else{
-				justDailSearchResponse	= getJustDialSearchServicePage(pageIndex, 50, term, request);
+			} else {
+				justDailSearchResponse = getJustDialSearchServicePage(pageIndex, 50, term, request);
 			}
-			
-
-
-			JSONArray JDresult = justDailSearchResponse.getJSONArray("services");
+			JSONArray JDresult=null;
 			JSONArray DbserviceList = new JSONArray(profiles);
 			for (int i = 0; i < DbserviceList.length(); i++) {
 				JSONObject jsonDBObject = DbserviceList.getJSONObject(i);
@@ -178,20 +175,29 @@ public class SearchController {
 				jsonDBObject.put("reviewCount", totReviews.length());
 				DbserviceList.put(i, jsonDBObject);
 			}
+			//JD services
+			if (justDailSearchResponse != null && justDailSearchResponse.length() > 0) {
 
-			for (int i = 0; i < JDresult.length(); i++) {
-				JSONObject jsonObject = JDresult.getJSONObject(i);
-				String totReviews = jsonObject.getString("totalReviews");
-				if (totReviews.equals("")) {
-					totReviews = "0";
+				JDresult = justDailSearchResponse.getJSONArray("services");
+
+				for (int i = 0; i < JDresult.length(); i++) {
+					JSONObject jsonObject = JDresult.getJSONObject(i);
+					String totReviews = jsonObject.getString("totalReviews");
+					if (totReviews.equals("")) {
+						totReviews = "0";
+					}
+					jsonObject.put("reviewCount", Integer.parseInt(totReviews));
+					DbserviceList.put(jsonObject);
 				}
-				jsonObject.put("reviewCount", Integer.parseInt(totReviews));
-				DbserviceList.put(jsonObject);
 			}
+			//
 			JSONArray sortedArray = UserProfileController.sortJsonArray("reviewCount", DbserviceList);
 
 			long total = this.mongoTemplate.count(query, UserProfile.class);
-			total += JDresult.length();
+			if (justDailSearchResponse != null && justDailSearchResponse.length() > 0) {
+			
+				total += JDresult.length();
+			}
 			response.put("total", total);
 			response.put("pageIndex", pageIndex);
 			response.put("data", sortedArray);
@@ -402,23 +408,28 @@ public class SearchController {
 			}
 
 			JSONObject JDResponse = JDHandler.getSearchServiceList(JDtoken.getToken(), search, max, pageNo);
-			JSONObject resultsObject = JDResponse.getJSONObject("results");
-			JSONArray columns = resultsObject.getJSONArray("columns");
-			JSONArray dataList = resultsObject.getJSONArray("data");
-			JSONArray newDataList = new JSONArray();
-			for (int i = 0; i < dataList.length(); i++) {
-				JSONArray dataInfoList = dataList.getJSONArray(i);
-				JSONObject dataInfoMap = new JSONObject();
-				for (int j = 0; j < dataInfoList.length(); j++) {
-					dataInfoMap.put(columns.getString(j), dataInfoList.get(j));
+			if (JDResponse != null) {
+
+				JSONObject resultsObject = JDResponse.getJSONObject("results");
+				JSONArray columns = resultsObject.getJSONArray("columns");
+				JSONArray dataList = resultsObject.getJSONArray("data");
+				JSONArray newDataList = new JSONArray();
+				for (int i = 0; i < dataList.length(); i++) {
+					JSONArray dataInfoList = dataList.getJSONArray(i);
+					JSONObject dataInfoMap = new JSONObject();
+					for (int j = 0; j < dataInfoList.length(); j++) {
+						dataInfoMap.put(columns.getString(j), dataInfoList.get(j));
+					}
+					newDataList.put(dataInfoMap);
 				}
-				newDataList.put(dataInfoMap);
+				response.put("services", newDataList);
+			} else {
+				response = null;
 			}
-			response.put("services", newDataList);
 			// response.put("JDResponse", JDResponse);
 		} catch (Exception e) {
 			// throw e;
-			Util.handleException(e);
+			// Util.handleException(e);
 			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
 		}
 		// Util.logStats(mongoTemplate, request, "search services", null, null, null,
@@ -431,6 +442,7 @@ public class SearchController {
 
 	/**
 	 * Search JD services by categories
+	 * 
 	 * @param category
 	 * @param catID
 	 * @param max
@@ -486,7 +498,7 @@ public class SearchController {
 			// response.put("JDResponse", JDResponse);
 		} catch (Exception e) {
 			// throw e;
-			Util.handleException(e);
+			// Util.handleException(e);
 			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
 		}
 		// Util.logStats(mongoTemplate, request, "search services", null, null, null,
