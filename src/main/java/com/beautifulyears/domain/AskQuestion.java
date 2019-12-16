@@ -15,6 +15,7 @@ public class AskQuestion {
 	@Id
 	private String 	id;
 	private String 	question;
+	private String 	description;
 
 	@DBRef
 	private AskCategory askCategory;
@@ -23,7 +24,7 @@ public class AskQuestion {
 	private User	askedBy;
 
 	@DBRef
-	private User	answeredBy;
+	private UserProfile	answeredBy;
 	
 	private Boolean	answered;
 	private final Date createdAt = new Date();
@@ -44,6 +45,14 @@ public class AskQuestion {
 		this.question = question;
 	}
 
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
 	public Date getCreatedAt() {
 		return createdAt;
 	}
@@ -56,11 +65,11 @@ public class AskQuestion {
 		this.lastModifiedAt = lastModifiedAt;
 	}
 
-	public User getAnsweredBy() {
+	public UserProfile getAnsweredBy() {
 		return answeredBy;
 	}
 
-	public void setAnsweredBy(User answeredBy) {
+	public void setAnsweredBy(UserProfile answeredBy) {
 		this.answeredBy = answeredBy;
 	}
 
@@ -91,8 +100,9 @@ public class AskQuestion {
 	public AskQuestion() {
 	}
 
-	public AskQuestion(String question, AskCategory askCategory, User askedBy, User answeredBy, Boolean answered) {
+	public AskQuestion(String question, String description, AskCategory askCategory, User askedBy, UserProfile answeredBy, Boolean answered) {
 		this.question = question;
+		this.description = description;
 		this.askCategory = askCategory;
 		this.askedBy = askedBy;
 		this.answeredBy = answeredBy;

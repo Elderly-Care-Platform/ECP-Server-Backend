@@ -20,13 +20,13 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 	private MongoTemplate mongoTemplate;
 
 	@Override
-	public PageImpl<UserProfile> getServiceProvidersByFilterCriteria(Object[] userTypes, String city,
+	public PageImpl<UserProfile> getServiceProvidersByFilterCriteria(String name, Object[] userTypes, String city,
 			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties,
 			Pageable page, List<String> fields) {
 		List<UserProfile> userProfileList = null;
 		Query q = new Query();
 		
-		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties);
+		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name);
 
 		q.with(page);
 		userProfileList = mongoTemplate.find(q, UserProfile.class);
@@ -39,11 +39,11 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 	}
 
 	@Override
-	public long getServiceProvidersByFilterCriteriaCount(Object[] userTypes, String city,
+	public long getServiceProvidersByFilterCriteriaCount(String name, Object[] userTypes, String city,
 			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties) {
 		List<UserProfile> userProfileList = null;
 		Query q = new Query();
-		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties);
+		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name);
 		
 		userProfileList = mongoTemplate.find(q, UserProfile.class);
 
@@ -53,7 +53,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 	}
 
 	private Query getQuery(Query q, Object[] userTypes, String city,
-			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties) {
+			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties, String name) {
 		
 		q.addCriteria(Criteria.where("status").in(
 				new Object[] { DiscussConstants.DISCUSS_STATUS_ACTIVE, null }));
@@ -69,9 +69,11 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 		if (null != tagIds && tagIds.size() > 0) {
 			q.addCriteria(Criteria.where("systemTags.$id").in(tagIds));
 		}
+
 		if (null != experties && experties.size() > 0) {
 			q.addCriteria(Criteria.where("experties.$id").in(experties));
 		}
+
 		if (city != null) {
 			Criteria criteria = new Criteria();
 			criteria.orOperator(
@@ -83,8 +85,12 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 			q.addCriteria(criteria);
 		}
 		
-		q.addCriteria(Criteria.where("basicProfileInfo.firstName").exists(true));
-
+		if (null != name && "" != name) {
+			q.addCriteria(Criteria.where("basicProfileInfo.firstName").regex(name, "i"));
+		}
+		else{
+			q.addCriteria(Criteria.where("basicProfileInfo.firstName").exists(true));
+		}
 		return q;
 	}
 
@@ -113,5 +119,4 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 		profile = mongoTemplate.findOne(q, UserProfile.class);
 		return profile;
 	}
-
 }

@@ -79,6 +79,27 @@ public class DiscussReplyLikeController extends LikeController<DiscussReply> {
 
 	}
 
+	@RequestMapping(method = { RequestMethod.PUT }, params = "type=1")
+	@ResponseBody
+	public Object submitCommentUnLike(
+			@RequestParam(value = "replyId", required = true) String replyId,
+			HttpServletRequest req, HttpServletResponse res) throws Exception {
+		LoggerUtil.logEntry();
+		return BYGenericResponseHandler.getResponse(unlikeContent(replyId,
+				String.valueOf(DiscussConstants.REPLY_TYPE_COMMENT), req, res));
+	}
+
+	@RequestMapping(method = { RequestMethod.PUT }, params = "type=2")
+	@ResponseBody
+	public Object submitAnswerUnLike(
+			@RequestParam(value = "replyId", required = true) String replyId,
+			HttpServletRequest req, HttpServletResponse res) throws Exception {
+		LoggerUtil.logEntry();
+		return BYGenericResponseHandler.getResponse(unlikeContent(replyId,
+				String.valueOf(DiscussConstants.REPLY_TYPE_ANSWER), req, res));
+
+	}
+
 	@Override
 	Object likeContent(String id, String type, String url,
 			HttpServletRequest req, HttpServletResponse res) throws Exception {
@@ -120,6 +141,49 @@ public class DiscussReplyLikeController extends LikeController<DiscussReply> {
 					"Like on comment", user.getId(), user.getEmail(),
 					reply.getId(), null, null, null,
 					"Like on content with type " + reply.getContentType(),
+					"COMMUNITY");
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+
+		return reply;
+	}
+
+	@Override
+	Object unlikeContent(String id, String type,
+			HttpServletRequest req, HttpServletResponse res) throws Exception {
+		LoggerUtil.logEntry();
+		int replyType = Integer.parseInt(type);
+		DiscussReply reply = null;
+		try {
+			User user = Util.getSessionUser(req);
+			reply = (DiscussReply) discussReplyRepository.findOne(id);
+			if (null != reply) {
+				if (null == user) {
+					throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
+				} else if (SessionController
+						.checkCurrentSessionFor(req, "LIKE")) {
+					if (reply.getReplyType() == replyType) {
+						if (reply.getLikedBy().contains(user.getId())) {
+							submitUnLike(user, id, DiscussConstants.CONTENT_TYPE_DISCUSS);
+							reply.getLikedBy().remove(user.getId());
+							discussReplyRepository.save(reply);
+							
+							logHandler.addLog(reply, ActivityLogConstants.CRUD_TYPE_CREATE, req);
+						} else {
+							throw new BYException(BYErrorCodes.DISCUSS_ALREADY_UNLIKED_BY_USER);
+						}
+					}
+				}
+				reply.setLikeCount(reply.getLikedBy().size());
+				reply.setLikedByUser(false);
+			} else {
+				throw new BYException(BYErrorCodes.DISCUSS_NOT_FOUND);
+			}
+			Util.logStats(HousingController.staticMongoTemplate, req,
+					"Unlike on comment", user.getId(), user.getEmail(),
+					reply.getId(), null, null, null,
+					"Unlike on content with type " + reply.getContentType(),
 					"COMMUNITY");
 		} catch (Exception e) {
 			Util.handleException(e);

@@ -1,6 +1,7 @@
 package com.beautifulyears.domain;
 
 import java.util.Date;
+import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -13,13 +14,14 @@ public class ServiceReview {
 
     @Id
     private String id;
+
     private String serviceId;
-    private Float rating;
+    private String userId;
     private String review;
-    private Integer likeCount;
-    private Integer unLikeCount;
-    private int status;
-    private String userName;
+    private List<String> likeCount;
+    private List<String> unLikeCount;
+    private boolean isDeleted;
+    private String title;
     private String parentReviewId;
     private final Date createdAt = new Date();
     private Date lastModifiedAt = new Date();
@@ -32,52 +34,12 @@ public class ServiceReview {
         this.id = id;
     }
 
-    public Float getRating() {
-        return rating;
-    }
-
-    public void setRating(Float rating) {
-        this.rating = rating;
-    }
-
     public String getReview() {
         return review;
     }
 
     public void setReview(String review) {
         this.review = review;
-    }
-
-    public Integer getLikeCount() {
-        return likeCount;
-    }
-
-    public void setLikeCount(Integer likeCount) {
-        this.likeCount = likeCount;
-    }
-
-    public Integer getUnLikeCount() {
-        return unLikeCount;
-    }
-
-    public void setUnLikeCount(Integer unLikeCount) {
-        this.unLikeCount = unLikeCount;
-    }
-
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
     }
 
     public String getParentReviewId() {
@@ -108,15 +70,55 @@ public class ServiceReview {
         this.serviceId = serviceId;
     }
 
-    public ServiceReview(String serviceId, Float rating, String review, Integer likeCount, Integer unLikeCount,
-            int status, String userName, String parentReviewId) {
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public List<String> getLikeCount() {
+        return likeCount;
+    }
+
+    public void setLikeCount(List<String> likeCount) {
+        this.likeCount = likeCount;
+    }
+
+    public List<String> getUnLikeCount() {
+        return unLikeCount;
+    }
+
+    public void setUnLikeCount(List<String> unLikeCount) {
+        this.unLikeCount = unLikeCount;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public ServiceReview(String serviceId, String review, List<String> likeCount, List<String> unLikeCount,
+            String userId, String parentReviewId, String title, boolean isDeleted) {
         this.serviceId = serviceId;
-        this.rating = rating;
+        this.userId = userId;
         this.review = review;
         this.likeCount = likeCount;
         this.unLikeCount = unLikeCount;
-        this.status = status;
-        this.userName = userName;
+        this.title = title;
+        this.isDeleted = isDeleted;
         this.parentReviewId = parentReviewId;
         this.lastModifiedAt = new Date();
     }

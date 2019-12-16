@@ -6,43 +6,27 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.newA
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort.Direction;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
-import org.springframework.data.mongodb.core.aggregation.TypedAggregation;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.beautifulyears.constants.ActivityLogConstants;
 import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.constants.DiscussConstants;
 import com.beautifulyears.domain.DiscussReply;
 import com.beautifulyears.domain.HousingFacility;
+import com.beautifulyears.domain.ServiceRatings;
+import com.beautifulyears.domain.ServiceReview;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.domain.UserRating;
-import com.beautifulyears.domain.ServiceReview;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
 import com.beautifulyears.mail.MailHandler;
 import com.beautifulyears.repository.DiscussReplyRepository;
 import com.beautifulyears.repository.HousingRepository;
+import com.beautifulyears.repository.ServiceRatingsRepository;
 import com.beautifulyears.repository.ServiceReviewRepository;
 import com.beautifulyears.repository.UserProfileRepository;
 import com.beautifulyears.repository.UserRatingRepository;
@@ -57,6 +41,24 @@ import com.beautifulyears.util.Util;
 import com.beautifulyears.util.activityLogHandler.ActivityLogHandler;
 import com.beautifulyears.util.activityLogHandler.ReplyActivityLogHandler;
 
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.aggregation.TypedAggregation;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
 @Controller
 @RequestMapping("/reviewRate")
 public class ReviewController {
@@ -68,30 +70,30 @@ public class ReviewController {
 	private UserProfileRepository userProfileRepository;
 	private ActivityLogHandler<DiscussReply> logHandler;
 	private ServiceReviewRepository serviceRevRepo;
+	private ServiceRatingsRepository serviceRateRepo;
+
 	@Autowired
-	public ReviewController(DiscussReplyRepository discussReplyRepository,
-			UserRatingRepository userRatingRepository,
-			UserProfileRepository userProfileRepository,
-			HousingRepository housingRepository, 	
-			ServiceReviewRepository serviceRevRepo,
+	public ReviewController(DiscussReplyRepository discussReplyRepository, UserRatingRepository userRatingRepository,
+			UserProfileRepository userProfileRepository, HousingRepository housingRepository,
+			ServiceReviewRepository serviceRevRepo, ServiceRatingsRepository serviceRateRepo,
 			MongoTemplate mongoTemplate) {
 		this.discussReplyRepository = discussReplyRepository;
 		this.userRatingRepository = userRatingRepository;
 		this.userProfileRepository = userProfileRepository;
 		this.housingRepository = housingRepository;
 		this.serviceRevRepo = serviceRevRepo;
+		this.serviceRateRepo = serviceRateRepo;
 		this.mongoTemplate = mongoTemplate;
 		logHandler = new ReplyActivityLogHandler(mongoTemplate);
 	}
 
 	@RequestMapping(method = { RequestMethod.GET }, value = { "" }, produces = { "application/json" })
 	@ResponseBody
-	public Object getReviewRate(
-			@RequestParam(value = "reviewContentType", required = true) Integer contentType,
+	public Object getReviewRate(@RequestParam(value = "reviewContentType", required = true) Integer contentType,
 			@RequestParam(value = "associatedId", required = true) String associatedId,
 			@RequestParam(value = "userId", required = false) String userId,
-			@RequestParam(value = "verified", required = false) Boolean verified,
-			HttpServletRequest req, HttpServletResponse res) throws Exception {
+			@RequestParam(value = "verified", required = false) Boolean verified, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
 		List<DiscussReply> reviewsList = new ArrayList<DiscussReply>();
 		DiscussDetailResponse responseHandler = new DiscussDetailResponse();
 		List<String> filterCriteria = new ArrayList<String>();
@@ -102,8 +104,7 @@ public class ReviewController {
 
 		if (null != contentType && null != associatedId) {
 			Query q = new Query();
-			q.addCriteria(Criteria.where("replyType")
-					.is(DiscussConstants.REPLY_TYPE_REVIEW).and("contentType")
+			q.addCriteria(Criteria.where("replyType").is(DiscussConstants.REPLY_TYPE_REVIEW).and("contentType")
 					.is(contentType).and("discussId").is(associatedId));
 			if (null != verified) {
 				q.addCriteria(Criteria.where("verified").is(verified));
@@ -112,25 +113,21 @@ public class ReviewController {
 				q.addCriteria(Criteria.where("userId").is(userId));
 			}
 			reviewsList = mongoTemplate.find(q, DiscussReply.class);
-			Util.logStats(mongoTemplate, req, "get rate review", null, null,
-					null, null, null, filterCriteria, "get rate and reviews ",
-					"COMMUNITY");
+			Util.logStats(mongoTemplate, req, "get rate review", null, null, null, null, null, filterCriteria,
+					"get rate and reviews ", "COMMUNITY");
 		} else {
 			throw new BYException(BYErrorCodes.MISSING_PARAMETER);
 		}
 		responseHandler.addReplies(reviewsList, Util.getSessionUser(req));
-		return BYGenericResponseHandler.getResponse(responseHandler
-				.getResponse());
+		return BYGenericResponseHandler.getResponse(responseHandler.getResponse());
 
 	}
 
 	@RequestMapping(method = { RequestMethod.POST }, value = "", consumes = { "application/json" })
 	@ResponseBody
-	public Object submitReviewRate(
-			@RequestParam(value = "reviewContentType", required = true) Integer contentType,
+	public Object submitReviewRate(@RequestParam(value = "reviewContentType", required = true) Integer contentType,
 			@RequestParam(value = "associatedId", required = true) String associatedId,
-			@RequestBody DiscussReply reviewRate, HttpServletRequest req,
-			HttpServletResponse res) throws Exception {
+			@RequestBody DiscussReply reviewRate, HttpServletRequest req, HttpServletResponse res) throws Exception {
 
 		LoggerUtil.logEntry();
 		try {
@@ -138,29 +135,22 @@ public class ReviewController {
 			User user = Util.getSessionUser(req);
 
 			DiscussReply newReview = reviewRate;
-			if (null != user
-					&& SessionController.checkCurrentSessionFor(req,
-							"RATE_REVIEW")) {
-				if (null != contentType && null != associatedId
-						&& null != newReview) {
+			if (null != user && SessionController.checkCurrentSessionFor(req, "RATE_REVIEW")) {
+				if (null != contentType && null != associatedId && null != newReview) {
 					List<String> filterCriteria = new ArrayList<String>();
 					filterCriteria.add("reviewContentType = " + contentType);
 					filterCriteria.add("associatedId = " + associatedId);
 					if (isSelfAccessment(associatedId, contentType, user)) {
 						throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
 					}
-					if (BYConstants.USER_ROLE_EDITOR.equals(user
-							.getUserRoleId())
-							|| BYConstants.USER_ROLE_SUPER_USER.equals(user
-									.getUserRoleId())) {
+					if (BYConstants.USER_ROLE_EDITOR.equals(user.getUserRoleId())
+							|| BYConstants.USER_ROLE_SUPER_USER.equals(user.getUserRoleId())) {
 						newReview.setVerified(true);
 					}
 					submitRating(contentType, associatedId, newReview, user);
 					submitReview(contentType, associatedId, newReview, user);
-					Util.logStats(mongoTemplate, req, "Submit Rating & review",
-							user.getId(), user.getEmail(), associatedId, null,
-							null, filterCriteria, "Submit new Rating & review",
-							"COMMUNITY");
+					Util.logStats(mongoTemplate, req, "Submit Rating & review", user.getId(), user.getEmail(),
+							associatedId, null, null, filterCriteria, "Submit new Rating & review", "COMMUNITY");
 				} else {
 					throw new BYException(BYErrorCodes.MISSING_PARAMETER);
 				}
@@ -174,8 +164,7 @@ public class ReviewController {
 		return null;
 	}
 
-	private DiscussReply submitReview(Integer contentType, String associatedId,
-			DiscussReply newReviewRate, User user) {
+	private DiscussReply submitReview(Integer contentType, String associatedId, DiscussReply newReviewRate, User user) {
 		DiscussReply review = null;
 		review = this.getReview(contentType, associatedId, user);
 		int operationType = ActivityLogConstants.CRUD_TYPE_CREATE;
@@ -185,15 +174,13 @@ public class ReviewController {
 			review.setUrl(newReviewRate.getUrl());
 			review.setContentType(contentType);
 			review.setVerified(newReviewRate.isVerified());
-			review.setUserRatingPercentage(newReviewRate
-					.getUserRatingPercentage());
+			review.setUserRatingPercentage(newReviewRate.getUserRatingPercentage());
 			review.setReplyType(DiscussConstants.REPLY_TYPE_REVIEW);
 			review.setUserId(user.getId());
 			review.setUserName(user.getUserName());
 			Query query = new Query();
 			query.addCriteria(Criteria.where("userId").is(user.getId()));
-			UserProfile profile = mongoTemplate.findOne(query,
-					UserProfile.class);
+			UserProfile profile = mongoTemplate.findOne(query, UserProfile.class);
 			review.setUserProfile(profile);
 			sendMailForReview(review, user);
 		} else {
@@ -207,8 +194,7 @@ public class ReviewController {
 		return review;
 	}
 
-	private UserRating submitRating(Integer contentType, String associatedId,
-			DiscussReply reviewRate, User user) {
+	private UserRating submitRating(Integer contentType, String associatedId, DiscussReply reviewRate, User user) {
 		UserRating rating = null;
 		int operationType = ActivityLogConstants.CRUD_TYPE_CREATE;
 		if (null != contentType && null != reviewRate && null != user) {
@@ -223,8 +209,7 @@ public class ReviewController {
 				operationType = ActivityLogConstants.CRUD_TYPE_UPDATE;
 			}
 			if (null != reviewRate.getUserRatingPercentage()
-					&& (reviewRate.getUserRatingPercentage() < 0 || reviewRate
-							.getUserRatingPercentage() > 100)) {
+					&& (reviewRate.getUserRatingPercentage() < 0 || reviewRate.getUserRatingPercentage() > 100)) {
 				throw new BYException(BYErrorCodes.RATING_VALUE_INVALID);
 			}
 			rating.setRatingPercentage(reviewRate.getUserRatingPercentage());
@@ -238,27 +223,21 @@ public class ReviewController {
 		return rating;
 	}
 
-	private UserRating getRating(Integer contentType, String associatedId,
-			User user) {
+	private UserRating getRating(Integer contentType, String associatedId, User user) {
 		Query query = new Query();
-		query.addCriteria(Criteria.where("associatedContentType")
-				.is(contentType).and("associatedId").is(associatedId)
+		query.addCriteria(Criteria.where("associatedContentType").is(contentType).and("associatedId").is(associatedId)
 				.and("userId").is(user.getId()));
 		return this.mongoTemplate.findOne(query, UserRating.class);
 	}
 
-	private DiscussReply getReview(Integer reviewContentType,
-			String associatedId, User user) {
+	private DiscussReply getReview(Integer reviewContentType, String associatedId, User user) {
 		Query query = new Query();
-		query.addCriteria(Criteria.where("replyType")
-				.is(DiscussConstants.REPLY_TYPE_REVIEW).and("contentType")
-				.is(reviewContentType).and("discussId").is(associatedId)
-				.and("userId").is(user.getId()));
+		query.addCriteria(Criteria.where("replyType").is(DiscussConstants.REPLY_TYPE_REVIEW).and("contentType")
+				.is(reviewContentType).and("discussId").is(associatedId).and("userId").is(user.getId()));
 		return this.mongoTemplate.findOne(query, DiscussReply.class);
 	}
 
-	private void updateAllDependantEntities(Integer contentType,
-			UserRating rating, User user) {
+	private void updateAllDependantEntities(Integer contentType, UserRating rating, User user) {
 		switch (contentType) {
 		case DiscussConstants.CONTENT_TYPE_INDIVIDUAL_PROFESSIONAL:
 		case DiscussConstants.CONTENT_TYPE_INSTITUTION_SERVICES:
@@ -275,8 +254,7 @@ public class ReviewController {
 		}
 	}
 
-	private void updateAllDependantEntities(Integer contentType,
-			DiscussReply review, User user) {
+	private void updateAllDependantEntities(Integer contentType, DiscussReply review, User user) {
 		switch (contentType) {
 		case DiscussConstants.CONTENT_TYPE_INDIVIDUAL_PROFESSIONAL:
 		case DiscussConstants.CONTENT_TYPE_INSTITUTION_SERVICES:
@@ -302,36 +280,25 @@ public class ReviewController {
 	}
 
 	private void updateHousingRating(UserRating rating, User currentUser) {
-		HousingFacility housing = this.housingRepository.findOne(rating
-				.getAssociatedId());
+		HousingFacility housing = this.housingRepository.findOne(rating.getAssociatedId());
 		if (null != housing) {
-			if (null == rating.getRatingPercentage()
-					|| 0 == rating.getRatingPercentage()) {
+			if (null == rating.getRatingPercentage() || 0 == rating.getRatingPercentage()) {
 				housing.getRatedBy().remove(rating.getUserId());
 			} else if (!housing.getRatedBy().contains(rating.getUserId())) {
 				housing.getRatedBy().add(rating.getUserId());
 			}
-			TypedAggregation<UserRating> aggregation = newAggregation(
-					UserRating.class,
-					match(Criteria.where("associatedId")
-							.is(rating.getAssociatedId())
-							.and("ratingPercentage").gt(0)
-							.and("associatedContentType")
-							.is(rating.getAssociatedContentType())),
-					group("associatedId").avg("ratingPercentage").as(
-							"ratingPercentage"));
+			TypedAggregation<UserRating> aggregation = newAggregation(UserRating.class,
+					match(Criteria.where("associatedId").is(rating.getAssociatedId()).and("ratingPercentage").gt(0)
+							.and("associatedContentType").is(rating.getAssociatedContentType())),
+					group("associatedId").avg("ratingPercentage").as("ratingPercentage"));
 
-			AggregationResults<UserRating> result = mongoTemplate.aggregate(
-					aggregation, UserRating.class);
+			AggregationResults<UserRating> result = mongoTemplate.aggregate(aggregation, UserRating.class);
 			List<UserRating> ratingAggregated = result.getMappedResults();
 			if (ratingAggregated.size() > 0) {
-				housing.setAggrRatingPercentage(ratingAggregated.get(0)
-						.getRatingPercentage());
+				housing.setAggrRatingPercentage(ratingAggregated.get(0).getRatingPercentage());
 			}
-			if (currentUser.getUserRoleId()
-					.equals(BYConstants.USER_ROLE_EDITOR)
-					|| currentUser.getUserRoleId().equals(
-							BYConstants.USER_ROLE_SUPER_USER)) {
+			if (currentUser.getUserRoleId().equals(BYConstants.USER_ROLE_EDITOR)
+					|| currentUser.getUserRoleId().equals(BYConstants.USER_ROLE_SUPER_USER)) {
 				housing.setVerified(true);
 			}
 			this.housingRepository.save(housing);
@@ -340,36 +307,25 @@ public class ReviewController {
 	}
 
 	private void updateInstitutionRating(UserRating rating, User currentUser) {
-		UserProfile profile = this.userProfileRepository.findOne(rating
-				.getAssociatedId());
+		UserProfile profile = this.userProfileRepository.findOne(rating.getAssociatedId());
 		if (null != profile) {
-			if (null == rating.getRatingPercentage()
-					|| 0 == rating.getRatingPercentage()) {
+			if (null == rating.getRatingPercentage() || 0 == rating.getRatingPercentage()) {
 				profile.getRatedBy().remove(rating.getUserId());
 			} else if (!profile.getRatedBy().contains(rating.getUserId())) {
 				profile.getRatedBy().add(rating.getUserId());
 			}
-			TypedAggregation<UserRating> aggregation = newAggregation(
-					UserRating.class,
-					match(Criteria.where("associatedId")
-							.is(rating.getAssociatedId())
-							.and("ratingPercentage").gt(0)
-							.and("associatedContentType")
-							.is(rating.getAssociatedContentType())),
-					group("associatedId").avg("ratingPercentage").as(
-							"ratingPercentage"));
+			TypedAggregation<UserRating> aggregation = newAggregation(UserRating.class,
+					match(Criteria.where("associatedId").is(rating.getAssociatedId()).and("ratingPercentage").gt(0)
+							.and("associatedContentType").is(rating.getAssociatedContentType())),
+					group("associatedId").avg("ratingPercentage").as("ratingPercentage"));
 
-			AggregationResults<UserRating> result = mongoTemplate.aggregate(
-					aggregation, UserRating.class);
+			AggregationResults<UserRating> result = mongoTemplate.aggregate(aggregation, UserRating.class);
 			List<UserRating> ratingAggregated = result.getMappedResults();
 			if (ratingAggregated.size() > 0) {
-				profile.setAggrRatingPercentage(ratingAggregated.get(0)
-						.getRatingPercentage());
+				profile.setAggrRatingPercentage(ratingAggregated.get(0).getRatingPercentage());
 			}
-			if (currentUser.getUserRoleId()
-					.equals(BYConstants.USER_ROLE_EDITOR)
-					|| currentUser.getUserRoleId().equals(
-							BYConstants.USER_ROLE_SUPER_USER)) {
+			if (currentUser.getUserRoleId().equals(BYConstants.USER_ROLE_EDITOR)
+					|| currentUser.getUserRoleId().equals(BYConstants.USER_ROLE_SUPER_USER)) {
 				profile.setVerified(true);
 			}
 			this.userProfileRepository.save(profile);
@@ -377,18 +333,15 @@ public class ReviewController {
 	}
 
 	private void updateHousingReviews(DiscussReply review, User currentUser) {
-		HousingFacility housing = this.housingRepository.findOne(review
-				.getDiscussId());
+		HousingFacility housing = this.housingRepository.findOne(review.getDiscussId());
 		if (null != housing) {
 			if (Util.isEmpty(review.getText())) {
 				housing.getReviewedBy().remove(review.getUserId());
 			} else if (!housing.getReviewedBy().contains(review.getUserId())) {
 				housing.getReviewedBy().add(review.getUserId());
 			}
-			if (currentUser.getUserRoleId()
-					.equals(BYConstants.USER_ROLE_EDITOR)
-					|| currentUser.getUserRoleId().equals(
-							BYConstants.USER_ROLE_SUPER_USER)) {
+			if (currentUser.getUserRoleId().equals(BYConstants.USER_ROLE_EDITOR)
+					|| currentUser.getUserRoleId().equals(BYConstants.USER_ROLE_SUPER_USER)) {
 				housing.setVerified(true);
 			}
 			this.housingRepository.save(housing);
@@ -397,18 +350,15 @@ public class ReviewController {
 	}
 
 	private void updateInstitutionReviews(DiscussReply review, User currentUser) {
-		UserProfile profile = this.userProfileRepository.findOne(review
-				.getDiscussId());
+		UserProfile profile = this.userProfileRepository.findOne(review.getDiscussId());
 		if (null != profile) {
 			if (Util.isEmpty(review.getText())) {
 				profile.getReviewedBy().remove(review.getUserId());
 			} else if (!profile.getReviewedBy().contains(review.getUserId())) {
 				profile.getReviewedBy().add(review.getUserId());
 			}
-			if (currentUser.getUserRoleId()
-					.equals(BYConstants.USER_ROLE_EDITOR)
-					|| currentUser.getUserRoleId().equals(
-							BYConstants.USER_ROLE_SUPER_USER)) {
+			if (currentUser.getUserRoleId().equals(BYConstants.USER_ROLE_EDITOR)
+					|| currentUser.getUserRoleId().equals(BYConstants.USER_ROLE_SUPER_USER)) {
 				profile.setVerified(true);
 			}
 			this.userProfileRepository.save(profile);
@@ -416,17 +366,14 @@ public class ReviewController {
 		}
 	}
 
-	private boolean isSelfAccessment(String associatedId, Integer contentType,
-			User user) throws Exception {
+	private boolean isSelfAccessment(String associatedId, Integer contentType, User user) throws Exception {
 		boolean isSelf = false;
 		try {
 			switch (contentType) {
 			case DiscussConstants.CONTENT_TYPE_INDIVIDUAL_PROFESSIONAL:
 			case DiscussConstants.CONTENT_TYPE_INSTITUTION_SERVICES:
-				UserProfile userProfile = this.userProfileRepository
-						.findByUserId(user.getId());
-				if (null != userProfile
-						&& userProfile.getId().equals(associatedId)) {
+				UserProfile userProfile = this.userProfileRepository.findByUserId(user.getId());
+				if (null != userProfile && userProfile.getId().equals(associatedId)) {
 					isSelf = true;
 				}
 				break;
@@ -444,24 +391,17 @@ public class ReviewController {
 			case DiscussConstants.CONTENT_TYPE_INDIVIDUAL_PROFESSIONAL:
 			case DiscussConstants.CONTENT_TYPE_INSTITUTION_SERVICES:
 			case DiscussConstants.CONTENT_TYPE_INSTITUTION_HOUSING:
-				UserProfile reviewedEntity = this.userProfileRepository
-						.findOne(review.getDiscussId());
+				UserProfile reviewedEntity = this.userProfileRepository.findOne(review.getDiscussId());
 				if (!reviewedEntity.getUserId().equals(user.getId())) {
-					ResourceUtil resourceUtil = new ResourceUtil(
-							"mailTemplate.properties");
-					User profileUser = UserController.getUser(reviewedEntity
-							.getUserId());
-					String userName = !Util.isEmpty(profileUser.getUserName()) ? profileUser
-							.getUserName() : "Anonymous User";
+					ResourceUtil resourceUtil = new ResourceUtil("mailTemplate.properties");
+					User profileUser = UserController.getUser(reviewedEntity.getUserId());
+					String userName = !Util.isEmpty(profileUser.getUserName()) ? profileUser.getUserName()
+							: "Anonymous User";
 					String replyTypeString = "profile";
 					String path = review.getUrl();
-					String body = MessageFormat.format(
-							resourceUtil.getResource("reviewOnProfile"),
-							userName, path);
+					String body = MessageFormat.format(resourceUtil.getResource("reviewOnProfile"), userName, path);
 					MailHandler.sendMailToUserId(reviewedEntity.getUserId(),
-							"Your " + replyTypeString
-									+ " was reviewed on beautifulYears.com",
-							body);
+							"Your " + replyTypeString + " was reviewed on beautifulYears.com", body);
 				}
 				break;
 			default:
@@ -473,16 +413,18 @@ public class ReviewController {
 		}
 	}
 
+	/**
+	 * Get reviews for services
+	 */
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/service" }, produces = { "application/json" })
 	@ResponseBody
-	public Object getReviewPage(
-			@RequestParam(value = "searchTxt", required = false) String searchTxt,
+	public Object getReviewPage(@RequestParam(value = "searchTxt", required = false) String searchTxt,
 			@RequestParam(value = "serviceId", required = false) String serviceId,
 			@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
 			@RequestParam(value = "p", required = false, defaultValue = "0") int pageIndex,
-			@RequestParam(value = "s", required = false, defaultValue = "10") int pageSize,
-			HttpServletRequest request) throws Exception {
+			@RequestParam(value = "s", required = false, defaultValue = "10") int pageSize, HttpServletRequest request)
+			throws Exception {
 		LoggerUtil.logEntry();
 		User currentUser = Util.getSessionUser(request);
 		PageImpl<ServiceReview> page = null;
@@ -495,47 +437,193 @@ public class ReviewController {
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
 			page = serviceRevRepo.getPage(searchTxt, serviceId, pageable);
-			serviceReviewPage = ServiceReviewResponse.getPage(page, currentUser);
+			serviceReviewPage = ServiceReviewResponse.getPage(page, currentUser, mongoTemplate);
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
 		return BYGenericResponseHandler.getResponse(serviceReviewPage);
 	}
 
+	/**
+	 * Get ratings for services
+	 */
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/serviceRatings" }, produces = { "application/json" })
+	@ResponseBody
+	public Object getServiceRatings(@RequestParam(value = "serviceId", required = true) String serviceId,
+			HttpServletRequest request) throws Exception {
+		LoggerUtil.logEntry();
+
+		List<ServiceRatings> serviceRating = null;
+		try {
+			serviceRating = serviceRateRepo.findByServiceId(serviceId);
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+		return BYGenericResponseHandler.getResponse(serviceRating);
+	}
+
+	/**
+	 * Add service rating and reviews
+	 */
 	@RequestMapping(method = { RequestMethod.POST }, value = { "/addServiceReview" }, consumes = { "application/json" })
 	@ResponseBody
-	public Object submitServiceReview(@RequestBody ServiceReview serviceReview, HttpServletRequest request) throws Exception {
+	public Object submitServiceReview(@RequestBody ServiceReview serviceReview, HttpServletRequest request)
+			throws Exception {
 		LoggerUtil.logEntry();
 		User currentUser = Util.getSessionUser(request);
 		if (null != currentUser) {
 			if (serviceReview != null && (Util.isEmpty(serviceReview.getId()))) {
-				ServiceReview serviceRevExtracted = new ServiceReview(
-					serviceReview.getServiceId(),
-					serviceReview.getRating(),
-					serviceReview.getReview(),
-					serviceReview.getLikeCount(),
-					serviceReview.getUnLikeCount(),
-					serviceReview.getStatus(),
-					serviceReview.getUserName(),
-					serviceReview.getParentReviewId()
-				);
-
-				Query query = new Query();
-				query.addCriteria(Criteria.where("id").is(serviceRevExtracted.getServiceId()));
-				UserProfile userProfile = null;
-				userProfile = mongoTemplate.findOne(query, UserProfile.class);
-
-				if(userProfile != null){
-				userProfile.getReviewedBy().add(currentUser.getId());
-				float totRating =  userProfile.getAggrRatingPercentage();
-				totRating = (totRating + serviceRevExtracted.getRating()) / userProfile.getReviewedBy().size() ;
-				userProfile.setAggrRatingPercentage(totRating);
-				mongoTemplate.save(userProfile);
-				}
+				ServiceReview serviceRevExtracted = new ServiceReview(serviceReview.getServiceId(),
+						serviceReview.getReview(), serviceReview.getLikeCount(), serviceReview.getUnLikeCount(),
+						currentUser.getId(), serviceReview.getParentReviewId(), serviceReview.getTitle(), false);
 
 				serviceReview = serviceRevRepo.save(serviceRevExtracted);
-				// logHandlerRev.addLog(productReview, ActivityLogConstants.CRUD_TYPE_CREATE, request);
+
+				Query serviceQuery = new Query();
+				serviceQuery.addCriteria(Criteria.where("id").is(serviceRevExtracted.getServiceId()));
+				UserProfile userProfile = null;
+				userProfile = mongoTemplate.findOne(serviceQuery, UserProfile.class);
+
+				if(userProfile != null){
+					userProfile.getReviewedBy().add(currentUser.getId());
+					mongoTemplate.save(userProfile);
+				}
+				// logHandlerRev.addLog(productReview, ActivityLogConstants.CRUD_TYPE_CREATE,
+				// request);
 				logger.info("new service review entity created with ID: " + serviceReview.getId());
+			} else {
+				// Edit review
+				Query query = new Query();
+				query.addCriteria(Criteria.where("id").is(serviceReview.getId()));
+				ServiceReview serviceReviewExtracted = null;
+				serviceReviewExtracted = mongoTemplate.findOne(query, ServiceReview.class);
+				if (serviceReviewExtracted != null) {
+
+					serviceReviewExtracted.setTitle(serviceReview.getTitle());
+					serviceReviewExtracted.setReview(serviceReview.getReview());
+					serviceReview = serviceRevRepo.save(serviceReviewExtracted);
+					logger.info("service review entity updated with ID: " + serviceReview.getId());
+
+				} else {
+					throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
+				}
+			}
+		} else {
+			throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
+		}
+		Util.logStats(mongoTemplate, request, "NEW Service Review added.", currentUser.getId(), currentUser.getEmail(),
+				serviceReview.getId(), null, null, null, "new service review entity is added", "SERVICE_REVIEW");
+		return BYGenericResponseHandler.getResponse(serviceReview);
+	}
+
+
+	/**
+	 * Delete Service review
+	 * 
+	 * @param reviewId
+	 * @param request
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(method = { RequestMethod.DELETE }, value = { "/deleteServiceReview/{reviewId}" }, produces = {
+			"application/json" })
+	@ResponseBody
+	public Object deleteServiceReview(@PathVariable(value = "reviewId") String reviewId, HttpServletRequest request)
+			throws Exception {
+		LoggerUtil.logEntry();
+		User currentUser = Util.getSessionUser(request);
+		ServiceReview reviewDeleted = null;
+		if (null != currentUser) {
+			Query query = new Query();
+			query.addCriteria(Criteria.where("id").is(reviewId));
+			ServiceReview serviceReviewExtracted = null;
+			serviceReviewExtracted = mongoTemplate.findOne(query, ServiceReview.class);
+			if (serviceReviewExtracted != null) {
+				serviceReviewExtracted.setDeleted(true);
+				reviewDeleted = serviceRevRepo.save(serviceReviewExtracted);
+				logger.info("service review entity deleted with ID: " + reviewDeleted.getId());
+			}
+
+		} else {
+			throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
+		}
+		return BYGenericResponseHandler.getResponse(reviewDeleted);
+	}
+
+	/**
+	 * Add new service rating
+	 */
+	@RequestMapping(method = { RequestMethod.POST }, value = { "/addServiceRating" }, consumes = { "application/json" })
+	@ResponseBody
+	public Object addServiceRating(@RequestBody ServiceRatings serviceRating, HttpServletRequest request)
+			throws Exception {
+		LoggerUtil.logEntry();
+		User currentUser = Util.getSessionUser(request);
+		if (null != currentUser) {
+			if (serviceRating != null && (Util.isEmpty(serviceRating.getId()))) {
+
+				ServiceRatings serviceRateExtracted = new ServiceRatings(serviceRating.getServiceId(),
+						currentUser.getId(), serviceRating.getRating());
+
+				Query query = new Query();
+				query.addCriteria(Criteria.where("userId").is(currentUser.getId()));
+				query.addCriteria(Criteria.where("serviceId").is(serviceRateExtracted.getServiceId()));
+				ServiceRatings existingRating = null;
+				existingRating = mongoTemplate.findOne(query, ServiceRatings.class);
+
+				Query serviceQuery = new Query();
+				serviceQuery.addCriteria(Criteria.where("id").is(serviceRateExtracted.getServiceId()));
+				UserProfile userProfile = null;
+				userProfile = mongoTemplate.findOne(serviceQuery, UserProfile.class);
+
+				if (existingRating == null) {
+
+					if (userProfile != null) {
+
+						List<ServiceRatings> allServiceRating = new ArrayList<ServiceRatings>();
+						allServiceRating = serviceRateRepo.findByServiceId(serviceRateExtracted.getServiceId());
+						allServiceRating.add(serviceRateExtracted);
+
+						userProfile.getRatedBy().add(currentUser.getId());
+						float totRating = 0;
+
+						for (ServiceRatings rating : allServiceRating) {
+							totRating += rating.getRating();
+						}
+
+						totRating = totRating / allServiceRating.size();
+
+						userProfile.setAggrRatingPercentage(totRating);
+						mongoTemplate.save(userProfile);
+					}
+
+					serviceRating = serviceRateRepo.save(serviceRateExtracted);
+				} else {
+					// Update User Rating
+					existingRating.setRating(serviceRateExtracted.getRating());
+					existingRating.setLastModifiedAt(serviceRateExtracted.getLastModifiedAt());
+					serviceRating = serviceRateRepo.save(existingRating);
+
+					if (userProfile != null) {
+						// Recount average rating for DB service
+						List<ServiceRatings> allServiceRating = new ArrayList<ServiceRatings>();
+						allServiceRating = serviceRateRepo.findByServiceId(serviceRateExtracted.getServiceId());
+
+						float totRating = 0;
+
+						for (ServiceRatings rating : allServiceRating) {
+							totRating += rating.getRating();
+						}
+
+						totRating = totRating / allServiceRating.size();
+
+						userProfile.setAggrRatingPercentage(totRating);
+						mongoTemplate.save(userProfile);
+					}
+					// throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
+				}
+
+				logger.info("new service rating entity created with ID: " + serviceRating.getId());
 			} else {
 				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
 			}
@@ -543,9 +631,71 @@ public class ReviewController {
 			throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
 		}
 		Util.logStats(mongoTemplate, request, "NEW Service Review added.", currentUser.getId(), currentUser.getEmail(),
-		serviceReview.getId(), null, null, null,
-				"new service review entity is added", "PRODUCT_REVIEW");
-		return BYGenericResponseHandler.getResponse(serviceReview);
+				serviceRating.getId(), null, null, null, "new service review entity is added", "SERVICE_REVIEW");
+		return BYGenericResponseHandler.getResponse(serviceRating);
+	}
+
+	/**
+	 * Add service rating and reviews
+	 */
+	@RequestMapping(method = { RequestMethod.PUT }, value = { "/service/likeUnlikeReview" }, consumes = {
+			"application/json" })
+	@ResponseBody
+	public Object serviceLikeUnlikeReview(@RequestParam(value = "reviewId", required = true) String reviewId,
+			HttpServletRequest request) throws Exception {
+		LoggerUtil.logEntry();
+		User currentUser = Util.getSessionUser(request);
+		ServiceReview reviewUpdated = null;
+		if (null != currentUser) {
+
+			Query query = new Query();
+			query.addCriteria(Criteria.where("id").is(reviewId));
+			ServiceReview serviceRevExtracted = null;
+			serviceRevExtracted = mongoTemplate.findOne(query, ServiceReview.class);
+			List<String> users = new ArrayList<String>();
+			if (serviceRevExtracted != null) {
+
+				// if (isLike) {
+				if (serviceRevExtracted.getLikeCount() != null
+						&& serviceRevExtracted.getLikeCount().contains(currentUser.getId())) {
+					users = serviceRevExtracted.getLikeCount();
+					users.remove(currentUser.getId());
+					serviceRevExtracted.setLikeCount(users);
+					// throw new BYException(BYErrorCodes.USER_ALREADY_EXIST);
+				} else {
+					if (serviceRevExtracted.getLikeCount() != null) {
+						users = serviceRevExtracted.getLikeCount();
+					}
+					users.add(currentUser.getId());
+					serviceRevExtracted.setLikeCount(users);
+				}
+				// }
+				// else {
+				// if (serviceRevExtracted.getUnLikeCount() != null
+				// && serviceRevExtracted.getUnLikeCount().contains(currentUser.getId())) {
+				// throw new BYException(BYErrorCodes.USER_ALREADY_EXIST);
+				// } else {
+				// if (serviceRevExtracted.getUnLikeCount() != null) {
+				// users = serviceRevExtracted.getUnLikeCount();
+				// }
+				// users.add(currentUser.getId());
+				// serviceRevExtracted.setUnLikeCount(users);
+				// }
+				// }
+
+				reviewUpdated = serviceRevRepo.save(serviceRevExtracted);
+			} else {
+				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
+			}
+
+		} else {
+			throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
+		}
+
+		Util.logStats(mongoTemplate, request, "Service Review Like/Unliked.", currentUser.getId(),
+				currentUser.getEmail(), reviewUpdated.getId(), null, null, null, "new Service Review Like/Unliked.",
+				"SERVICE_REVIEW");
+		return BYGenericResponseHandler.getResponse(reviewUpdated);
 	}
 
 }

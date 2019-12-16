@@ -106,6 +106,9 @@ public class UserController {
 		return BYGenericResponseHandler.getResponse(currentSession);
 	}
 
+	/**
+	 * Login/Signup user
+	 */
 	@RequestMapping(value = "/login", method = RequestMethod.POST)
 	public @ResponseBody Object login(@RequestBody User loginRequest, HttpServletRequest req, HttpServletResponse res)
 			throws Exception {
@@ -376,6 +379,9 @@ public class UserController {
 		return null;
 	}
 
+	/**
+	 * Send OTP
+	 */
 	@RequestMapping(value = "/sendOtp", method = RequestMethod.GET)
 	public @ResponseBody Object sendOtp(@RequestParam(value = "mobile", required = true) String mobileNo,
 			HttpServletRequest req, HttpServletResponse res) throws Exception {
@@ -395,6 +401,9 @@ public class UserController {
 		return null;
 	}
 
+	/**
+	 * Verify OTP
+	 */
 	@RequestMapping(value = "/verifyOtp", method = RequestMethod.GET)
 	public @ResponseBody Object verifyOtp(@RequestParam(value = "mobile", required = true) String mobileNo,
 			@RequestParam(value = "otp", required = true) String otp, HttpServletRequest req, HttpServletResponse res)
@@ -415,6 +424,9 @@ public class UserController {
 		return null;
 	}
 
+	/**
+	 * Resend OTP
+	 */
 	@RequestMapping(value = "/resendOtp", method = RequestMethod.GET)
 	public @ResponseBody Object resendOtp(@RequestParam(value = "mobile", required = true) String mobileNo,
 			HttpServletRequest req, HttpServletResponse res) throws Exception {

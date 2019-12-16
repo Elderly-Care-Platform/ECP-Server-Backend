@@ -17,11 +17,11 @@ public class AskQuestionRepositoryImpl implements AskQuestionRepositoryCustom {
 	private MongoTemplate mongoTemplate;
 
 	@Override
-	public PageImpl<AskQuestion> getPage(String searchTxt, String askCategory, String askedBy, String answeredBy, Pageable pageable) {
+	public PageImpl<AskQuestion> getPage(String searchTxt, String askCategory, String askedBy, String answeredBy, Boolean answered, Pageable pageable) {
 		List<AskQuestion> stories = null;
 
 		Query query = new Query();
-		query = getQuery(query, searchTxt, askCategory, askedBy, answeredBy);
+		query = getQuery(query, searchTxt, askCategory, askedBy, answeredBy, answered);
 		query.with(pageable);
 		
 		stories = this.mongoTemplate.find(query, AskQuestion.class);
@@ -31,15 +31,18 @@ public class AskQuestionRepositoryImpl implements AskQuestionRepositoryCustom {
 		return storyPage;
 	}
 
-	private Query getQuery(Query q, String searchTxt, String askCategory, String askedBy, String answeredBy) {
+	private Query getQuery(Query q, String searchTxt, String askCategory, String askedBy, String answeredBy, Boolean answered) {
 		if (null != searchTxt && searchTxt!="") {
 			q.addCriteria(Criteria.where("name").regex(searchTxt,"i"));
 		}
 		if (null != askedBy && askedBy!="") {
-			q.addCriteria(Criteria.where("askedBy.$id").is(askedBy));
+			q.addCriteria(Criteria.where("askedBy.$id").is( new ObjectId(askedBy) ));
 		}
 		if (null != answeredBy && answeredBy!="") {
-			q.addCriteria(Criteria.where("answeredBy.$id").is(answeredBy));
+			q.addCriteria(Criteria.where("answeredBy.$id").is( new ObjectId(answeredBy) ));
+		}
+		if (null != answered) {
+			q.addCriteria(Criteria.where("answered").is(answered));
 		}
 		if (null != askCategory && askCategory!="") {
 			q.addCriteria(Criteria.where("askCategory.$id").is(new ObjectId(askCategory) ));
@@ -48,10 +51,10 @@ public class AskQuestionRepositoryImpl implements AskQuestionRepositoryCustom {
 	}
 
 	@Override
-	public long getCount(String searchTxt, String askCategory, String askedBy, String answeredBy) {
+	public long getCount(String searchTxt, String askCategory, String askedBy, String answeredBy, Boolean answered) {
 		long count = 0;
 		Query query = new Query();
-		query = getQuery(query, searchTxt, askCategory, askedBy, answeredBy);
+		query = getQuery(query, searchTxt, askCategory, askedBy, answeredBy, answered);
 		count = this.mongoTemplate.count(query, AskQuestion.class);
 		return count;
 	}

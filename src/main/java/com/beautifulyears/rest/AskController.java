@@ -27,19 +27,24 @@ import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.constants.UserTypes;
 import com.beautifulyears.domain.AskCategory;
 import com.beautifulyears.domain.AskQuestion;
+import com.beautifulyears.domain.AskQuestionReply;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
+import com.beautifulyears.mail.MailHandler;
 import com.beautifulyears.repository.UserRepository;
 import com.beautifulyears.repository.AskCategoryRepository;
+import com.beautifulyears.repository.AskQuestionReplyRepository;
 import com.beautifulyears.repository.AskQuestionRepository;
 import com.beautifulyears.repository.UserProfileRepository;
 import com.beautifulyears.rest.response.AskCategoryResponse;
+import com.beautifulyears.rest.response.AskQuestionReplyResponse;
 import com.beautifulyears.rest.response.AskQuestionResponse;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.rest.response.PageImpl;
 import com.beautifulyears.rest.response.UserProfileResponse;
 import com.beautifulyears.rest.response.AskCategoryResponse.AskCategoryPage;
+import com.beautifulyears.rest.response.AskQuestionReplyResponse.AskQuestionReplyPage;
 import com.beautifulyears.rest.response.AskQuestionResponse.AskQuestionPage;
 import com.beautifulyears.rest.response.UserProfileResponse.UserProfilePage;
 import com.beautifulyears.util.LoggerUtil;
@@ -47,6 +52,7 @@ import com.beautifulyears.util.Util;
 import com.beautifulyears.util.activityLogHandler.ActivityLogHandler;
 import com.beautifulyears.util.activityLogHandler.AskCategoryActivityLogHandler;
 import com.beautifulyears.util.activityLogHandler.AskQuestionActivityLogHandler;
+import com.beautifulyears.util.activityLogHandler.AskQuestionReplyActivityLogHandler;
 
 /**
  * The REST based service for managing "product"
@@ -58,31 +64,31 @@ import com.beautifulyears.util.activityLogHandler.AskQuestionActivityLogHandler;
 @RequestMapping(value = { "/ask" })
 public class AskController {
 	private static final Logger logger = Logger
-			.getLogger(ProductController.class);
+			.getLogger(AskController.class);
 	private AskQuestionRepository askQuesRepo;
 	private AskCategoryRepository askCatRepo;
 	private UserProfileRepository userProfileRepo;
-	// private ProductReviewRepository productRevRepo;
+	private AskQuestionReplyRepository quesReplyRepo;
 	private MongoTemplate mongoTemplate;
 	ActivityLogHandler<AskQuestion> logHandler;
 	ActivityLogHandler<AskCategory> logHandlerCat;
-	// ActivityLogHandler<ProductReview> logHandlerRev;
+	ActivityLogHandler<AskQuestionReply> logHandlerRep;
 	// ActivityLogHandler<Object> shareLogHandler;
 
 	@Autowired
 	public AskController(AskQuestionRepository askQuesRepo, UserRepository userRepository, 
 			AskCategoryRepository askCatRepo,
 			UserProfileRepository userProfileRepo,
-			// ProductReviewRepository productRevRepo,
+			AskQuestionReplyRepository quesReplyRepo,
 			MongoTemplate mongoTemplate) {
 		this.askQuesRepo = askQuesRepo;
 		this.askCatRepo = askCatRepo;
 		this.userProfileRepo = userProfileRepo;
-		//this.productRevRepo = productRevRepo;
+		this.quesReplyRepo = quesReplyRepo;
 		this.mongoTemplate = mongoTemplate;
 		logHandler = new AskQuestionActivityLogHandler(mongoTemplate);
 		logHandlerCat = new AskCategoryActivityLogHandler(mongoTemplate);
-		// logHandlerRev = new ProductReviewActivityLogHandler(mongoTemplate);
+		logHandlerRep = new AskQuestionReplyActivityLogHandler(mongoTemplate);
 		// shareLogHandler = new SharedActivityLogHandler(mongoTemplate);
 	}
 
@@ -126,6 +132,7 @@ public class AskController {
 				
 				AskQuestion askQuesExtracted = new AskQuestion(
 					askQues.getQuestion(),
+					askQues.getDescription(),
 					askQues.getAskCategory(),
 					askQues.getAskedBy(),
 					askQues.getAnsweredBy(),
@@ -135,6 +142,14 @@ public class AskController {
 				askQues = askQuesRepo.save(askQuesExtracted);
 				logHandler.addLog(askQues, ActivityLogConstants.CRUD_TYPE_CREATE, request);
 				logger.info("new ask question entity created with ID: " + askQues.getId());
+				MailHandler.sendMailToUserId(askQues.getAnsweredBy().getId(), "ECP - New Question for you", 
+				"Hi,<br/>"+
+
+				"This is to inform that a new question has been asked by one of elders who is seeking help / some informtion.<br/>"+
+				" Question Asked by is '" + askQues.getQuestion() + "'<br/>"+
+				"Requesting you to please respond.<br/><br/>"+
+				"Best Regards<br/>"+
+				"ECP Team");
 			} else {
 				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
 			}
@@ -159,6 +174,7 @@ public class AskController {
 
 					AskQuestion oldAskQues = mongoTemplate.findById(new ObjectId(askQues.getId()), AskQuestion.class);
 					oldAskQues.setAnswered(askQues.getAnswered());
+					oldAskQues.setDescription(askQues.getDescription());
 					oldAskQues.setAskCategory(askQues.getAskCategory());
 					oldAskQues.setAskedBy(askQues.getAskedBy());
 					oldAskQues.setAnsweredBy(askQues.getAnsweredBy());
@@ -197,6 +213,7 @@ public class AskController {
 			@RequestParam(value = "askCategory", required = false) String askCategory,
 			@RequestParam(value = "askedBy", required = false) String askedBy,
 			@RequestParam(value = "answeredBy", required = false) String answeredBy,
+			@RequestParam(value = "answered", required = false) Boolean answered,
 			@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
 			@RequestParam(value = "p", required = false, defaultValue = "0") int pageIndex,
@@ -213,8 +230,8 @@ public class AskController {
 			}
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
-			page = askQuesRepo.getPage(searchTxt, askCategory, askedBy, answeredBy, pageable);
-			askQuesPage = AskQuestionResponse.getPage(page, currentUser);
+			page = askQuesRepo.getPage(searchTxt, askCategory, askedBy, answeredBy, answered , pageable);
+			askQuesPage = AskQuestionResponse.getPage(page, currentUser,quesReplyRepo);
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
@@ -228,13 +245,14 @@ public class AskController {
 			@RequestParam(value = "askCategory", required = false) String askCategory,
 			@RequestParam(value = "askedBy", required = false) String askedBy,
 			@RequestParam(value = "answeredBy", required = false) String answeredBy,
+			@RequestParam(value = "answered", required = false) Boolean answered,
 			HttpServletRequest request) throws Exception {
 		LoggerUtil.logEntry();
 		Map<String, Long> obj = new HashMap<String, Long>();
 		List<String> filterCriteria = new ArrayList<String>();
 		try {
 			Long allCount = null;
-			allCount = askQuesRepo.getCount(searchTxt, askCategory, askedBy, answeredBy);
+			allCount = askQuesRepo.getCount(searchTxt, askCategory, askedBy, answeredBy, answered);
 			obj.put("all", new Long(allCount));
 		} catch (Exception e) {
 			Util.handleException(e);
@@ -275,7 +293,7 @@ public class AskController {
 
 	@RequestMapping(value = { "/category" }, method = { RequestMethod.POST }, consumes = { "application/json" }, produces = { "application/json" })
 	@ResponseBody
-	public Object submitProductCategory(@RequestBody AskCategory askCategory, HttpServletRequest request) throws Exception {
+	public Object submitCategory(@RequestBody AskCategory askCategory, HttpServletRequest request) throws Exception {
 		LoggerUtil.logEntry();
 		User currentUser = Util.getSessionUser(request);
 		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "ASK")) {
@@ -307,7 +325,7 @@ public class AskController {
 
 	@RequestMapping(method = { RequestMethod.PUT }, value = { "/category" }, consumes = { "application/json" })
 	@ResponseBody
-	public Object editAskCategory(@RequestBody AskCategory askCat, HttpServletRequest request) throws Exception {
+	public Object editCategory(@RequestBody AskCategory askCat, HttpServletRequest request) throws Exception {
 		LoggerUtil.logEntry();
 		User currentUser = Util.getSessionUser(request);
 		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "ASK")) {
@@ -344,121 +362,76 @@ public class AskController {
 		return BYGenericResponseHandler.getResponse(askCat);
 	}
 
-	// @RequestMapping(method = { RequestMethod.GET }, value = { "/review/page" }, produces = { "application/json" })
-	// @ResponseBody
-	// public Object getReviewPage(
-	// 		@RequestParam(value = "searchTxt", required = false) String searchTxt,
-	// 		@RequestParam(value = "productId", required = false) String productId,
-	// 		@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
-	// 		@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
-	// 		@RequestParam(value = "p", required = false, defaultValue = "0") int pageIndex,
-	// 		@RequestParam(value = "s", required = false, defaultValue = "10") int pageSize,
-	// 		HttpServletRequest request) throws Exception {
-	// 	LoggerUtil.logEntry();
-	// 	User currentUser = Util.getSessionUser(request);
-	// 	PageImpl<ProductReview> page = null;
-	// 	ProductReviewPage productRevPage = null;
-	// 	try {
-	// 		Direction sortDirection = Direction.DESC;
-	// 		if (dir != 0) {
-	// 			sortDirection = Direction.ASC;
-	// 		}
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/reply/page" }, produces = { "application/json" })
+	@ResponseBody
+	public Object getReviewPage(
+			@RequestParam(value = "searchTxt", required = false) String searchTxt,
+			@RequestParam(value = "questionId", required = false) String questionId,
+			@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
+			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
+			@RequestParam(value = "p", required = false, defaultValue = "0") int pageIndex,
+			@RequestParam(value = "s", required = false, defaultValue = "10") int pageSize,
+			HttpServletRequest request) throws Exception {
+		LoggerUtil.logEntry();
+		User currentUser = Util.getSessionUser(request);
+		PageImpl<AskQuestionReply> page = null;
+		AskQuestionReplyPage quesReplyPage = null;
+		try {
+			Direction sortDirection = Direction.DESC;
+			if (dir != 0) {
+				sortDirection = Direction.ASC;
+			}
 
-	// 		Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
-	// 		page = productRevRepo.getPage(searchTxt, productId, pageable);
-	// 		productRevPage = ProductReviewResponse.getPage(page, currentUser);
-	// 	} catch (Exception e) {
-	// 		Util.handleException(e);
-	// 	}
-	// 	return BYGenericResponseHandler.getResponse(productRevPage);
-	// }
+			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
+			page = quesReplyRepo.getPage(searchTxt, questionId, pageable);
+			quesReplyPage = AskQuestionReplyResponse.getPage(page, currentUser);
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+		return BYGenericResponseHandler.getResponse(quesReplyPage);
+	}
 
-	// @RequestMapping(method = { RequestMethod.POST }, value = { "/review" }, consumes = { "application/json" })
-	// @ResponseBody
-	// public Object submitProductReview(@RequestBody ProductReview productReview, HttpServletRequest request) throws Exception {
-	// 	LoggerUtil.logEntry();
-	// 	User currentUser = Util.getSessionUser(request);
-	// 	if (null != currentUser && SessionController.checkCurrentSessionFor(request, "PRODUCT")) {
-	// 		if (productReview != null && (Util.isEmpty(productReview.getId()))) {
-	// 			ProductReview productRevExtracted = new ProductReview(
-	// 				productReview.getProductId(),
-	// 				productReview.getRating(),
-	// 				productReview.getReview(),
-	// 				productReview.getLikeCount(),
-	// 				productReview.getUnLikeCount(),
-	// 				productReview.getStatus(),
-	// 				productReview.getUserName(),
-	// 				productReview.getParentReviewId()
-	// 			);
+	@RequestMapping(method = { RequestMethod.POST }, value = { "/reply" }, consumes = { "application/json" })
+	@ResponseBody
+	public Object submitAskQuestionReply(@RequestBody AskQuestionReply askQuestionReply, HttpServletRequest request) throws Exception {
+		LoggerUtil.logEntry();
+		User currentUser = Util.getSessionUser(request);
+		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "ASK")) {
+			if (askQuestionReply != null && (Util.isEmpty(askQuestionReply.getId()))) {
+				AskQuestionReply askQuestionReplyExtracted = new AskQuestionReply(
+					askQuestionReply.getAskQuestionId(), 
+					askQuestionReply.getReply(), 
+					askQuestionReply.getUser()
+				);
 
-	// 			productReview = productRevRepo.save(productRevExtracted);
-	// 			logHandlerRev.addLog(productReview, ActivityLogConstants.CRUD_TYPE_CREATE, request);
-	// 			logger.info("new product review entity created with ID: " + productReview.getId());
-	// 		} else {
-	// 			throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
-	// 		}
-	// 	} else {
-	// 		throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
-	// 	}
-	// 	Util.logStats(mongoTemplate, request, "NEW Product Review added.", currentUser.getId(), currentUser.getEmail(),
-	// 		productReview.getId(), null, null, null,
-	// 			"new product review entity is added", "PRODUCT_REVIEW");
-	// 	return BYGenericResponseHandler.getResponse(productReview);
-	// }
+				askQuestionReply = quesReplyRepo.save(askQuestionReplyExtracted);
 
-	// @RequestMapping(method = { RequestMethod.PUT }, value = { "/review" }, consumes = { "application/json" })
-	// @ResponseBody
-	// public Object editProductReview(@RequestBody ProductReview productRev, HttpServletRequest request) throws Exception {
-	// 	LoggerUtil.logEntry();
-	// 	User currentUser = Util.getSessionUser(request);
-	// 	if (null != currentUser && SessionController.checkCurrentSessionFor(request, "PRODUCT")) {
-	// 		if (productRev != null && (!Util.isEmpty(productRev.getId()))) {
-	// 			if (BYConstants.USER_ROLE_EDITOR.equals(currentUser.getUserRoleId())
-	// 					|| BYConstants.USER_ROLE_SUPER_USER.equals(currentUser.getUserRoleId()) ) {
+				AskQuestion question = askQuesRepo.findOne(askQuestionReply.getAskQuestionId());
+				if(question.getAskedBy().getId().equals(askQuestionReplyExtracted.getUser().getId())){
+					question.setAnswered(false);
+				}
+				else{
+					question.setAnswered(true);
+				}
+				askQuesRepo.save(question);
+				logHandlerRep.addLog(askQuestionReply, ActivityLogConstants.CRUD_TYPE_CREATE, request);
+				logger.info("new ask question reply entity created with ID: " + askQuestionReply.getId());
+			} else {
+				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
+			}
+		} else {
+			throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
+		}
+		Util.logStats(mongoTemplate, request, "NEW Ask question reply added.", currentUser.getId(), currentUser.getEmail(),
+			askQuestionReply.getId(), null, null, null,
+				"new ask question reply entity is added", "ASK_QUESTION_REPLY");
+		return BYGenericResponseHandler.getResponse(askQuestionReply);
+	}
 
-	// 				ProductReview oldProductRev = mongoTemplate.findById(new ObjectId(productRev.getId()), ProductReview.class);
-	// 				oldProductRev.setProductId(productRev.getProductId());
-	// 				oldProductRev.setRating(productRev.getRating());
-	// 				oldProductRev.setReview(productRev.getReview());
-	// 				oldProductRev.setLikeCount(productRev.getLikeCount());
-	// 				oldProductRev.setUnLikeCount(productRev.getUnLikeCount());
-	// 				oldProductRev.setStatus(productRev.getStatus());
-	// 				oldProductRev.setUserName(productRev.getUserName());
-	// 				oldProductRev.setParentReviewId(productRev.getParentReviewId());
-
-	// 				productRev = productRevRepo.save(oldProductRev);
-	// 				logHandlerRev.addLog(productRev,
-	// 						ActivityLogConstants.CRUD_TYPE_UPDATE, request);
-	// 				logger.info("old product review entity updated for ID: "
-	// 						+ productRev.getId() + " by User "
-	// 						+ currentUser.getId());
-
-	// 				Util.logStats(mongoTemplate, request,
-	// 						"EDIT " + productRev.getId()
-	// 								+ " product review content.", currentUser.getId(),
-	// 						currentUser.getEmail(), productRev.getId(), null,
-	// 						null, null, "old product review entity updated",
-	// 						"PRODUCT");
-	// 			} else {
-	// 				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
-	// 			}
-	// 		} else {
-	// 			throw new BYException(BYErrorCodes.NO_CONTENT_FOUND);
-	// 		}
-	// 	} else {
-	// 		throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
-	// 	}
-	// 	return BYGenericResponseHandler.getResponse(productRev);
-	// }
-
-	/*
-	 * this method allows to get a page of userProfiles who are service providers
-	 * based on page number and size. Service providers can be institution as well
-	 * as individuals.
-	 */
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/experts/page" }, produces = { "application/json" })
 	@ResponseBody
 	public Object getExperts(
+		@RequestParam(value = "searchTxt", required = false) String searchTxt,
 		@RequestParam(value = "experties", required = false, defaultValue = "") List<ObjectId> experties,
 		@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
 		@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
@@ -483,19 +456,13 @@ public class AskController {
 			if (dir != 0) {
 				sortDirection = Direction.ASC;
 			}
+
 			List<String> fields = null;
-			// List<String> fields = new ArrayList<String>();
-			// fields.add("userId");
-			// fields.add("age");
-			// fields.add("workTitle");
-			// fields.add("experties");
-			// fields.add("userTypes");
-			// fields.add("basicProfileInfo");
-			
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
 			userProfilePage = UserProfileResponse.getPage(
-				userProfileRepo.getServiceProvidersByFilterCriteria(userTypes, null, null, null, experties, pageable, fields),
-				null
+					userProfileRepo.getServiceProvidersByFilterCriteria(
+						searchTxt, userTypes, null, null, null, experties, pageable, fields),
+					null
 				);
 			if (userProfilePage.getContent().size() > 0) {
 				logger.debug("did not find any ask question expert");

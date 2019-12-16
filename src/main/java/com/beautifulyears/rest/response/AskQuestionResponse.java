@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.beautifulyears.domain.UserProfile;
+import com.beautifulyears.repository.AskQuestionReplyRepository;
 import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.domain.AskQuestion;
 import com.beautifulyears.domain.AskCategory;
@@ -12,6 +14,7 @@ import com.beautifulyears.domain.User;
 public class AskQuestionResponse implements IResponse {
 
 	private List<AskQuestionEntity> askQuesArray = new ArrayList<AskQuestionEntity>();
+	private static AskQuestionReplyRepository askQuesReplyRepo;
 
 	@Override
 	public List<AskQuestionEntity> getResponse() {
@@ -84,10 +87,12 @@ public class AskQuestionResponse implements IResponse {
 	public static class AskQuestionEntity {
 		private String 	id;
 		private String 	question;
+		private String 	description;
 		private AskCategory askCategory;
 		private User	askedBy;
-		private User	answeredBy;
+		private UserProfile	answeredBy;
 		private Boolean	answered;
+		private long	replyCount;
 		private Date createdAt = new Date();
 		private Date lastModifiedAt = new Date();
 		private boolean isEditableByUser = false;
@@ -133,6 +138,14 @@ public class AskQuestionResponse implements IResponse {
 			this.question = question;
 		}
 
+		public String getDescription() {
+			return description;
+		}
+
+		public void setDescription(String description) {
+			this.description = description;
+		}
+
 		public AskCategory getAskCategory() {
 			return askCategory;
 		}
@@ -149,12 +162,12 @@ public class AskQuestionResponse implements IResponse {
 			this.askedBy = askedBy;
 		}
 
-		public User getAnsweredBy() {
+		public UserProfile getAnsweredBy() {
 			return answeredBy;
 		}
 
-		public void setAnsweredBy(User answeredBy) {
-			this.answeredBy = answeredBy;
+		public void setAnsweredBy(UserProfile userProfile) {
+			this.answeredBy = userProfile;
 		}
 
 		public Boolean getAnswered() {
@@ -165,16 +178,26 @@ public class AskQuestionResponse implements IResponse {
 			this.answered = answered;
 		}
 
+		public long getReplyCount() {
+			return replyCount;
+		}
+
+		public void setReplyCount(long replyCount) {
+			this.replyCount = replyCount;
+		}
+
 		public AskQuestionEntity(AskQuestion askQues, User user) {
 			this.setId(askQues.getId());
 			this.setAnswered(askQues.getAnswered());
 			this.setAskCategory(askQues.getAskCategory());
-			this.setAnsweredBy(askQues.getAnsweredBy());
 			this.setAskedBy(askQues.getAskedBy());
+			this.setAnsweredBy(askQues.getAnsweredBy());
 			this.setQuestion(askQues.getQuestion());
+			this.setDescription(askQues.getDescription());
 			this.setCreatedAt(askQues.getCreatedAt());
 			this.setLastModifiedAt(askQues.getLastModifiedAt());
-			
+			this.setLastModifiedAt(askQues.getLastModifiedAt());
+			this.setReplyCount(AskQuestionResponse.askQuesReplyRepo.getCount(null,askQues.getId() ));
 			if (null != user
 					&& (BYConstants.USER_ROLE_EDITOR.equals(user.getUserRoleId())
 						|| BYConstants.USER_ROLE_SUPER_USER.equals(user.getUserRoleId())
@@ -204,7 +227,8 @@ public class AskQuestionResponse implements IResponse {
 		this.askQuesArray.add(new AskQuestionEntity(askQues, user));
 	}
 
-	public static AskQuestionPage getPage(PageImpl<AskQuestion> page, User user) {
+	public static AskQuestionPage getPage(PageImpl<AskQuestion> page, User user,AskQuestionReplyRepository askQuesReplyRepo) {
+		AskQuestionResponse.askQuesReplyRepo = askQuesReplyRepo;
 		AskQuestionPage res = new AskQuestionPage(page, user);
 		return res;
 	}

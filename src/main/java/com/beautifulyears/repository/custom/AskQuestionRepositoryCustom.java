@@ -7,7 +7,7 @@ import com.beautifulyears.rest.response.PageImpl;
 
 public interface AskQuestionRepositoryCustom {
 
-	public PageImpl<AskQuestion> getPage(String searchTxt, String askCategory, String askedBy, String answeredBy, Pageable pageable);
+	public PageImpl<AskQuestion> getPage(String searchTxt, String askCategory, String askedBy, String answeredBy, Boolean answered, Pageable pageable);
 
-	public long getCount(String searchTxt, String askCategory, String askedBy, String answeredBy);
+	public long getCount(String searchTxt, String askCategory, String askedBy, String answeredBy, Boolean answered);
 }

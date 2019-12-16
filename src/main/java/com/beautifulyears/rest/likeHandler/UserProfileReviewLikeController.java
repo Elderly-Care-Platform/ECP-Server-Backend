@@ -99,6 +99,17 @@ public class UserProfileReviewLikeController extends
 	}
 
 	@Override
+	@RequestMapping(method = { RequestMethod.DELETE })
+	@ResponseBody
+	Object unlikeContent(
+			@RequestParam(value = "reviewId", required = true) String id,
+			@RequestParam(value = "type", required = true) String type,
+			HttpServletRequest req, HttpServletResponse res) throws Exception {
+		
+		return null;
+	}
+
+	@Override
 	void sendMailForLike(DiscussReply likedEntity, User user, String url) {
 		try {
 			if (!likedEntity.getUserId().equals(user.getId())) {

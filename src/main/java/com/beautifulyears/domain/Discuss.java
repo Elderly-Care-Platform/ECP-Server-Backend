@@ -50,6 +50,8 @@ public class Discuss {
 
 	private int directReplyCount;
 
+	private int viewCount;
+
 	private final Date createdAt = new Date();
 
 	private Date lastModifiedAt = new Date();
@@ -77,7 +79,7 @@ public class Discuss {
 
 	public Discuss(String userId, String username, String discussType,
 			List<String> topicId, String title, String text, int status,
-			int aggrReplyCount, List<Tag> systemTags, Long sharedCount,
+			int aggrReplyCount,int viewCount, List<Tag> systemTags, Long sharedCount,
 			List<String> userTags, Map<String, String> articlePhotoFilename,
 			Boolean isFeatured,Boolean isPromotion, int contentType, LinkInfo linkInfo,UserProfile profile) {
 		super();
@@ -94,6 +96,7 @@ public class Discuss {
 		}
 		this.status = status;
 		this.aggrReplyCount = aggrReplyCount;
+		this.viewCount = viewCount;
 		this.articlePhotoFilename = articlePhotoFilename;
 		this.isFeatured = isFeatured;
 		this.isPromotion = isPromotion;
@@ -285,5 +288,13 @@ public class Discuss {
 
 	public Date getCreatedAt() {
 		return createdAt;
+	}
+
+	public int getViewCount() {
+		return viewCount;
+	}
+
+	public void setViewCount(int viewCount) {
+		this.viewCount = viewCount;
 	}
 }

@@ -94,7 +94,7 @@ public class JustDialHandler {
             sbPostData.append("city=" + this.city);
             sbPostData.append("&case=" + this.JDcase);
             sbPostData.append("&stype=" + this.stype);
-            sbPostData.append("&search=" + category);
+            sbPostData.append("&search=" + URLEncoder.encode(category, "UTF-8"));
             sbPostData.append("&national_catid=" + catID);
             sbPostData.append("&max=" + max);
             sbPostData.append("&pg_no=" + pageNo);
@@ -133,7 +133,7 @@ public class JustDialHandler {
             logger.debug(response);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("ERROR in search from Justdial. " + e);
+            // throw new RuntimeException("ERROR in search from Justdial. " + e);
         }
         return resultsObject;
 
@@ -197,7 +197,7 @@ public class JustDialHandler {
     public JSONObject getSearchServiceList(String token, String search, int max, int pageNo) {
         LoggerUtil.logEntry();
         String response = null;
-        JSONObject resultsObject = new JSONObject();
+        JSONObject resultsObject = null;
         try {
             String postUrl = this.baseUrl + this.justDialsearch;
 
@@ -244,7 +244,7 @@ public class JustDialHandler {
             logger.debug(response);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("ERROR in search from Justdial. " + e);
+            // throw new RuntimeException("ERROR in search from Justdial. " + e);
         }
         return resultsObject;
 

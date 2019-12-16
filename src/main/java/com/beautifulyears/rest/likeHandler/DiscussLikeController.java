@@ -106,6 +106,54 @@ public class DiscussLikeController extends LikeController<Discuss> {
 	}
 
 	@Override
+	@RequestMapping(method = { RequestMethod.PUT }, params = "type=0")
+	@ResponseBody
+	Object unlikeContent(
+			@RequestParam(value = "discussId", required = true) String id,
+			@RequestParam(value = "type", required = false) String type,
+			HttpServletRequest req, HttpServletResponse res) throws Exception {
+		LoggerUtil.logEntry();
+		Object response = null;
+		try {
+			DiscussResponse discussResponse = new DiscussResponse();
+			Discuss discuss = null;
+			User user = Util.getSessionUser(req);
+
+			if (null == user) {
+				throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
+			} else if (SessionController.checkCurrentSessionFor(req, "LIKE")) {
+
+				discuss = (Discuss) discussRepository.findOne(id);
+				if (discuss != null) {
+					if (discuss.getLikedBy().contains(user.getId())) {
+						submitUnLike(user, id, DiscussConstants.CONTENT_TYPE_DISCUSS);
+						discuss.getLikedBy().remove(user.getId());
+						discussRepository.save(discuss);
+
+						logHandler.addLog(discuss,
+								ActivityLogConstants.CRUD_TYPE_CREATE, req);
+						Util.logStats(HousingController.staticMongoTemplate, req, "Unlike on content", user.getId(),
+								user.getEmail(), discuss.getId(), null, null, null, "Unlike on content", "COMMUNITY");
+						logger.debug("discuss content liked successfully");
+
+						response = BYGenericResponseHandler
+								.getResponse(discussResponse.getDiscussEntity(
+										discuss, user));
+					} else {
+						throw new BYException(BYErrorCodes.DISCUSS_ALREADY_UNLIKED_BY_USER);
+						
+					}
+				} else {
+					throw new BYException(BYErrorCodes.DISCUSS_NOT_FOUND);
+				}
+			}
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+		return response;
+	}
+
+	@Override
 	void sendMailForLike(Discuss LikedEntity, User user, String url) {
 		LoggerUtil.logEntry();
 		try {
