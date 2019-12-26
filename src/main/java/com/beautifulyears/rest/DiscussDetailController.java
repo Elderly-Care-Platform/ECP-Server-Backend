@@ -1,5 +1,6 @@
 package com.beautifulyears.rest;
 
+import java.util.Date;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,7 +11,6 @@ import java.util.stream.Collectors;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -34,6 +34,7 @@ import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.constants.DiscussConstants;
 import com.beautifulyears.domain.Discuss;
 import com.beautifulyears.domain.DiscussReply;
+import com.beautifulyears.domain.DiscussView;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.exceptions.BYErrorCodes;
@@ -41,6 +42,7 @@ import com.beautifulyears.exceptions.BYException;
 import com.beautifulyears.mail.MailHandler;
 import com.beautifulyears.repository.DiscussReplyRepository;
 import com.beautifulyears.repository.DiscussRepository;
+import com.beautifulyears.repository.DiscussViewRepository;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.rest.response.DiscussDetailResponse;
 import com.beautifulyears.util.LoggerUtil;
@@ -64,14 +66,18 @@ public class DiscussDetailController {
 	private MongoTemplate mongoTemplate;
 	private DiscussRepository discussRepository;
 	private DiscussReplyRepository discussReplyRepository;
+	private DiscussViewRepository discussViewRepository;
 	private ActivityLogHandler<DiscussReply> logHandler;
 
 	@Autowired
 	public DiscussDetailController(MongoTemplate mongoTemplate, DiscussRepository discussRepository,
-			DiscussReplyRepository discussReplyRepository) {
+			DiscussReplyRepository discussReplyRepository,
+			DiscussViewRepository discussViewRepository
+			) {
 		this.discussRepository = discussRepository;
 		this.mongoTemplate = mongoTemplate;
 		this.discussReplyRepository = discussReplyRepository;
+		this.discussViewRepository = discussViewRepository;
 		logHandler = new ReplyActivityLogHandler(mongoTemplate);
 	}
 
@@ -90,10 +96,30 @@ public class DiscussDetailController {
 			@RequestParam(value = "discussId", required = true) String discussId) throws Exception {
 		LoggerUtil.logEntry();
 		Discuss discuss = discussRepository.findOne(discussId);
-		if(discuss != null){
-			discuss.setViewCount(discuss.getViewCount() + 1);
-			this.discussRepository.save(discuss);
+		User user = Util.getSessionUser(req);
+		List<DiscussView> views = null;
+		DiscussView view = null;
+		String userId = "";
+		if(user != null){
+			userId = user.getId();
 		}
+		
+		views = discussViewRepository.findByContentIdAndUserIdAndIpAddress(discuss.getId(), userId, req.getRemoteAddr());
+
+		if(views!= null && views.size() > 0){
+			view = views.get(0);
+			view.setViewAt(new Date());
+			discussViewRepository.save(view);
+		}
+		else{
+			view = new DiscussView(discuss.getId(), userId, new Date(), req.getRemoteAddr());
+			discussViewRepository.save(view);
+			if(discuss != null){
+				discuss.setViewCount(discuss.getViewCount() + 1);
+				this.discussRepository.save(discuss);
+			}
+		}
+		
 		Util.logStats(mongoTemplate, req, "get detail of discuss item", null, null, discussId, null, null,
 				Arrays.asList("discussId = " + discussId), "get detail page for discussId " + discussId, "COMMUNITY");
 		return BYGenericResponseHandler.getResponse(getDiscussDetailById(discussId, req));
