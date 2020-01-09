@@ -428,7 +428,7 @@ public class SearchController {
 			}
 			// response.put("JDResponse", JDResponse);
 		} catch (Exception e) {
-			// throw e;
+			throw e;
 			// Util.handleException(e);
 			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
 		}
