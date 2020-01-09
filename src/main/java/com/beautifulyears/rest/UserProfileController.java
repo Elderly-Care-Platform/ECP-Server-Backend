@@ -787,7 +787,8 @@ public class UserProfileController {
 				logger.debug("did not find anything");
 			}
 		} catch (Exception e) {
-			Util.handleException(e);
+			// Util.handleException(e);
+			return e.toString();
 		}
 		Util.logStats(mongoTemplate, req, "get service providers", null, null, null, null, null, filterCriteria,
 				"get service providers", "SERVICE");
