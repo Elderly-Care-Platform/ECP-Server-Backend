@@ -10,6 +10,8 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
@@ -26,7 +28,7 @@ public class JustDialHandler {
     private String baseUrl = "http://win.justdial.com/tata-v1";
     private String createToken = "/createToken.php";
     private String justDialsearch = "/searchziva.php?";
-    private String categories= "/catid_list.php";
+    private String categories = "/catid_list.php";
     private String city = "Hyderabad";
 
     private String JDcase = "spcall";
@@ -250,10 +252,19 @@ public class JustDialHandler {
 
     }
 
-    public String getServiceCategories(String token) {
+    public Object getServiceCategories(String token) {
         LoggerUtil.logEntry();
         String response = null;
-        String result = null;
+        Object result = null;
+        String SeniorLiving = "Senior Living";
+        String HomeCare = "Home Care Service";
+        String Health = "Health";
+        String Wellness = "Wellness";
+        String Rental = "Rental";
+        String Consultants = "Consultants";
+        String EmergencyService = "Emergency Service";
+        String Others = "Others";
+
         try {
             String postUrl = this.baseUrl + this.categories;
 
@@ -278,10 +289,58 @@ public class JustDialHandler {
                 b.append(inputLine + "\n");
             in.close();
             response = b.toString();
+
             JSONObject json = new JSONObject(response);
             JSONArray resultsObject = json.getJSONArray("results");
 
-            result = resultsObject.toString();
+            Map<String, List<JSONObject>> categoryMap = new HashMap<>();
+            categoryMap.put(SeniorLiving, new ArrayList<JSONObject>());
+            categoryMap.put(HomeCare, new ArrayList<JSONObject>());
+            categoryMap.put(Health, new ArrayList<JSONObject>());
+            categoryMap.put(Wellness, new ArrayList<JSONObject>());
+            categoryMap.put(Rental, new ArrayList<JSONObject>());
+            categoryMap.put(Consultants, new ArrayList<JSONObject>());
+            categoryMap.put(EmergencyService, new ArrayList<JSONObject>());
+            categoryMap.put(Others, new ArrayList<JSONObject>());
+
+            for (int i = 0; i < resultsObject.length(); i++) {
+                JSONObject category = resultsObject.getJSONObject(i);
+                if (category.getString("category_name").contains("Retirement")) {
+                    categoryMap.get(SeniorLiving).add(category);
+                } else if (category.getString("category_name").contains("Home ")
+                        || category.getString("category_name").contains("Nurs")
+                        || category.getString("category_name").contains("Delivery")
+                        || category.getString("category_name").contains("House")
+                        || category.getString("category_name").contains("Diagnostic")) {
+                    categoryMap.get(HomeCare).add(category);
+                } else if (category.getString("category_name").contains("Hospital")
+                        || category.getString("category_name").contains("Clinic")
+                        || category.getString("category_name").contains("Doctor")
+                        || category.getString("category_name").contains("Medical")
+                        || category.getString("category_name").contains("Chemist")
+                        || category.getString("category_name").contains("Dentists")) {
+                    categoryMap.get(Health).add(category);
+                } else if (category.getString("category_name").contains("Fitness")
+                        || category.getString("category_name").contains("Nutrition")
+                        || category.getString("category_name").contains("Counsellor")) {
+                    categoryMap.get(Wellness).add(category);
+                } else if (category.getString("category_name").contains("Legal")
+                        || category.getString("category_name").contains("Financial")
+                        || category.getString("category_name").contains("Lawyers")) {
+                    categoryMap.get(Consultants).add(category);
+                } else if (category.getString("category_name").contains("Ambulance")
+                        || category.getString("category_name").contains("Financial")) {
+                    categoryMap.get(EmergencyService).add(category);
+                } else if (category.getString("category_name").contains("Driver")
+                        || category.getString("category_name").contains("Taxi")
+                        || category.getString("category_name").contains("Equipment")) {
+                    categoryMap.get(Rental).add(category);
+                } else {
+                    categoryMap.get(Others).add(category);
+                }
+            }
+
+            result = new JSONObject(categoryMap);
 
             logger.debug(response);
         } catch (Exception e) {
