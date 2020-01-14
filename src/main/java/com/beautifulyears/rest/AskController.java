@@ -29,6 +29,7 @@ import com.beautifulyears.domain.AskCategory;
 import com.beautifulyears.domain.AskQuestion;
 import com.beautifulyears.domain.AskQuestionReply;
 import com.beautifulyears.domain.User;
+import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
 import com.beautifulyears.mail.MailHandler;
@@ -127,6 +128,7 @@ public class AskController {
 	public Object submitAskQuestion(@RequestBody AskQuestion askQues, HttpServletRequest request) throws Exception {
 		LoggerUtil.logEntry();
 		User currentUser = Util.getSessionUser(request);
+		UserProfile askQuesExpert = null;
 		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "ASK")) {
 			if (askQues != null && (Util.isEmpty(askQues.getId()))) {
 				
@@ -140,13 +142,14 @@ public class AskController {
 					);
 
 				askQues = askQuesRepo.save(askQuesExtracted);
+				askQuesExpert = userProfileRepo.findOne(askQues.getAnsweredBy().getId());
 				logHandler.addLog(askQues, ActivityLogConstants.CRUD_TYPE_CREATE, request);
 				logger.info("new ask question entity created with ID: " + askQues.getId());
-				MailHandler.sendMailToUserId(askQues.getAnsweredBy().getId(), "ECP - New Question for you", 
+				MailHandler.sendMailToUserId(askQuesExpert.getUserId(), "ECP - New Question for you", 
 				"Hi,<br/>"+
 
 				"This is to inform that a new question has been asked by one of elders who is seeking help / some informtion.<br/>"+
-				" Question Asked by is '" + askQues.getQuestion() + "'<br/>"+
+				" Question Asked is '" + askQues.getQuestion() + "'<br/>"+
 				"Requesting you to please respond.<br/><br/>"+
 				"Best Regards<br/>"+
 				"ECP Team");
@@ -409,9 +412,22 @@ public class AskController {
 				AskQuestion question = askQuesRepo.findOne(askQuestionReply.getAskQuestionId());
 				if(question.getAskedBy().getId().equals(askQuestionReplyExtracted.getUser().getId())){
 					question.setAnswered(false);
+					MailHandler.sendMailToUserId(question.getAnsweredBy().getUserId(), "ECP - Response from user", 
+						"Hi,<br/>"+
+						"This is to inform that questioner responded to question answered by you .<br/>"+
+						" Question was '" + question.getQuestion() + "'<br/>"+
+						"Requesting you to please respond.<br/><br/>"+
+						"Best Regards<br/>"+
+						"ECP Team");
 				}
 				else{
 					question.setAnswered(true);
+					MailHandler.sendMailToUserId(question.getAskedBy().getId(), "ECP - Response from expert", 
+						"Hi,<br/>"+
+						"This is to inform that expert replied to question asked by you.<br/>"+
+						" Question was '" + question.getQuestion() + "'<br/>"+
+						"Best Regards<br/>"+
+						"ECP Team");
 				}
 				askQuesRepo.save(question);
 				logHandlerRep.addLog(askQuestionReply, ActivityLogConstants.CRUD_TYPE_CREATE, request);
