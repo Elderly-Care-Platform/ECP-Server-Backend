@@ -15,7 +15,7 @@ import com.beautifulyears.domain.ServiceProviderInfo;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.domain.menu.Tag;
-
+import com.beautifulyears.repository.AskQuestionRepository; 
 /**
  * @author Nitin
  *
@@ -23,6 +23,8 @@ import com.beautifulyears.domain.menu.Tag;
 public class UserProfileResponse implements IResponse {
 
 	private List<UserProfileEntity> userProfileArray = new ArrayList<UserProfileEntity>();
+
+	private static AskQuestionRepository askQuestionRepo;
 
 	@Override
 	public List<UserProfileEntity> getResponse() {
@@ -50,6 +52,7 @@ public class UserProfileResponse implements IResponse {
 		private int age;
 		private String workTitle;
 		private List<AskCategory> experties;
+		private long answersCount;
 
 
 		private List<UserProfileResponse.UserProfileEntity> serviceBranches = new ArrayList<UserProfileResponse.UserProfileEntity>();
@@ -75,8 +78,16 @@ public class UserProfileResponse implements IResponse {
 			if (null != user && profile.getReviewedBy().contains(user.getId())) {
 				this.setReviewedByUser(true);
 			}
-			ratingCount = profile.getRatedBy().size();
-			reviewCount = profile.getReviewedBy().size();
+
+			if(UserProfileResponse.askQuestionRepo != null){
+				this.setAnswersCount(UserProfileResponse.askQuestionRepo.getCount(null, null, null, profile.getId(), true));
+			}
+			else{
+				this.setAnswersCount(0);
+			}
+
+			this.setRatingCount(profile.getRatedBy().size());
+			this.setReviewCount(profile.getReviewedBy().size());
 			this.isFeatured = profile.isFeatured();
 			this.verified = profile.isVerified();
 			this.facilities = profile.getFacilities();
@@ -272,6 +283,13 @@ public class UserProfileResponse implements IResponse {
 			this.experties = experties;
 		}
 
+		public long getAnswersCount() {
+			return answersCount;
+		}
+
+		public void setAnswersCount(long answersCount) {
+			this.answersCount = answersCount;
+		}
 	}
 
 	public static class UserProfilePage {
@@ -348,7 +366,14 @@ public class UserProfileResponse implements IResponse {
 		}
 	}
 
+	public static UserProfilePage getPage(PageImpl<UserProfile> page, User user, AskQuestionRepository askQuestionRepo ) {
+		UserProfileResponse.askQuestionRepo = askQuestionRepo;
+		UserProfilePage res = new UserProfilePage(page, user);
+		return res;
+	}
+
 	public static UserProfilePage getPage(PageImpl<UserProfile> page, User user) {
+		UserProfileResponse.askQuestionRepo = null;
 		UserProfilePage res = new UserProfilePage(page, user);
 		return res;
 	}
