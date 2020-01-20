@@ -516,7 +516,7 @@ public class SearchController {
 			"application/json" })
 	@ResponseBody
 	public Object getJustDialCategories(HttpServletRequest request) throws Exception {
-		String response = null;
+		Object response = null;
 		try {
 
 			JustdialToken JDtoken = null;
