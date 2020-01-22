@@ -428,8 +428,8 @@ public class SearchController {
 			}
 			// response.put("JDResponse", JDResponse);
 		} catch (Exception e) {
-			throw e;
-			// Util.handleException(e);
+			// throw e;
+			Util.handleException(e);
 			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
 		}
 		// Util.logStats(mongoTemplate, request, "search services", null, null, null,
