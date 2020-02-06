@@ -154,10 +154,10 @@ public class UserController {
 			if (null == user) {
 				logger.debug("User does not exist");
 				return submitUser(loginRequest, true, req, res);
-				// throw new BYException(BYErrorCodes.USER_EMAIL_DOES_NOT_EXIST);
-			} else if (user.getUserRegType() == BYConstants.USER_REG_TYPE_SOCIAL) {
-				throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRE_SOCIAL_SIGNIN);
-			} else {
+				// throw new BYException(BYErrorCodes.USER_EMAIL_DOES_NOT_EXIST);	
+			
+			
+			}  else {
 				logger.debug("User logged in success for user email = " + loginRequest.getEmail() != null
 						? loginRequest.getEmail()
 						: loginRequest.getPhoneNumber());
