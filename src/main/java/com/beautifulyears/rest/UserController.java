@@ -169,7 +169,8 @@ public class UserController {
 			}
 
 		} catch (Exception e) {
-			Util.handleException(e);
+				throw e;
+			// Util.handleException(e);
 		}
 		Util.logStats(mongoTemplate, req, "New Login session", session.getUserId(), session.getUserEmail(),
 				session.getSessionId(), null, null, null, "New Login session", "USER");
