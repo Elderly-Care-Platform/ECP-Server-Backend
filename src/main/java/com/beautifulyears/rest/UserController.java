@@ -153,11 +153,11 @@ public class UserController {
 
 			if (null == user) {
 				logger.debug("User does not exist");
+				// throw new BYException(BYErrorCodes.USER_EMAIL_DOES_NOT_EXIST);
 				return submitUser(loginRequest, true, req, res);
-				// throw new BYException(BYErrorCodes.USER_EMAIL_DOES_NOT_EXIST);	
-			
-			
-			}  else {
+			} else if (user.getUserRegType() == BYConstants.USER_REG_TYPE_SOCIAL) {
+				throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRE_SOCIAL_SIGNIN);
+			} else {
 				logger.debug("User logged in success for user email = " + loginRequest.getEmail() != null
 						? loginRequest.getEmail()
 						: loginRequest.getPhoneNumber());
@@ -169,8 +169,7 @@ public class UserController {
 			}
 
 		} catch (Exception e) {
-				throw e;
-			// Util.handleException(e);
+			Util.handleException(e);
 		}
 		Util.logStats(mongoTemplate, req, "New Login session", session.getUserId(), session.getUserEmail(),
 				session.getSessionId(), null, null, null, "New Login session", "USER");
@@ -267,8 +266,7 @@ public class UserController {
 
 			} catch (Exception e) {
 				logger.error("error occured while creating the user");
-				// Util.handleException(e);
-				throw e;
+				Util.handleException(e);
 			}
 			Util.logStats(mongoTemplate, req, "Register new User", session.getUserId(), session.getUserEmail(),
 					session.getSessionId(), null, null, null, "Register new User", "USER");
