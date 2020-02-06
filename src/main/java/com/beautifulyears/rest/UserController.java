@@ -267,7 +267,8 @@ public class UserController {
 
 			} catch (Exception e) {
 				logger.error("error occured while creating the user");
-				Util.handleException(e);
+				// Util.handleException(e);
+				throw e;
 			}
 			Util.logStats(mongoTemplate, req, "Register new User", session.getUserId(), session.getUserEmail(),
 					session.getSessionId(), null, null, null, "Register new User", "USER");
