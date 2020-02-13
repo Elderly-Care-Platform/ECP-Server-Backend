@@ -234,7 +234,7 @@ public class AskController {
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
 			page = askQuesRepo.getPage(searchTxt, askCategory, askedBy, answeredBy, answered , pageable);
-			askQuesPage = AskQuestionResponse.getPage(page, currentUser,quesReplyRepo);
+			askQuesPage = AskQuestionResponse.getPage(page, currentUser,quesReplyRepo, userProfileRepo);
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
