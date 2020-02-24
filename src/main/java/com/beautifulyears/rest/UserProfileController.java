@@ -387,6 +387,7 @@ public class UserProfileController {
 								if (null != existinprofile) {
 									existinprofile.getBasicProfileInfo()
 											.setPrimaryPhoneNo(currentUser.getPhoneNumber());
+									existinprofile.getBasicProfileInfo().setDescription(existinprofile.getBasicProfileInfo().getShortDescription());
 									existinprofile = userProfileRepository.save(existinprofile);
 								}
 								UserController.deleteUser(currentUser);
@@ -411,7 +412,7 @@ public class UserProfileController {
 								existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
 								if (null != existinprofile) {
 									existinprofile.getBasicProfileInfo().setPrimaryEmail(currentUser.getEmail());
-									;
+									existinprofile.getBasicProfileInfo().setDescription(existinprofile.getBasicProfileInfo().getShortDescription());
 									existinprofile = userProfileRepository.save(existinprofile);
 								}
 								UserController.deleteUser(currentUser);
@@ -487,6 +488,7 @@ public class UserProfileController {
 						// profile = userProfileRepository.findByUserId(userId);
 
 						// profile = mergeProfile(profile, userProfile, currentUser, req);
+						userProfile.getBasicProfileInfo().setDescription(userProfile.getBasicProfileInfo().getShortDescription());
 						profile = userProfileRepository.save(userProfile);
 
 					} else {
