@@ -61,8 +61,8 @@ public class MailHandler {
 		private String body;
 		private List<String> recepients = new ArrayList<String>();
 		private final static Logger logger = Logger.getLogger(MailDispatcher.class);
-        final String user = "test@ritzyware.com";
-        final String pass = "test@ritzy";
+        final String user = "admin@joyofage.org";
+        final String pass = "joyofage@123";
 
 		public MailDispatcher(List<String> recepients, String subject,
 				String body) {
@@ -75,7 +75,7 @@ public class MailHandler {
 		@Override
 		public void run() {
 		Properties props = new Properties();
-		props.put("mail.smtp.host", "smtp.zoho.com");
+		props.put("mail.smtp.host", "smtp.gmail.com");
 		props.put("mail.smtp.port", "587");
 		props.put("mail.smtp.auth", "true");
 		props.put("mail.smtp.starttls.enable", "true");
