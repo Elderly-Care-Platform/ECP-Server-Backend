@@ -854,7 +854,7 @@ public class UserProfileController {
 	private UserProfile mergeProfile(UserProfile oldProfile, UserProfile newProfile, User currentUser,
 			HttpServletRequest req) {
 		if (oldProfile != null) {
-			newProfile.getBasicProfileInfo().setShortDescription(getShortDescription(newProfile));
+			//newProfile.getBasicProfileInfo().setShortDescription(getShortDescription(newProfile));
 			oldProfile.setLastModifiedAt(new Date());
 			oldProfile.setSystemTags(newProfile.getSystemTags());
 
