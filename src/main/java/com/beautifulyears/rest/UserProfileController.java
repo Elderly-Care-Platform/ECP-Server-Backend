@@ -723,12 +723,12 @@ public class UserProfileController {
 		// String[] JdsearchTerms = { "care hospital clinics nursing home" };
 
 		ArrayList<String>  JdsearchTerms = new ArrayList<String>(); 
-        JdsearchTerms.add("care"); 
+        JdsearchTerms.add("Institutions For Aged"); 
         JdsearchTerms.add("hospital"); 
         JdsearchTerms.add("clinics"); 
         JdsearchTerms.add("nursing"); 
         JdsearchTerms.add("medical"); 
-		JdsearchTerms.add("service");
+		// JdsearchTerms.add("service");
 
 		Collections.shuffle(JdsearchTerms); 
 		
