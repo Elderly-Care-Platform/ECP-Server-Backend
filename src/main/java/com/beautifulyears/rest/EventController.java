@@ -103,7 +103,7 @@ public class EventController {
 		User currentUser = Util.getSessionUser(request);
 		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "POST")) {
 			if (event != null && (Util.isEmpty(event.getId()))) {
-				event.setOrganiser(currentUser.getUserName());
+				//event.setOrganiser(currentUser.getUserName());
 				Event eventExtracted = new Event(
 					event.getTitle(), 
 					event.getDatetime(), 
