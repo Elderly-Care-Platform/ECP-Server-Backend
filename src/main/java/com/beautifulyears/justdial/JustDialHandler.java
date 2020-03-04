@@ -207,7 +207,7 @@ public class JustDialHandler {
             StringBuilder sbPostData = new StringBuilder(postUrl);
             sbPostData.append("city=" + this.city);
             sbPostData.append("&case=" + this.JDcase);
-            sbPostData.append("&stype=" + this.searchstype);
+            sbPostData.append("&stype=" + this.stype);
             sbPostData.append("&search=" + URLEncoder.encode(search, "UTF-8"));
             sbPostData.append("&max=" + max);
             sbPostData.append("&pg_no=" + pageNo);
