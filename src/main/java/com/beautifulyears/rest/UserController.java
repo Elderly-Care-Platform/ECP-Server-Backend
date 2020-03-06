@@ -615,7 +615,7 @@ public class UserController {
 			} else {
 				body = MessageFormat.format(resourceUtil.getResource("welcomeMail"), "");
 			}
-			MailHandler.sendMail(user.getEmail(), "Welcome to Beautifulyears.com", body);
+			MailHandler.sendMail(user.getEmail(), "Welcome to JoyOfAge.org", body);
 			mailStatus = true;
 		} catch (Exception e) {
 			logger.error(BYErrorCodes.ERROR_IN_SENDING_MAIL);

@@ -10,12 +10,12 @@ public class InitServlet extends HttpServlet {
 	private String host = "http://localhost";
 	private String contextPath = "/ROOT";
 	private String apiContextPath = "/BY";
-	private String productServerHost = "qa.beautifulyears.com";
+	private String productServerHost = "qa.joyofage.org";
 	private String productServerPort = "8083";
 	private String mailSupported = "";
 	private String imageUploadPath = "/Users/pulkit/Work/SocialAlpha/server_data/uploads";
 	private String sitemapPath = "/Users/pulkit/Work/SocialAlpha/server_data/sitemap";
-	private String s3MediaBucketName = "dev-media.beautifulyears.com";
+	private String s3MediaBucketName = "dev-media.joyofage.org";
 	private String cdnPath = "https://d33mlq9vmeqlx3.cloudfront.net";
 
 	public void init() {
