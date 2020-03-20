@@ -312,7 +312,7 @@ public class DiscussDetailController {
 						.addCriteria(
 								Criteria.where("status").is(
 										DiscussConstants.REPLY_STATUS_ACTIVE));
-				query.with(new Sort(Sort.Direction.ASC,
+				query.with(new Sort(Sort.Direction.DESC,
 						new String[] { "createdAt" }));
 				replies = this.mongoTemplate.find(query,
 						DiscussReply.class);
