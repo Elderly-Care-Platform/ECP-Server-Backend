@@ -13,8 +13,8 @@ public class InitServlet extends HttpServlet {
 	private String productServerHost = "qa.joyofage.org";
 	private String productServerPort = "8083";
 	private String mailSupported = "";
-	private String imageUploadPath = "/Users/pulkit/Work/SocialAlpha/server_data/uploads";
-	private String sitemapPath = "/Users/pulkit/Work/SocialAlpha/server_data/sitemap";
+	private String imageUploadPath = "/usr/share/tomcat8/resources/uploads";
+	private String sitemapPath = "/usr/share/tomcat8/resources/sitemap";
 	private String s3MediaBucketName = "dev-media.joyofage.org";
 	private String cdnPath = "https://d33mlq9vmeqlx3.cloudfront.net";
 
