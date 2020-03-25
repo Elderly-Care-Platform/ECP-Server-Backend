@@ -167,7 +167,7 @@ public class SearchController {
 			} else {
 				justDailSearchResponse = getJustDialSearchServicePage(pageIndex, 50, term, request);
 			}
-			JSONArray JDresult=null;
+			JSONArray JDresult = null;
 			JSONArray DbserviceList = new JSONArray(profiles);
 			for (int i = 0; i < DbserviceList.length(); i++) {
 				JSONObject jsonDBObject = DbserviceList.getJSONObject(i);
@@ -175,7 +175,7 @@ public class SearchController {
 				jsonDBObject.put("reviewCount", totReviews.length());
 				DbserviceList.put(i, jsonDBObject);
 			}
-			//JD services
+			// JD services
 			if (justDailSearchResponse != null && justDailSearchResponse.length() > 0) {
 
 				JDresult = justDailSearchResponse.getJSONArray("services");
@@ -195,7 +195,7 @@ public class SearchController {
 
 			long total = this.mongoTemplate.count(query, UserProfile.class);
 			if (justDailSearchResponse != null && justDailSearchResponse.length() > 0) {
-			
+
 				total += JDresult.length();
 			}
 			response.put("total", total);
@@ -553,6 +553,59 @@ public class SearchController {
 		// String newResponse = response.toString();
 		// return BYGenericResponseHandler.getResponse(response);
 		return response.toString();
+	}
+
+	/**
+	 * JD Auto Complete list
+	 */
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/autoComplete" }, produces = { "application/json" })
+	@ResponseBody
+	public Object getAutoComplete(@RequestParam(value = "search", required = true) String search,
+			HttpServletRequest request) throws Exception {
+		Object response = null;
+		List<Integer> serviceTypes = new ArrayList<Integer>();
+		serviceTypes.add(UserTypes.INDIVIDUAL_PROFESSIONAL);
+		serviceTypes.add(UserTypes.INSTITUTION_NGO);
+		serviceTypes.add(UserTypes.INSTITUTION_BRANCH);
+
+		try {
+
+			Direction sortDirection = Direction.DESC;
+			Pageable pageable = new PageRequest(0, 5, sortDirection, "createdAt");
+			TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingAny(search);
+
+			Query query = TextQuery.queryText(criteria).sortByScore();
+			query.with(pageable);
+
+			query.addCriteria(Criteria.where("userTypes").in(serviceTypes));
+			query.addCriteria(
+					Criteria.where("status").in(new Object[] { DiscussConstants.DISCUSS_STATUS_ACTIVE, null }));
+
+			List<UserProfile> profiles = this.mongoTemplate.find(query, UserProfile.class);
+			JSONArray DbServices = new JSONArray(profiles);
+
+			JustDialHandler JDHandler = new JustDialHandler();
+			JSONArray JDResult = new JSONArray();
+			JDResult = JDHandler.getAutosuggest(search);
+
+			for (int i = 0; i < DbServices.length(); i++) {
+				JSONObject service = new JSONObject();
+				service.put("id", DbServices.getJSONObject(i).getString("id"));
+				service.put("value",
+						DbServices.getJSONObject(i).getJSONObject("basicProfileInfo").getString("firstName"));
+				service.put("type", 0);
+				JDResult.put(service);
+			}
+
+			response = JDResult.toString();
+
+		} catch (Exception e) {
+			// throw e;
+			Util.handleException(e);
+			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
+		}
+
+		return response;
 	}
 
 }
