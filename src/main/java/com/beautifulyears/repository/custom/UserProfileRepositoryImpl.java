@@ -1,6 +1,7 @@
 package com.beautifulyears.repository.custom;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.bson.types.ObjectId;
@@ -12,6 +13,7 @@ import org.springframework.data.mongodb.core.query.Query;
 
 import com.beautifulyears.constants.DiscussConstants;
 import com.beautifulyears.constants.UserTypes;
+import com.beautifulyears.domain.AskCategory;
 import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.rest.response.PageImpl;
 
@@ -86,7 +88,28 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 		}
 		
 		if (null != name && "" != name) {
-			q.addCriteria(Criteria.where("basicProfileInfo.firstName").regex(name, "i"));
+			// get category list
+			List<AskCategory> catList = null;
+			Query query = new Query();
+			query.addCriteria(Criteria.where("name").regex(name,"i"));
+
+			catList = this.mongoTemplate.find(query, AskCategory.class);
+			List<String> catStrList = new ArrayList<String>();
+			if(catList != null){
+				Iterator<AskCategory> catListIterator = catList.iterator();
+				while (catListIterator.hasNext()) {
+					catStrList.add(catListIterator.next().getId());	
+				}
+				q.addCriteria(
+					new Criteria().orOperator(
+						Criteria.where("experties").in(catStrList),
+						Criteria.where("basicProfileInfo.firstName").regex(name, "i")
+					)
+				);	
+			}
+			else{
+				q.addCriteria(Criteria.where("basicProfileInfo.firstName").regex(name, "i"));
+			}
 		}
 		else{
 			q.addCriteria(Criteria.where("basicProfileInfo.firstName").exists(true));
