@@ -164,9 +164,16 @@ public class SearchController {
 				searchText = term;
 			}
 
-			TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingAny(searchText);
+			// TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingAny(searchText);
 
-			Query query = TextQuery.queryText(criteria).sortByScore();
+			// Query query = TextQuery.queryText(criteria).sortByScore();
+			Query query = new Query();
+
+			query.addCriteria(
+				new Criteria().orOperator(
+					Criteria.where("basicProfileInfo.firstName").regex(searchText,"i")
+				)
+			);
 			query.with(pageable);
 
 			query.addCriteria(Criteria.where("userTypes").in(serviceTypes));
