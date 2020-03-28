@@ -901,12 +901,11 @@ public class UserProfileController {
 
 			@Override
 			public int compare(JSONObject a, JSONObject b) {
-				String valA = new String();
-				String valB = new String();
-
+				Integer valA = 0;
+				Integer valB = 0;
 				try {
-					valA = String.valueOf(a.get(KEY_NAME));
-					valB = String.valueOf(b.get(KEY_NAME));
+					valA = a.getInt(KEY_NAME);
+					valB = b.getInt(KEY_NAME);
 				} catch (JSONException e) {
 					// do something
 					throw new RuntimeException("ERROR in sorting data. " + e);

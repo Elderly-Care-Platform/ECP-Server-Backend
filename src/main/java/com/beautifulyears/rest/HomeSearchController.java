@@ -256,9 +256,16 @@ public class HomeSearchController {
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
 
-			TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingAny(term);
+			// TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingAny(term);
 
-			Query query = TextQuery.queryText(criteria).sortByScore();
+			// Query query = TextQuery.queryText(criteria).sortByScore();
+			Query query = new Query();
+
+			query.addCriteria(
+				new Criteria().orOperator(
+					Criteria.where("basicProfileInfo.firstName").regex(term,"i")
+				)
+			);
 			query.with(pageable);
 
 			query.addCriteria(Criteria.where("userTypes").in(serviceTypes));
@@ -403,12 +410,11 @@ public class HomeSearchController {
 
 			@Override
 			public int compare(JSONObject a, JSONObject b) {
-				String valA = new String();
-				String valB = new String();
-
+				Integer valA = 0;
+				Integer valB = 0;
 				try {
-					valA = String.valueOf(a.get(KEY_NAME));
-					valB = String.valueOf(b.get(KEY_NAME));
+					valA = a.getInt(KEY_NAME);
+					valB = b.getInt(KEY_NAME);
 				} catch (JSONException e) {
 					// do something
 					throw new RuntimeException("ERROR in sorting data. " + e);
