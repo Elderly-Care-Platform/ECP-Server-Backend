@@ -35,8 +35,8 @@ public class JustDialHandler {
     private String JDcase = "spcall";
     private String JDdetailCase = "detail";
     private int JDversion = 9;
-    private String stype = "category_list";
-    private String searchstype = "company_list";
+    private String categoryType = "category_list";
+    private String companyType = "company_list";
     private int wap = 2;
 
     private String createToken() {
@@ -96,7 +96,7 @@ public class JustDialHandler {
             StringBuilder sbPostData = new StringBuilder(postUrl);
             sbPostData.append("city=" + this.city);
             sbPostData.append("&case=" + this.JDcase);
-            sbPostData.append("&stype=" + this.stype);
+            sbPostData.append("&stype=" + this.categoryType);
             sbPostData.append("&search=" + URLEncoder.encode(category, "UTF-8"));
             sbPostData.append("&national_catid=" + catID);
             sbPostData.append("&max=" + max);
@@ -208,7 +208,7 @@ public class JustDialHandler {
             StringBuilder sbPostData = new StringBuilder(postUrl);
             sbPostData.append("city=" + this.city);
             sbPostData.append("&case=" + this.JDcase);
-            sbPostData.append("&stype=" + this.stype);
+            sbPostData.append("&stype=" + this.companyType);
             sbPostData.append("&search=" + URLEncoder.encode(search, "UTF-8"));
             sbPostData.append("&max=" + max);
             sbPostData.append("&pg_no=" + pageNo);
