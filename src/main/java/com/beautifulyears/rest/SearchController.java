@@ -213,6 +213,8 @@ public class SearchController {
 				JSONObject jsonDBObject = DbserviceList.getJSONObject(i);
 				JSONArray totReviews = jsonDBObject.getJSONArray("reviewedBy");
 				jsonDBObject.put("reviewCount", totReviews.length());
+				Integer ratingPercent = jsonDBObject.getInt("aggrRatingPercentage");
+				jsonDBObject.put("ratingPercentage", ratingPercent);
 				DbserviceList.put(i, jsonDBObject);
 			}
 			// JD services
@@ -222,16 +224,17 @@ public class SearchController {
 
 				for (int i = 0; i < JDresult.length(); i++) {
 					JSONObject jsonObject = JDresult.getJSONObject(i);
-					String totReviews = jsonObject.getString("totalReviews");
-					if (totReviews.equals("")) {
-						totReviews = "0";
+					String jdRating = jsonObject.getString("compRating");
+					if (jdRating.equals("")) {
+						jdRating = "0";
 					}
-					jsonObject.put("reviewCount", Integer.parseInt(totReviews));
+					
+					jsonObject.put("ratingPercentage", UserProfileController.getDbServiceRating(Math.round(Float.parseFloat(jdRating))));
 					DbserviceList.put(jsonObject);
 				}
 			}
 			//
-			JSONArray sortedArray = UserProfileController.sortJsonArray("reviewCount", DbserviceList);
+			JSONArray sortedArray = UserProfileController.sortJsonArray("ratingPercentage", DbserviceList);
 
 			long total = this.mongoTemplate.count(query, UserProfile.class);
 			if (justDailSearchResponse != null && justDailSearchResponse.length() > 0) {
@@ -453,6 +456,8 @@ public class SearchController {
 				JSONObject resultsObject = JDResponse.getJSONObject("results");
 				JSONArray columns = resultsObject.getJSONArray("columns");
 				JSONArray dataList = resultsObject.getJSONArray("data");
+				String categoryKey = JDResponse.getString("keyword");
+				String categoryId = JDResponse.getString("national_catid");
 				JSONArray newDataList = new JSONArray();
 				for (int i = 0; i < dataList.length(); i++) {
 					JSONArray dataInfoList = dataList.getJSONArray(i);
@@ -460,6 +465,8 @@ public class SearchController {
 					for (int j = 0; j < dataInfoList.length(); j++) {
 						dataInfoMap.put(columns.getString(j), dataInfoList.get(j));
 					}
+					dataInfoMap.put("categoryKey",categoryKey);
+					dataInfoMap.put("categoryId",categoryId);
 					newDataList.put(dataInfoMap);
 				}
 				response.put("services", newDataList);
@@ -526,6 +533,8 @@ public class SearchController {
 			JSONObject resultsObject = JDResponse.getJSONObject("results");
 			JSONArray columns = resultsObject.getJSONArray("columns");
 			JSONArray dataList = resultsObject.getJSONArray("data");
+			String categoryKey = JDResponse.getString("keyword");
+			String categoryId = JDResponse.getString("national_catid");
 			JSONArray newDataList = new JSONArray();
 			for (int i = 0; i < dataList.length(); i++) {
 				JSONArray dataInfoList = dataList.getJSONArray(i);
@@ -533,6 +542,8 @@ public class SearchController {
 				for (int j = 0; j < dataInfoList.length(); j++) {
 					dataInfoMap.put(columns.getString(j), dataInfoList.get(j));
 				}
+				dataInfoMap.put("categoryKey",categoryKey);
+				dataInfoMap.put("categoryId",categoryId);
 				newDataList.put(dataInfoMap);
 			}
 			response.put("services", newDataList);
