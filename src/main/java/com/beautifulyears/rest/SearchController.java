@@ -29,10 +29,13 @@ import com.beautifulyears.constants.UserTypes;
 import com.beautifulyears.domain.Discuss;
 import com.beautifulyears.domain.HousingFacility;
 import com.beautifulyears.domain.JustdialToken;
+import com.beautifulyears.domain.ServiceCategories;
+import com.beautifulyears.domain.ServiceSubCategory;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.justdial.JustDialHandler;
 import com.beautifulyears.repository.JustDialTokenRepository;
+import com.beautifulyears.repository.ServiceCategoriesRepository;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.rest.response.DiscussResponse;
 import com.beautifulyears.rest.response.DiscussResponse.DiscussPage;
@@ -55,11 +58,14 @@ import com.beautifulyears.util.Util;
 public class SearchController {
 	private MongoTemplate mongoTemplate;
 	private static JustDialTokenRepository justDialTokenRepository;
+	private ServiceCategoriesRepository serviceCategoriesRepository;
 
 	@Autowired
-	public SearchController(MongoTemplate mongoTemplate, JustDialTokenRepository justDialTokenRepository) {
+	public SearchController(MongoTemplate mongoTemplate, JustDialTokenRepository justDialTokenRepository,
+			ServiceCategoriesRepository serviceCategoriesRepository) {
 		SearchController.justDialTokenRepository = justDialTokenRepository;
 		this.mongoTemplate = mongoTemplate;
+		this.serviceCategoriesRepository = serviceCategoriesRepository;
 	}
 
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/discussPageSearch" }, produces = { "application/json" })
@@ -119,7 +125,8 @@ public class SearchController {
 	 */
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/servicePageSearch" }, produces = { "application/json" })
 	@ResponseBody
-	public Object getServicePage(@RequestParam(value = "term", required = true) String term,
+	public Object getServicePage(@RequestParam(value = "term", required = false) String term,
+			@RequestParam(value = "catName", required = false) String catName,
 			@RequestParam(value = "catid", required = false, defaultValue = "0") int catId,
 			@RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir,
@@ -149,9 +156,24 @@ public class SearchController {
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
 
-			TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingAny(term);
+			String searchText = null;
 
-			Query query = TextQuery.queryText(criteria).sortByScore();
+			if (catName != null && term == null) {
+				searchText = catName;
+			} else if (term != null) {
+				searchText = term;
+			}
+
+			// TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingAny(searchText);
+
+			// Query query = TextQuery.queryText(criteria).sortByScore();
+			Query query = new Query();
+
+			query.addCriteria(
+				new Criteria().orOperator(
+					Criteria.where("basicProfileInfo.firstName").regex(searchText,"i")
+				)
+			);
 			query.with(pageable);
 
 			query.addCriteria(Criteria.where("userTypes").in(serviceTypes));
@@ -163,10 +185,28 @@ public class SearchController {
 			JSONObject justDailSearchResponse = new JSONObject();
 
 			if (catId != 0) {
-				justDailSearchResponse = getJustDialCategoryServices(term, catId, pageSize, pageIndex, request);
+				justDailSearchResponse = getJustDialCategoryServices(searchText, catId, pageSize, pageIndex, request);
+			} else if (catName != null && term == null) {
+				ServiceCategories dbCategory = null;
+				JSONArray jsonarray = new JSONArray();
+				dbCategory = this.serviceCategoriesRepository.findByName(catName);
+				if (dbCategory != null) {
+					for (ServiceSubCategory subCategory : dbCategory.getSubCategories()) {
+						JSONObject jdCategoryService = new JSONObject();
+						jdCategoryService = getJustDialCategoryServices("", Integer.parseInt(subCategory.getId()), 10,
+								1, request);
+
+						for (int i = 0; i < jdCategoryService.getJSONArray("services").length(); i++) {
+							JSONObject jsonObject = jdCategoryService.getJSONArray("services").getJSONObject(i);
+							jsonarray.put(jsonObject);
+						}
+					}
+					justDailSearchResponse.put("services", jsonarray);
+				}
 			} else {
-				justDailSearchResponse = getJustDialSearchServicePage(pageIndex, 50, term, request);
+				justDailSearchResponse = getJustDialSearchServicePage(pageIndex, 50, searchText, request);
 			}
+
 			JSONArray JDresult = null;
 			JSONArray DbserviceList = new JSONArray(profiles);
 			for (int i = 0; i < DbserviceList.length(); i++) {
@@ -513,34 +553,34 @@ public class SearchController {
 	/**
 	 * JD categories list
 	 */
-	@RequestMapping(method = { RequestMethod.GET }, value = { "/justdailCategories" }, produces = {
-			"application/json" })
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/serviceCategories" }, produces = { "application/json" })
 	@ResponseBody
-	public Object getJustDialCategories(HttpServletRequest request) throws Exception {
-		Object response = null;
+	public Object getServiceCategories(HttpServletRequest request) throws Exception {
+		List<ServiceCategories> categories = null;
 		try {
 
-			JustdialToken JDtoken = null;
-			List<JustdialToken> JDtokenList = null;
-			JDtokenList = justDialTokenRepository.findAll();
-			if (JDtokenList.size() > 0) {
-				JDtoken = JDtokenList.get(0);
-			}
-			// TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-			Date cuurentdate = new Date();
-			// Date expireDate = new Date(JDtoken.getExpires()*1000);
-			// int comp = cuurentdate.compareTo(expireDate);
-			JustDialHandler JDHandler = new JustDialHandler();
-			Long currentTime = cuurentdate.getTime() / 1000;
+			// JustdialToken JDtoken = null;
+			// List<JustdialToken> JDtokenList = null;
+			// JDtokenList = justDialTokenRepository.findAll();
+			// if (JDtokenList.size() > 0) {
+			// JDtoken = JDtokenList.get(0);
+			// }
+			// // TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+			// Date cuurentdate = new Date();
+			// // Date expireDate = new Date(JDtoken.getExpires()*1000);
+			// // int comp = cuurentdate.compareTo(expireDate);
+			// JustDialHandler JDHandler = new JustDialHandler();
+			// Long currentTime = cuurentdate.getTime() / 1000;
 
-			if (null == JDtoken || currentTime >= JDtoken.getExpires()) {
-				JustdialToken JDNewtoken = JDHandler.getNewToken();
-				JDtoken.setToken(JDNewtoken.getToken());
-				JDtoken.setExpires(JDNewtoken.getExpires());
-				justDialTokenRepository.save(JDtoken);
-			}
+			// if (null == JDtoken || currentTime >= JDtoken.getExpires()) {
+			// JustdialToken JDNewtoken = JDHandler.getNewToken();
+			// JDtoken.setToken(JDNewtoken.getToken());
+			// JDtoken.setExpires(JDNewtoken.getExpires());
+			// justDialTokenRepository.save(JDtoken);
+			// }
 
-			response = JDHandler.getServiceCategories(JDtoken.getToken());
+			// response = JDHandler.getServiceCategories(JDtoken.getToken());
+			categories = this.serviceCategoriesRepository.findAll();
 
 		} catch (Exception e) {
 			// throw e;
@@ -551,8 +591,8 @@ public class SearchController {
 		// null, term, filterCriteria,
 		// "search services for term = " + term, "SEARCH");
 		// String newResponse = response.toString();
-		// return BYGenericResponseHandler.getResponse(response);
-		return response.toString();
+		// return response.toString();
+		return BYGenericResponseHandler.getResponse(categories);
 	}
 
 	/**
