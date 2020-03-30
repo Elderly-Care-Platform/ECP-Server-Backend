@@ -1,5 +1,7 @@
 package com.beautifulyears.repository.custom;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.bson.types.ObjectId;
@@ -11,6 +13,7 @@ import org.springframework.data.mongodb.core.query.Query;
 
 import com.beautifulyears.constants.ProductConstants;
 import com.beautifulyears.domain.Product;
+import com.beautifulyears.domain.ProductCategory;
 import com.beautifulyears.rest.response.PageImpl;
 
 public class ProductRepositoryImpl implements ProductRepositoryCustom {
@@ -35,12 +38,35 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
 	private Query getQuery(Query q, String searchTxt, String category) {
 		if (null != searchTxt && searchTxt!= "") {
-			q.addCriteria(
-				new Criteria().orOperator(
-					Criteria.where("name").regex(searchTxt,"i"),
-					Criteria.where("shortDescription").regex(searchTxt,"i")
-				)
-			);
+
+			// get category list
+			List<ProductCategory> catList = null;
+			Query query = new Query();
+			query.addCriteria(Criteria.where("name").regex(searchTxt,"i"));
+
+			catList = this.mongoTemplate.find(query, ProductCategory.class);
+			List<ObjectId> catObjList = new ArrayList<ObjectId>();
+			if(catList != null){
+				Iterator<ProductCategory> catListIterator = catList.iterator();
+				while (catListIterator.hasNext()) {
+					catObjList.add(new ObjectId(catListIterator.next().getId()));	
+				}
+				q.addCriteria(
+					new Criteria().orOperator(
+						Criteria.where("productCategory.$id").in(catObjList),
+						Criteria.where("name").regex(searchTxt,"i"),
+						Criteria.where("shortDescription").regex(searchTxt,"i")
+					)
+				);	
+			}
+			else{
+				q.addCriteria(
+					new Criteria().orOperator(
+						Criteria.where("name").regex(searchTxt,"i"),
+						Criteria.where("shortDescription").regex(searchTxt,"i")
+					)
+				);
+			}
 		}
 		if (null != category && category!="") {
 			q.addCriteria(Criteria.where("productCategory.$id").is(new ObjectId(category) ));
