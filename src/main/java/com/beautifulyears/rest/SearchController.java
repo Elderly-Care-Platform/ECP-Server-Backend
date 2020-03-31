@@ -18,6 +18,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.TextCriteria;
 import org.springframework.data.mongodb.core.query.TextQuery;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -46,6 +47,7 @@ import com.beautifulyears.rest.response.UserProfileResponse;
 import com.beautifulyears.rest.response.UserProfileResponse.UserProfilePage;
 import com.beautifulyears.util.LoggerUtil;
 import com.beautifulyears.util.Util;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * The REST based service for managing "search"
@@ -164,16 +166,14 @@ public class SearchController {
 				searchText = term;
 			}
 
-			// TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingAny(searchText);
+			// TextCriteria criteria =
+			// TextCriteria.forDefaultLanguage().matchingAny(searchText);
 
 			// Query query = TextQuery.queryText(criteria).sortByScore();
 			Query query = new Query();
 
 			query.addCriteria(
-				new Criteria().orOperator(
-					Criteria.where("basicProfileInfo.firstName").regex(searchText,"i")
-				)
-			);
+					new Criteria().orOperator(Criteria.where("basicProfileInfo.firstName").regex(searchText, "i")));
 			query.with(pageable);
 
 			query.addCriteria(Criteria.where("userTypes").in(serviceTypes));
@@ -186,16 +186,36 @@ public class SearchController {
 
 			if (catId != 0) {
 				justDailSearchResponse = getJustDialCategoryServices(searchText, catId, pageSize, pageIndex, request);
-			} else if (catName != null && term == null) {
+			} else if (catName != null) {
 				ServiceCategories dbCategory = null;
 				JSONArray jsonarray = new JSONArray();
 				dbCategory = this.serviceCategoriesRepository.findByName(catName);
 				if (dbCategory != null) {
-					for (ServiceSubCategory subCategory : dbCategory.getSubCategories()) {
-						JSONObject jdCategoryService = new JSONObject();
-						jdCategoryService = getJustDialCategoryServices("", Integer.parseInt(subCategory.getId()), 10,
-								1, request);
+					// for (ServiceSubCategory subCategory : dbCategory.getSubCategories()) {
+					// JSONObject jdCategoryService = new JSONObject();
+					// jdCategoryService = getJustDialCategoryServices("",
+					// Integer.parseInt(subCategory.getId()), 10,
+					// 1, request);
 
+					// for (int i = 0; i < jdCategoryService.getJSONArray("services").length(); i++)
+					// {
+					// JSONObject jsonObject =
+					// jdCategoryService.getJSONArray("services").getJSONObject(i);
+					// jsonarray.put(jsonObject);
+					// }
+					// }
+					// justDailSearchResponse.put("services", jsonarray);
+
+					List<CompletableFuture<JSONObject>> allFutures = new ArrayList<>();
+					for (ServiceSubCategory subCategory : dbCategory.getSubCategories()) {
+						allFutures.add(getAsyncJustDialCategoryServices("", Integer.parseInt(subCategory.getId()), 10,
+								1, request));
+					}
+					CompletableFuture.allOf(allFutures.toArray(new CompletableFuture[0])).join();
+					System.out.println("response: " + allFutures);
+					for (CompletableFuture<JSONObject> futureResult : allFutures) {
+						JSONObject jdCategoryService = new JSONObject();
+						jdCategoryService = futureResult.get();
 						for (int i = 0; i < jdCategoryService.getJSONArray("services").length(); i++) {
 							JSONObject jsonObject = jdCategoryService.getJSONArray("services").getJSONObject(i);
 							jsonarray.put(jsonObject);
@@ -228,8 +248,17 @@ public class SearchController {
 					if (jdRating.equals("")) {
 						jdRating = "0";
 					}
-					
-					jsonObject.put("ratingPercentage", UserProfileController.getDbServiceRating(Math.round(Float.parseFloat(jdRating))));
+
+					jsonObject.put("ratingPercentage",
+							UserProfileController.getDbServiceRating(Math.round(Float.parseFloat(jdRating))));
+
+					if (term != null && catName != null) {
+						if (jsonObject.getString("name").toLowerCase().contains(term.toLowerCase())) {
+							DbserviceList.put(jsonObject);
+						}
+						continue;
+					}
+
 					DbserviceList.put(jsonObject);
 				}
 			}
@@ -465,8 +494,8 @@ public class SearchController {
 					for (int j = 0; j < dataInfoList.length(); j++) {
 						dataInfoMap.put(columns.getString(j), dataInfoList.get(j));
 					}
-					dataInfoMap.put("categoryKey",categoryKey);
-					dataInfoMap.put("categoryId",categoryId);
+					dataInfoMap.put("categoryKey", categoryKey);
+					dataInfoMap.put("categoryId", categoryId);
 					newDataList.put(dataInfoMap);
 				}
 				response.put("services", newDataList);
@@ -542,8 +571,8 @@ public class SearchController {
 				for (int j = 0; j < dataInfoList.length(); j++) {
 					dataInfoMap.put(columns.getString(j), dataInfoList.get(j));
 				}
-				dataInfoMap.put("categoryKey",categoryKey);
-				dataInfoMap.put("categoryId",categoryId);
+				dataInfoMap.put("categoryKey", categoryKey);
+				dataInfoMap.put("categoryId", categoryId);
 				newDataList.put(dataInfoMap);
 			}
 			response.put("services", newDataList);
@@ -559,6 +588,80 @@ public class SearchController {
 		// String newResponse = response.toString();
 		// return BYGenericResponseHandler.getResponse(response.toString());
 		return response;
+	}
+
+	/**
+	 * Search JD services by categories
+	 * 
+	 * @param category
+	 * @param catID
+	 * @param max
+	 * @param pageNo
+	 * @param request
+	 * @return
+	 * @throws Exception
+	 */
+	@Async
+	public CompletableFuture<JSONObject> getAsyncJustDialCategoryServices(
+			// String category, Integer catID, Integer max, int pageNo
+			@RequestParam(value = "category", required = true) String category,
+			@RequestParam(value = "catID", required = true) int catID,
+			@RequestParam(value = "max", required = false, defaultValue = "10") int max,
+			@RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo,
+			HttpServletRequest request) throws Exception {
+		JSONObject response = new JSONObject();
+		try {
+
+			JustdialToken JDtoken = null;
+			List<JustdialToken> JDtokenList = null;
+			JDtokenList = justDialTokenRepository.findAll();
+			if (JDtokenList.size() > 0) {
+				JDtoken = JDtokenList.get(0);
+			}
+			// TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+			Date cuurentdate = new Date();
+			// Date expireDate = new Date(JDtoken.getExpires()*1000);
+			// int comp = cuurentdate.compareTo(expireDate);
+			JustDialHandler JDHandler = new JustDialHandler();
+			Long currentTime = cuurentdate.getTime() / 1000;
+
+			if (null == JDtoken || currentTime >= JDtoken.getExpires()) {
+				JustdialToken JDNewtoken = JDHandler.getNewToken();
+				JDtoken.setToken(JDNewtoken.getToken());
+				JDtoken.setExpires(JDNewtoken.getExpires());
+				justDialTokenRepository.save(JDtoken);
+			}
+
+			JSONObject JDResponse = JDHandler.getServiceList(JDtoken.getToken(), category, catID, max, pageNo);
+			JSONObject resultsObject = JDResponse.getJSONObject("results");
+			JSONArray columns = resultsObject.getJSONArray("columns");
+			JSONArray dataList = resultsObject.getJSONArray("data");
+			String categoryKey = JDResponse.getString("keyword");
+			String categoryId = JDResponse.getString("national_catid");
+			JSONArray newDataList = new JSONArray();
+			for (int i = 0; i < dataList.length(); i++) {
+				JSONArray dataInfoList = dataList.getJSONArray(i);
+				JSONObject dataInfoMap = new JSONObject();
+				for (int j = 0; j < dataInfoList.length(); j++) {
+					dataInfoMap.put(columns.getString(j), dataInfoList.get(j));
+				}
+				dataInfoMap.put("categoryKey", categoryKey);
+				dataInfoMap.put("categoryId", categoryId);
+				newDataList.put(dataInfoMap);
+			}
+			response.put("services", newDataList);
+			// response.put("JDResponse", JDResponse);
+		} catch (Exception e) {
+			// throw e;
+			// Util.handleException(e);
+			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
+		}
+		// Util.logStats(mongoTemplate, request, "search services", null, null, null,
+		// null, term, filterCriteria,
+		// "search services for term = " + term, "SEARCH");
+		// String newResponse = response.toString();
+		// return BYGenericResponseHandler.getResponse(response.toString());
+		return CompletableFuture.completedFuture(response);
 	}
 
 	/**
