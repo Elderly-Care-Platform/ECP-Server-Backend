@@ -55,7 +55,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 					new Criteria().orOperator(
 						Criteria.where("productCategory.$id").in(catObjList),
 						Criteria.where("name").regex(searchTxt,"i"),
-						Criteria.where("shortDescription").regex(searchTxt,"i")
+						Criteria.where("description").regex(searchTxt,"i")
 					)
 				);	
 			}
@@ -63,7 +63,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 				q.addCriteria(
 					new Criteria().orOperator(
 						Criteria.where("name").regex(searchTxt,"i"),
-						Criteria.where("shortDescription").regex(searchTxt,"i")
+						Criteria.where("description").regex(searchTxt,"i")
 					)
 				);
 			}
