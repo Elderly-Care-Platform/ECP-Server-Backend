@@ -224,7 +224,7 @@ public class SearchController {
 					justDailSearchResponse.put("services", jsonarray);
 				}
 			} else {
-				justDailSearchResponse = getJustDialSearchServicePage(pageIndex, 50, searchText, request);
+				justDailSearchResponse = getJustDialSearchServicePage(pageIndex, pageSize, searchText, request);
 			}
 
 			JSONArray JDresult = null;
