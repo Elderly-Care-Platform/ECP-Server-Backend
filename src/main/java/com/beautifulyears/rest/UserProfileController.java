@@ -721,8 +721,7 @@ public class UserProfileController {
 		filterCriteria.add("isFeatured = " + isFeatured);
 		filterCriteria.add("city = " + city);
 
-		Integer[] userTypes = { UserTypes.INSTITUTION_HOUSING, UserTypes.INSTITUTION_BRANCH,
-				UserTypes.INSTITUTION_PRODUCTS, UserTypes.INSTITUTION_NGO, UserTypes.INDIVIDUAL_PROFESSIONAL };
+		Integer[] userTypes = { UserTypes.INSTITUTION_SERVICES };
 
 		// String[] JdsearchTerms = { "care hospital clinics nursing home" };
 

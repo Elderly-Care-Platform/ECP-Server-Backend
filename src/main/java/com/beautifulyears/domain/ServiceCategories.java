@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.ArrayList;
 import java.util.List;
 
-@Document(collection = "service_categories")
+@Document(collection = "service_categories_mapping")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServiceCategories {
 
