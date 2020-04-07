@@ -2,6 +2,7 @@ package com.beautifulyears.rest;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -25,17 +26,25 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.constants.DiscussConstants;
 import com.beautifulyears.constants.UserTypes;
 import com.beautifulyears.domain.Discuss;
 import com.beautifulyears.domain.HousingFacility;
+import com.beautifulyears.domain.JustDailServices;
+import com.beautifulyears.domain.JustDailSetting;
 import com.beautifulyears.domain.JustdialToken;
 import com.beautifulyears.domain.ServiceCategories;
+import com.beautifulyears.domain.ServiceCategoriesMapping;
 import com.beautifulyears.domain.ServiceSubCategory;
+import com.beautifulyears.domain.ServiceSubCategoryMapping;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.justdial.JustDialHandler;
+import com.beautifulyears.repository.JustDialSerivcesRepository;
+import com.beautifulyears.repository.JustDialSettingsRepository;
 import com.beautifulyears.repository.JustDialTokenRepository;
+import com.beautifulyears.repository.ServiceCategoriesMappingRepository;
 import com.beautifulyears.repository.ServiceCategoriesRepository;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.rest.response.DiscussResponse;
@@ -47,6 +56,8 @@ import com.beautifulyears.rest.response.UserProfileResponse;
 import com.beautifulyears.rest.response.UserProfileResponse.UserProfilePage;
 import com.beautifulyears.util.LoggerUtil;
 import com.beautifulyears.util.Util;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -61,13 +72,22 @@ public class SearchController {
 	private MongoTemplate mongoTemplate;
 	private static JustDialTokenRepository justDialTokenRepository;
 	private ServiceCategoriesRepository serviceCategoriesRepository;
+	private JustDialSettingsRepository justDialSettingsRepository;
+	private JustDialSerivcesRepository justDialSerivcesRepository;
+	private ServiceCategoriesMappingRepository serviceCategoriesMappingRepository;
 
 	@Autowired
 	public SearchController(MongoTemplate mongoTemplate, JustDialTokenRepository justDialTokenRepository,
-			ServiceCategoriesRepository serviceCategoriesRepository) {
+			ServiceCategoriesRepository serviceCategoriesRepository,
+			JustDialSettingsRepository justDialSettingsRepository,
+			JustDialSerivcesRepository justDialSerivcesRepository,
+			ServiceCategoriesMappingRepository serviceCategoriesMappingRepository) {
 		SearchController.justDialTokenRepository = justDialTokenRepository;
 		this.mongoTemplate = mongoTemplate;
 		this.serviceCategoriesRepository = serviceCategoriesRepository;
+		this.justDialSettingsRepository = justDialSettingsRepository;
+		this.justDialSerivcesRepository = justDialSerivcesRepository;
+		this.serviceCategoriesMappingRepository = serviceCategoriesMappingRepository;
 	}
 
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/discussPageSearch" }, produces = { "application/json" })
@@ -136,9 +156,9 @@ public class SearchController {
 			@RequestParam(value = "s", required = false, defaultValue = "10") int pageSize, HttpServletRequest request)
 			throws Exception {
 		List<Integer> serviceTypes = new ArrayList<Integer>();
-		serviceTypes.add(UserTypes.INDIVIDUAL_PROFESSIONAL);
-		serviceTypes.add(UserTypes.INSTITUTION_NGO);
-		serviceTypes.add(UserTypes.INSTITUTION_BRANCH);
+		serviceTypes.add(UserTypes.INSTITUTION_SERVICES);
+		// serviceTypes.add(UserTypes.INSTITUTION_NGO);
+		// serviceTypes.add(UserTypes.INSTITUTION_BRANCH);
 		List<String> filterCriteria = new ArrayList<String>();
 		filterCriteria.add("term = " + term);
 		filterCriteria.add("sort = " + sort);
@@ -286,6 +306,62 @@ public class SearchController {
 				"search services for term = " + term, "SEARCH");
 		// return BYGenericResponseHandler.getResponse(profilePage);
 		return response.toString();
+	}
+
+	/**
+	 * Fetch and store JD Services
+	 */
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/fetchJustDailServices" }, produces = {
+			"application/json" })
+	@ResponseBody
+	public Object fetchJustDailServices(HttpServletRequest request) throws Exception {
+
+		// Get record limit from setting
+		List<JustDailSetting> Jdsettings = justDialSettingsRepository.findAll();
+		Integer limit = Jdsettings.get(0).getLimit();
+		// Get all DB categories
+		List<ServiceCategoriesMapping> allCategories = this.serviceCategoriesMappingRepository.findAll();
+		List<JustDailServices> justdailServiceList = new ArrayList<>();
+		// JSONArray jsonarray = new JSONArray();
+		try {
+			for (ServiceCategoriesMapping category : allCategories) {
+				List<CompletableFuture<JSONObject>> allFutures = new ArrayList<>();
+				for (ServiceSubCategoryMapping subCategory : category.getSubCategories()) {
+					for (ServiceSubCategoryMapping.Source source : subCategory.getSource()) {
+						if (source.getName().equals(BYConstants.SERVICE_SOURCE_JD)) {
+							allFutures.add(getAsyncJustDialCategoryServices("", Integer.parseInt(source.getCatid()),
+									limit, 1, request));
+						}
+					}
+				}
+				CompletableFuture.allOf(allFutures.toArray(new CompletableFuture[0])).join();
+				System.out.println("response: " + allFutures);
+				for (CompletableFuture<JSONObject> futureResult : allFutures) {
+					JSONObject jdCategoryService = new JSONObject();
+					jdCategoryService = futureResult.get();
+					for (int i = 0; i < jdCategoryService.getJSONArray("services").length(); i++) {
+						JSONObject jsonObject = jdCategoryService.getJSONArray("services").getJSONObject(i);
+						jsonObject.put("catId", category.getId());
+						// Convert jsonObject to java Hashmap
+						HashMap<String, Object> result = new ObjectMapper().readValue(jsonObject.toString(),
+						HashMap.class);
+						JustDailServices jdservice = new JustDailServices();
+						jdservice.setServiceInfo(result);
+						justdailServiceList.add(jdservice);
+						
+					}
+				}
+
+			}
+			justDialSerivcesRepository.save(justdailServiceList);
+		} catch (Exception e) {
+			// throw e;
+			Util.handleException(e);
+			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
+		}
+		// return jsonarray.toString();
+		return BYGenericResponseHandler.getResponse(justdailServiceList);
+		// justDailSearchResponse.put("services", jsonarray);
 	}
 
 	@RequestMapping(method = { RequestMethod.GET }, value = { "/housingPageSearch" }, produces = { "application/json" })
