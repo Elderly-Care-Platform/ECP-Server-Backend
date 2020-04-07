@@ -322,7 +322,7 @@ public class SearchController {
 		// Get all DB categories
 		List<ServiceCategoriesMapping> allCategories = this.serviceCategoriesMappingRepository.findAll();
 		List<JustDailServices> justdailServiceList = new ArrayList<>();
-		// JSONArray jsonarray = new JSONArray();
+
 		try {
 			for (ServiceCategoriesMapping category : allCategories) {
 				List<CompletableFuture<JSONObject>> allFutures = new ArrayList<>();
@@ -344,16 +344,30 @@ public class SearchController {
 						jsonObject.put("catId", category.getId());
 						// Convert jsonObject to java Hashmap
 						HashMap<String, Object> result = new ObjectMapper().readValue(jsonObject.toString(),
-						HashMap.class);
-						JustDailServices jdservice = new JustDailServices();
-						jdservice.setServiceInfo(result);
-						justdailServiceList.add(jdservice);
-						
+								HashMap.class);
+
+						// Filter existing JD record
+						Query query = new Query();
+						query.addCriteria(Criteria.where("serviceInfo.docid").is(jsonObject.getString("docid")));
+						JustDailServices existingSerivceProfiles = null;
+						existingSerivceProfiles = this.mongoTemplate.findOne(query, JustDailServices.class);
+
+						if (existingSerivceProfiles == null) {
+							JustDailServices jdservice = new JustDailServices();
+							jdservice.setServiceInfo(result);
+							justdailServiceList.add(jdservice);
+						}else{
+							existingSerivceProfiles.setServiceInfo(result);
+							justDialSerivcesRepository.save(existingSerivceProfiles);
+						}
+
 					}
 				}
 
 			}
-			justDialSerivcesRepository.save(justdailServiceList);
+			if(justdailServiceList.size() > 0){
+				justDialSerivcesRepository.save(justdailServiceList);
+			}
 		} catch (Exception e) {
 			// throw e;
 			Util.handleException(e);
