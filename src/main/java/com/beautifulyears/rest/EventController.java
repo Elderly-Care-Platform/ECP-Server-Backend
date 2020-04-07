@@ -310,6 +310,11 @@ public class EventController {
 					query.addCriteria(Criteria.where("userId").is(reportEvent.getUserId()));
 					UserProfile userProfile = mongoTemplate.findOne(query, UserProfile.class);
 
+					Query queryE = new Query();
+					queryE.addCriteria(Criteria.where("id").is(reportEvent.getEventId()));
+
+					Event event = mongoTemplate.findOne(queryE, Event.class);
+
 					if (userProfile != null) {
 						ReportEvent reportEventExtra = new ReportEvent(reportEvent.getEventId(),
 								currentUser.getId(), reportEvent.getComment());
@@ -320,7 +325,7 @@ public class EventController {
 								+ userProfile.getBasicProfileInfo().getPrimaryEmail() + "\r\n"
 								+ userProfile.getBasicProfileInfo().getPrimaryPhoneNo();
 						MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
-								"Event Reported By: " + userProfile.getBasicProfileInfo().getFirstName(),
+								"Event Reported: " + event.getTitle(),
 								body);
 					}
 				} catch (Exception e) {
