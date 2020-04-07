@@ -28,14 +28,15 @@ public class JustDialHandler {
     private String baseUrl = "http://win.justdial.com/tata-v1";
     private String createToken = "/createToken.php";
     private String justDialsearch = "/searchziva.php?";
+    private String autoSuggest = "/autosuggest.php?";
     private String categories = "/catid_list.php";
     private String city = "Hyderabad";
 
     private String JDcase = "spcall";
     private String JDdetailCase = "detail";
     private int JDversion = 9;
-    private String stype = "category_list";
-    private String searchstype = "company_list";
+    private String categoryType = "category_list";
+    private String companyType = "company_list";
     private int wap = 2;
 
     private String createToken() {
@@ -95,7 +96,7 @@ public class JustDialHandler {
             StringBuilder sbPostData = new StringBuilder(postUrl);
             sbPostData.append("city=" + this.city);
             sbPostData.append("&case=" + this.JDcase);
-            sbPostData.append("&stype=" + this.stype);
+            sbPostData.append("&stype=" + this.categoryType);
             sbPostData.append("&search=" + URLEncoder.encode(category, "UTF-8"));
             sbPostData.append("&national_catid=" + catID);
             sbPostData.append("&max=" + max);
@@ -207,7 +208,7 @@ public class JustDialHandler {
             StringBuilder sbPostData = new StringBuilder(postUrl);
             sbPostData.append("city=" + this.city);
             sbPostData.append("&case=" + this.JDcase);
-            sbPostData.append("&stype=" + this.stype);
+            sbPostData.append("&stype=" + this.categoryType);
             sbPostData.append("&search=" + URLEncoder.encode(search, "UTF-8"));
             sbPostData.append("&max=" + max);
             sbPostData.append("&pg_no=" + pageNo);
@@ -348,6 +349,54 @@ public class JustDialHandler {
             throw new RuntimeException("ERROR in search from Justdial. " + e);
         }
         return result;
+
+    }
+
+    public JSONArray getAutosuggest(String search) {
+        LoggerUtil.logEntry();
+        String response = null;
+        JSONArray results = null;
+        try {
+            String postUrl = this.baseUrl + this.autoSuggest;
+
+            // Prepare parameter string
+            StringBuilder sbPostData = new StringBuilder(postUrl);
+            sbPostData.append("&search=" + URLEncoder.encode(search, "UTF-8"));
+
+            // final string
+            postUrl = sbPostData.toString();
+
+            logger.debug(postUrl);
+
+            URL u = new URL(postUrl);
+            String type = "application/json";
+            String encodedData = sbPostData.toString();
+            HttpURLConnection conn = (HttpURLConnection) u.openConnection();
+            conn.setDoOutput(true);
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Content-Type", type);
+            // conn.setRequestProperty("Content-Length",
+            // String.valueOf(encodedData.length()));
+            OutputStream os = conn.getOutputStream();
+            os.write(encodedData.getBytes());
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String inputLine;
+            StringBuffer b = new StringBuffer();
+            while ((inputLine = in.readLine()) != null)
+                b.append(inputLine + "\n");
+            in.close();
+            response = b.toString();
+            JSONObject json = new JSONObject(response);
+            results = json.getJSONArray("results");
+
+            // result = resultsObject.toString();
+
+            logger.debug(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            // throw new RuntimeException("ERROR in search from Justdial. " + e);
+        }
+        return results;
 
     }
 

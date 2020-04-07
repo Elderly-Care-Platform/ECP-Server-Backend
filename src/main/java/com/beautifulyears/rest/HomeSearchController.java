@@ -256,9 +256,16 @@ public class HomeSearchController {
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
 
-			TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingAny(term);
+			// TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingAny(term);
 
-			Query query = TextQuery.queryText(criteria).sortByScore();
+			// Query query = TextQuery.queryText(criteria).sortByScore();
+			Query query = new Query();
+
+			query.addCriteria(
+				new Criteria().orOperator(
+					Criteria.where("basicProfileInfo.firstName").regex(term,"i")
+				)
+			);
 			query.with(pageable);
 
 			query.addCriteria(Criteria.where("userTypes").in(serviceTypes));
@@ -277,6 +284,8 @@ public class HomeSearchController {
 				JSONObject jsonDBObject = DbserviceList.getJSONObject(i);
 				JSONArray totReviews = jsonDBObject.getJSONArray("reviewedBy");
 				jsonDBObject.put("reviewCount", totReviews.length());
+				Integer ratingPercent = jsonDBObject.getInt("aggrRatingPercentage");
+				jsonDBObject.put("ratingPercentage", ratingPercent);
 				DbserviceList.put(i, jsonDBObject);
 			}
 			// JD services
@@ -286,15 +295,16 @@ public class HomeSearchController {
 
 				for (int i = 0; i < JDresult.length(); i++) {
 					JSONObject jsonObject = JDresult.getJSONObject(i);
-					String totReviews = jsonObject.getString("totalReviews");
-					if (totReviews.equals("")) {
-						totReviews = "0";
+					String jdRating = jsonObject.getString("compRating");
+					if (jdRating.equals("")) {
+						jdRating = "0";
 					}
-					jsonObject.put("reviewCount", Integer.parseInt(totReviews));
+					
+					jsonObject.put("ratingPercentage", UserProfileController.getDbServiceRating(Math.round(Float.parseFloat(jdRating))));
 					DbserviceList.put(jsonObject);
 				}
 			}
-			JSONArray sortedArray = UserProfileController.sortJsonArray("reviewCount", DbserviceList);
+			JSONArray sortedArray = UserProfileController.sortJsonArray("ratingPercentage", DbserviceList);
 
 			long total = this.mongoTemplate.count(query, UserProfile.class);
 			if (justDailSearchResponse != null && justDailSearchResponse.length() > 0) {
@@ -390,39 +400,38 @@ public class HomeSearchController {
 	// return response;
 	// }
 
-	public static JSONArray sortJsonArray(String field, JSONArray array) {
-		JSONArray sortedJsonArray = new JSONArray();
+	// public static JSONArray sortJsonArray(String field, JSONArray array) {
+	// 	JSONArray sortedJsonArray = new JSONArray();
 
-		List<JSONObject> jsonValues = new ArrayList<JSONObject>();
-		for (int i = 0; i < array.length(); i++) {
-			jsonValues.add(array.getJSONObject(i));
-		}
-		Collections.sort(jsonValues, new Comparator<JSONObject>() {
-			// You can change "Name" with "ID" if you want to sort by ID
-			private final String KEY_NAME = field;
+	// 	List<JSONObject> jsonValues = new ArrayList<JSONObject>();
+	// 	for (int i = 0; i < array.length(); i++) {
+	// 		jsonValues.add(array.getJSONObject(i));
+	// 	}
+	// 	Collections.sort(jsonValues, new Comparator<JSONObject>() {
+	// 		// You can change "Name" with "ID" if you want to sort by ID
+	// 		private final String KEY_NAME = field;
 
-			@Override
-			public int compare(JSONObject a, JSONObject b) {
-				String valA = new String();
-				String valB = new String();
+	// 		@Override
+	// 		public int compare(JSONObject a, JSONObject b) {
+	// 			Integer valA = 0;
+	// 			Integer valB = 0;
+	// 			try {
+	// 				valA = a.getInt(KEY_NAME);
+	// 				valB = b.getInt(KEY_NAME);
+	// 			} catch (JSONException e) {
+	// 				// do something
+	// 				throw new RuntimeException("ERROR in sorting data. " + e);
+	// 			}
 
-				try {
-					valA = String.valueOf(a.get(KEY_NAME));
-					valB = String.valueOf(b.get(KEY_NAME));
-				} catch (JSONException e) {
-					// do something
-					throw new RuntimeException("ERROR in sorting data. " + e);
-				}
+	// 			return -valA.compareTo(valB);
+	// 			// if you want to change the sort order, simply use the following:
+	// 			// return -valA.compareTo(valB);
+	// 		}
+	// 	});
 
-				return -valA.compareTo(valB);
-				// if you want to change the sort order, simply use the following:
-				// return -valA.compareTo(valB);
-			}
-		});
-
-		for (int i = 0; i < array.length(); i++) {
-			sortedJsonArray.put(jsonValues.get(i));
-		}
-		return sortedJsonArray;
-	}
+	// 	for (int i = 0; i < array.length(); i++) {
+	// 		sortedJsonArray.put(jsonValues.get(i));
+	// 	}
+	// 	return sortedJsonArray;
+	// }
 }

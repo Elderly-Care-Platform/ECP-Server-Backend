@@ -135,20 +135,20 @@ public class TempShortDescriptionController {
 			if (imageMap.get("original").contains(
 					CDNConstants.S3_HOST + "bymedia")) {
 				String str = imageMap.get("original");
-				str = str.replace(CDNConstants.S3_HOST + "bymedia", "https://media.beautifulyears.com");
+				str = str.replace(CDNConstants.S3_HOST + "bymedia", "https://media.joyofage.org");
 				System.out.println("original = " + str);
 				imageMap.put("original", str);
 			}else if (imageMap.get("original").contains(
 					CDNConstants.S3_HOST + "by-dev-media")) {
 				String str = imageMap.get("original");
 				str = str.replace(CDNConstants.S3_HOST + "by-dev-media",
-						"https://media.beautifulyears.com");
+						"https://media.joyofage.org");
 				System.out.println("original = " + str);
 				imageMap.put("original", str);
 			}else if (imageMap.get("original").contains(cdnPath)) {
 				String str = imageMap.get("original");
 				str = str.replace(cdnPath,
-						"https://media.beautifulyears.com");
+						"https://media.joyofage.org");
 				System.out.println("original = " + str);
 				imageMap.put("original", str);
 			}
@@ -157,20 +157,20 @@ public class TempShortDescriptionController {
 			if (imageMap.get("titleImage").contains(
 					CDNConstants.S3_HOST + "bymedia")) {
 				String str = imageMap.get("titleImage");
-				str = str.replace(CDNConstants.S3_HOST + "bymedia", "https://media.beautifulyears.com");
+				str = str.replace(CDNConstants.S3_HOST + "bymedia", "https://media.joyofage.org");
 				System.out.println("titleImage = " + str);
 				imageMap.put("titleImage", str);
 			}else if (imageMap.get("titleImage").contains(
 					CDNConstants.S3_HOST + "by-dev-media")) {
 				String str = imageMap.get("titleImage");
 				str = str.replace(CDNConstants.S3_HOST + "by-dev-media",
-						"https://media.beautifulyears.com");
+						"https://media.joyofage.org");
 				System.out.println("titleImage = " + str);
 				imageMap.put("titleImage", str);
 			}else if (imageMap.get("titleImage").contains(cdnPath)) {
 				String str = imageMap.get("titleImage");
 				str = str.replace(cdnPath,
-						"https://media.beautifulyears.com");
+						"https://media.joyofage.org");
 				System.out.println("titleImage = " + str);
 				imageMap.put("titleImage", str);
 			}
@@ -179,20 +179,20 @@ public class TempShortDescriptionController {
 			if (imageMap.get("thumbnailImage").contains(
 					CDNConstants.S3_HOST + "bymedia")) {
 				String str = imageMap.get("thumbnailImage");
-				str = str.replace(CDNConstants.S3_HOST + "bymedia", "https://media.beautifulyears.com");
+				str = str.replace(CDNConstants.S3_HOST + "bymedia", "https://media.joyofage.org");
 				System.out.println("thumbnail = " + str);
 				imageMap.put("thumbnailImage", str);
 			}else if (imageMap.get("thumbnailImage").contains(
 					CDNConstants.S3_HOST + "by-dev-media")) {
 				String str = imageMap.get("thumbnailImage");
 				str = str.replace(CDNConstants.S3_HOST + "by-dev-media",
-						"https://media.beautifulyears.com");
+						"https://media.joyofage.org");
 				System.out.println("thumbnail = " + str);
 				imageMap.put("thumbnailImage", str);
 			}else if (imageMap.get("thumbnailImage").contains(cdnPath)) {
 				String str = imageMap.get("thumbnailImage");
 				str = str.replace(cdnPath,
-						"https://media.beautifulyears.com");
+						"https://media.joyofage.org");
 				System.out.println("thumbnail = " + str);
 				imageMap.put("thumbnailImage", str);
 			}
@@ -207,19 +207,19 @@ public class TempShortDescriptionController {
 			if (text.matches("(?is).*" + CDNConstants.S3_HOST + "bymedia"
 					+ ".*")) {
 				text = text.replaceAll(CDNConstants.S3_HOST + "bymedia",
-						"https://media.beautifulyears.com");
+						"https://media.joyofage.org");
 				System.out.println(text);
 			}
 			if (text.matches("(?is).*" + CDNConstants.S3_HOST + "by-dev-media"
 					+ ".*")) {
 				text = text.replaceAll(CDNConstants.S3_HOST + "by-dev-media",
-						"https://media.beautifulyears.com");
+						"https://media.joyofage.org");
 				System.out.println(text);
 			}
 			if (text.matches("(?is).*" + cdnPath
 					+ ".*")) {
 				text = text.replaceAll(cdnPath,
-						"https://media.beautifulyears.com");
+						"https://media.joyofage.org");
 				System.out.println(text);
 			}
 		}

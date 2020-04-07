@@ -17,6 +17,7 @@ public class AskCategoryResponse implements IResponse {
 	private List<AskCategoryEntity> askCategoryArray = new ArrayList<AskCategoryEntity>();
 
 	private static UserProfileRepository userProfileRepo;
+	private static String searchTxt;
 
 	@Override
 	public List<AskCategoryEntity> getResponse() {
@@ -91,6 +92,7 @@ public class AskCategoryResponse implements IResponse {
 		private String 	name;
 		private long questionCount;
 		private boolean isEditableByUser = false;
+		private boolean show = false;
 
 		public AskCategoryEntity(AskCategory askCategory, User user) {
 			this.setId(askCategory.getId());
@@ -98,7 +100,12 @@ public class AskCategoryResponse implements IResponse {
 			Integer[] userTypes = { UserTypes.ASK_EXPERT};
 			List<ObjectId> experties = new ArrayList<ObjectId>();
 			experties.add( new ObjectId(askCategory.getId()));
-			this.setQuestionCount(AskCategoryResponse.userProfileRepo.getServiceProvidersByFilterCriteriaCount(null, userTypes, null, null, null, experties));
+			long countWithoutSearch = AskCategoryResponse.userProfileRepo.getServiceProvidersByFilterCriteriaCount(null, userTypes, null, null, null, experties);
+			long countWithSearch = AskCategoryResponse.userProfileRepo.getServiceProvidersByFilterCriteriaCount(AskCategoryResponse.searchTxt, userTypes, null, null, null, experties);
+			this.setQuestionCount(countWithSearch);
+			if(countWithoutSearch > 0){
+				this.setShow(true);
+			}
 			if (null != user
 					&& (BYConstants.USER_ROLE_EDITOR.equals(user.getUserRoleId())
 						|| BYConstants.USER_ROLE_SUPER_USER.equals(user.getUserRoleId())
@@ -138,6 +145,14 @@ public class AskCategoryResponse implements IResponse {
 		public void setQuestionCount(long questionCount) {
 			this.questionCount = questionCount;
 		}
+
+		public boolean getShow() {
+			return show;
+		}
+
+		public void setShow(boolean show) {
+			this.show = show;
+		}
 		
 	}
 
@@ -161,8 +176,9 @@ public class AskCategoryResponse implements IResponse {
 		this.askCategoryArray.add(new AskCategoryEntity(askCategory, user));
 	}
 
-	public static AskCategoryPage getPage(PageImpl<AskCategory> page, User user, UserProfileRepository userProfileRepo ) {
+	public static AskCategoryPage getPage(PageImpl<AskCategory> page, User user, UserProfileRepository userProfileRepo, String searchTxt ) {
 		AskCategoryResponse.userProfileRepo = userProfileRepo;
+		AskCategoryResponse.searchTxt = searchTxt;
 		AskCategoryPage res = new AskCategoryPage(page, user);
 		return res;
 	}

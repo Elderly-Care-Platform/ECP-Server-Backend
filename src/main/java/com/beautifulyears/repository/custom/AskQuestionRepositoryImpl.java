@@ -33,7 +33,7 @@ public class AskQuestionRepositoryImpl implements AskQuestionRepositoryCustom {
 
 	private Query getQuery(Query q, String searchTxt, String askCategory, String askedBy, String answeredBy, Boolean answered) {
 		if (null != searchTxt && searchTxt!="") {
-			q.addCriteria(Criteria.where("name").regex(searchTxt,"i"));
+			q.addCriteria(Criteria.where("question").regex(searchTxt,"i"));
 		}
 		if (null != askedBy && askedBy!="") {
 			q.addCriteria(Criteria.where("askedBy.$id").is( new ObjectId(askedBy) ));

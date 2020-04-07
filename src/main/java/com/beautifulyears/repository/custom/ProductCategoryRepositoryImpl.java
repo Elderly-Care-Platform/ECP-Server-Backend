@@ -30,9 +30,9 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepositoryC
 	}
 
 	private Query getQuery(Query q, String searchTxt) {
-		if (null != searchTxt) {
-			q.addCriteria(Criteria.where("name").regex(searchTxt,"i"));
-		}
+		// if (null != searchTxt) {
+		// 	q.addCriteria(Criteria.where("name").regex(searchTxt,"i"));
+		// }
 		return q;
 	}
 

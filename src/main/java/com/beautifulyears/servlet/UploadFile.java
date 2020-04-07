@@ -77,7 +77,7 @@ public class UploadFile extends HttpServlet {
 //		// Create a new Message
 //		Message msg = new MimeMessage(session);
 //		try {
-//			msg.setFrom(new InternetAddress("writetous@beautifulyears.com"));
+//			msg.setFrom(new InternetAddress("admin@joyofage.org"));
 //
 //			msg.addRecipient(Message.RecipientType.TO, new InternetAddress(
 //					"jainnitin.in@gmail.com"));
@@ -99,7 +99,7 @@ public class UploadFile extends HttpServlet {
 //			e.printStackTrace();
 //		}
 //		
-//Destination destination = new Destination().withToAddresses(new String[]{"21784127542187ndsbvsd@beautifulyears.com"});
+//Destination destination = new Destination().withToAddresses(new String[]{"21784127542187ndsbvsd@joyofage.org"});
 //        
 //        // Create the subject and body of the message.
 //        Content subject = new Content().withData("test java mail for AWS ses");
@@ -110,7 +110,7 @@ public class UploadFile extends HttpServlet {
 //        Message message = new Message().withSubject(subject).withBody(body);
 //        
 //        // Assemble the email.
-//        SendEmailRequest request = new SendEmailRequest().withSource("writetous@beautifulyears.com").withDestination(destination).withMessage(message);
+//        SendEmailRequest request = new SendEmailRequest().withSource("admin@joyofage.org").withDestination(destination).withMessage(message);
 //        
 //        try
 //        {        

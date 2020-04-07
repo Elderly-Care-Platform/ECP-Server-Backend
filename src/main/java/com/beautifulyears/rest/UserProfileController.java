@@ -81,7 +81,8 @@ public class UserProfileController {
 
 	@Autowired
 	public UserProfileController(UserProfileRepository userProfileRepository,
-			ReportServiceRepository reportServiceRepository,UserRepository userRepository ,MongoTemplate mongoTemplate) {
+			ReportServiceRepository reportServiceRepository, UserRepository userRepository,
+			MongoTemplate mongoTemplate) {
 		this.userProfileRepository = userProfileRepository;
 		this.reportServiceRepository = reportServiceRepository;
 		this.userRepository = userRepository;
@@ -286,8 +287,8 @@ public class UserProfileController {
 			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
-			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(
-					null, userTypes, city, tagIds, isFeatured, null, pageable, fields), user);
+			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(null,
+					userTypes, city, tagIds, isFeatured, null, pageable, fields), user);
 			if (profilePage.getContent().size() > 0) {
 				logger.debug("found something");
 			} else {
@@ -337,8 +338,8 @@ public class UserProfileController {
 			fields.add("userId");
 
 			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
-			userProfilePage = UserProfileResponse.getPage(userProfileRepository
-					.getServiceProvidersByFilterCriteria(null, userTypes, null, null, null, null, pageable, fields), null);
+			userProfilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(
+					null, userTypes, null, null, null, null, pageable, fields), null);
 			if (userProfilePage.getContent().size() > 0) {
 				logger.debug("did not find any service providers");
 			}
@@ -352,9 +353,8 @@ public class UserProfileController {
 	}
 
 	/**
-	 * User profile creation
-	 * This method allows the creation of a user profile 
-	 * */
+	 * User profile creation This method allows the creation of a user profile
+	 */
 	@RequestMapping(method = { RequestMethod.POST }, value = { "" }, consumes = { "application/json" })
 	@ResponseBody
 	public Object submitUserProfile(@RequestBody UserProfile userProfile, HttpServletRequest req,
@@ -387,7 +387,8 @@ public class UserProfileController {
 								if (null != existinprofile) {
 									existinprofile.getBasicProfileInfo()
 											.setPrimaryPhoneNo(currentUser.getPhoneNumber());
-									existinprofile.getBasicProfileInfo().setDescription(existinprofile.getBasicProfileInfo().getShortDescription());
+									existinprofile.getBasicProfileInfo()
+											.setDescription(existinprofile.getBasicProfileInfo().getShortDescription());
 									existinprofile = userProfileRepository.save(existinprofile);
 								}
 								UserController.deleteUser(currentUser);
@@ -412,7 +413,8 @@ public class UserProfileController {
 								existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
 								if (null != existinprofile) {
 									existinprofile.getBasicProfileInfo().setPrimaryEmail(currentUser.getEmail());
-									existinprofile.getBasicProfileInfo().setDescription(existinprofile.getBasicProfileInfo().getShortDescription());
+									existinprofile.getBasicProfileInfo()
+											.setDescription(existinprofile.getBasicProfileInfo().getShortDescription());
 									existinprofile = userProfileRepository.save(existinprofile);
 								}
 								UserController.deleteUser(currentUser);
@@ -469,10 +471,11 @@ public class UserProfileController {
 		return BYGenericResponseHandler.getResponse(UserProfileResponse.getUserProfileEntity(profile, currentUser));
 	}
 
-	/* 
+	/*
 	 * Update user profile
-	 * @PathVariable(value = "userId") String userId 
-	 * */
+	 * 
+	 * @PathVariable(value = "userId") String userId
+	 */
 	@RequestMapping(method = { RequestMethod.PUT }, value = { "/{userId}" }, consumes = { "application/json" })
 	@ResponseBody
 	public Object updateUserProfile(@RequestBody UserProfile userProfile, @PathVariable(value = "userId") String userId,
@@ -488,7 +491,8 @@ public class UserProfileController {
 						// profile = userProfileRepository.findByUserId(userId);
 
 						// profile = mergeProfile(profile, userProfile, currentUser, req);
-						userProfile.getBasicProfileInfo().setDescription(userProfile.getBasicProfileInfo().getShortDescription());
+						userProfile.getBasicProfileInfo()
+								.setDescription(userProfile.getBasicProfileInfo().getShortDescription());
 						profile = userProfileRepository.save(userProfile);
 
 					} else {
@@ -717,21 +721,20 @@ public class UserProfileController {
 		filterCriteria.add("isFeatured = " + isFeatured);
 		filterCriteria.add("city = " + city);
 
-		Integer[] userTypes = { UserTypes.INSTITUTION_HOUSING, UserTypes.INSTITUTION_BRANCH,
-				UserTypes.INSTITUTION_PRODUCTS, UserTypes.INSTITUTION_NGO, UserTypes.INDIVIDUAL_PROFESSIONAL };
+		Integer[] userTypes = { UserTypes.INSTITUTION_SERVICES };
 
 		// String[] JdsearchTerms = { "care hospital clinics nursing home" };
 
-		ArrayList<String>  JdsearchTerms = new ArrayList<String>(); 
-        JdsearchTerms.add("Institutions For Aged"); 
-        JdsearchTerms.add("hospital"); 
-        JdsearchTerms.add("clinics"); 
-        JdsearchTerms.add("nursing"); 
-        JdsearchTerms.add("medical"); 
+		ArrayList<String> JdsearchTerms = new ArrayList<String>();
+		JdsearchTerms.add("Institutions For Aged");
+		JdsearchTerms.add("hospital");
+		JdsearchTerms.add("clinics");
+		JdsearchTerms.add("nursing");
+		JdsearchTerms.add("medical");
 		// JdsearchTerms.add("service");
 
-		Collections.shuffle(JdsearchTerms); 
-		
+		Collections.shuffle(JdsearchTerms);
+
 		LoggerUtil.logEntry();
 		List<ObjectId> tagIds = new ArrayList<ObjectId>();
 		User user = Util.getSessionUser(req);
@@ -759,24 +762,25 @@ public class UserProfileController {
 			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
-			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(
-				null, userTypes, city, tagIds, isFeatured, null, pageable, fields), user);
+			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(null,
+					userTypes, city, tagIds, isFeatured, null, pageable, fields), user);
 
-			JSONObject justDailSearchResponse = SearchController.getJustDialSearchServicePage(page, size, JdsearchTerms.get(0),
-					req);
+			JSONObject justDailSearchResponse = SearchController.getJustDialSearchServicePage(page, size,
+					JdsearchTerms.get(0), req);
 			JSONArray JDresult = justDailSearchResponse.getJSONArray("services");
 			JSONArray DbserviceList = new JSONArray(profilePage.getContent());
 			for (int i = 0; i < JDresult.length(); i++) {
 				JSONObject jsonObject = JDresult.getJSONObject(i);
-				String totReviews = jsonObject.getString("totalReviews");
-				if (totReviews.equals("")) {
-					totReviews = "0";
+				String jdRating = jsonObject.getString("compRating");
+				if (jdRating.equals("")) {
+					jdRating = "0";
 				}
-				jsonObject.put("reviewCount", Integer.parseInt(totReviews));
+
+				jsonObject.put("ratingPercentage", getDbServiceRating(Math.round(Float.parseFloat(jdRating))));
 				DbserviceList.put(jsonObject);
 			}
 
-			JSONArray sortedArray = sortJsonArray("reviewCount", DbserviceList);
+			JSONArray sortedArray = sortJsonArray("ratingPercentage", DbserviceList);
 
 			long total = profilePage.getTotal() + 50;
 			response.put("total", total);
@@ -854,7 +858,7 @@ public class UserProfileController {
 	private UserProfile mergeProfile(UserProfile oldProfile, UserProfile newProfile, User currentUser,
 			HttpServletRequest req) {
 		if (oldProfile != null) {
-			//newProfile.getBasicProfileInfo().setShortDescription(getShortDescription(newProfile));
+			// newProfile.getBasicProfileInfo().setShortDescription(getShortDescription(newProfile));
 			oldProfile.setLastModifiedAt(new Date());
 			oldProfile.setSystemTags(newProfile.getSystemTags());
 
@@ -901,12 +905,11 @@ public class UserProfileController {
 
 			@Override
 			public int compare(JSONObject a, JSONObject b) {
-				String valA = new String();
-				String valB = new String();
-
+				Integer valA = 0;
+				Integer valB = 0;
 				try {
-					valA = String.valueOf(a.get(KEY_NAME));
-					valB = String.valueOf(b.get(KEY_NAME));
+					valA = a.getInt(KEY_NAME);
+					valB = b.getInt(KEY_NAME);
 				} catch (JSONException e) {
 					// do something
 					throw new RuntimeException("ERROR in sorting data. " + e);
@@ -922,6 +925,24 @@ public class UserProfileController {
 			sortedJsonArray.put(jsonValues.get(i));
 		}
 		return sortedJsonArray;
+	}
+
+	public static Integer getDbServiceRating(Integer rate) {
+		Integer rating = 0;
+		if (rate == 0) {
+			rating = 0;
+		} else if (rate <= 1) {
+			rating = 20;
+		} else if (rate <= 2) {
+			rating = 40;
+		} else if (rate <= 3) {
+			rating = 60;
+		} else if (rate <= 4) {
+			rating = 80;
+		} else if (rate <= 5) {
+			rating = 90;
+		}
+		return rating;
 	}
 
 	class ProfileCount {

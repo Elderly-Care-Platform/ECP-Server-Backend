@@ -1,5 +1,7 @@
 package com.beautifulyears.repository.custom;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.bson.types.ObjectId;
@@ -14,6 +16,7 @@ import org.springframework.data.mongodb.core.query.Query;
 
 import com.beautifulyears.constants.DiscussConstants;
 import com.beautifulyears.domain.Discuss;
+import com.beautifulyears.domain.menu.Menu;
 import com.beautifulyears.rest.response.PageImpl;
 
 public class DiscussRepositoryImpl implements DiscussRepositoryCustom {
@@ -47,7 +50,34 @@ public class DiscussRepositoryImpl implements DiscussRepositoryCustom {
 			Boolean isPromotion) {
 
 		if(searchTxt != null && !searchTxt.isEmpty()){
-			q.addCriteria(Criteria.where("title").regex(searchTxt,"i"));
+
+			// get category list
+			List<Menu> catList = null;
+			Query query = new Query();
+			query.addCriteria(Criteria.where("parentMenuId").is("564071623e60f5b66f62df27"));
+			if(searchTxt != null && !searchTxt.isEmpty()){
+				query.addCriteria(Criteria.where("displayMenuName").regex(searchTxt,"i"));
+			}
+			catList = this.mongoTemplate.find(query, Menu.class);
+			List<ObjectId> catObjList = new ArrayList<ObjectId>();
+			if(catList != null){
+				Iterator<Menu> catListIterator = catList.iterator();
+				while (catListIterator.hasNext()) {
+					Menu m = catListIterator.next();
+					if(m.getTags() != null){
+						catObjList.add(new ObjectId( m.getTags().get(0).getId() ) );	
+					}
+				}
+				q.addCriteria(
+					new Criteria().orOperator(
+						Criteria.where("systemTags.$id").in(catObjList),
+						Criteria.where("title").regex(searchTxt,"i")
+					)
+				);	
+			}
+			else{
+				q.addCriteria(Criteria.where("title").regex(searchTxt,"i"));
+			}
 		}
 		if (discussTypeArray != null && discussTypeArray.size() > 0) {
 			q.addCriteria(Criteria.where((String) "discussType").in(

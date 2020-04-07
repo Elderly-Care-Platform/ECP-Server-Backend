@@ -326,6 +326,7 @@ public class DiscussController {
 	@ResponseBody 
 	public Object getTopicsSummary(
 		@RequestParam(value = "tagsData") List<String> tagsData,
+		@RequestParam(value = "searchTxt", required = false) String searchTxt,
 		HttpServletRequest request
 	){
 		User currentUser = Util.getSessionUser(request);
@@ -347,9 +348,9 @@ public class DiscussController {
 				tagIds.add(new ObjectId(tagIdsArr[i]));
 			}
 
-			count = discussRepository.getCount(null, null, tagIds, null, null, null);
-			page = discussRepository.getPage(null, null, tagIds, null, null, null, pageable);
-			discussPage = DiscussResponse.getPage(page, currentUser);
+			count = discussRepository.getCount(searchTxt, null, tagIds, null, null, null);
+			page = discussRepository.getPage(searchTxt, null, tagIds, null, null, null, pageable);
+			//discussPage = DiscussResponse.getPage(page, currentUser);
 			obj.put(itemId, new TopicSummary(new Long(count),discussPage));
 			tagIds.clear();
 		}

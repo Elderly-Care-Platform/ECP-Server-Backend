@@ -287,7 +287,7 @@ public class AskController {
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
 			page = askCatRepo.getPage(searchTxt, pageable);
-			askCatPage = AskCategoryResponse.getPage(page, currentUser,userProfileRepo);
+			askCatPage = AskCategoryResponse.getPage(page, currentUser,userProfileRepo, searchTxt);
 		} catch (Exception e) {
 			Util.handleException(e);
 		}

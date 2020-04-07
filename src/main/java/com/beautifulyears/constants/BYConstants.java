@@ -32,5 +32,6 @@ public final class BYConstants {
 	public static final int SESSION_TYPE_GUEST = 1;
 	public static final int SESSION_TYPE_PARTIAL = 2;
 	
-	
+	public static final String SERVICE_SOURCE_JD = "JD"; 
+	public static final String SERVICE_SOURCE_ELDERSPRING = "Elder Spring";
 }

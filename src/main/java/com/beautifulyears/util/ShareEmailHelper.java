@@ -90,8 +90,8 @@ public class ShareEmailHelper {
 		email.append("<table class='centered' style='text-align: center;border-collapse: collapse;border-spacing: 0;Margin-left: auto;Margin-right: auto;background-color: #ffffff;'>");
 		email.append("<tbody>");
 		email.append("<tr><td class='column first' style='text-align: center;padding: 0;vertical-align: top;line-height: 17px;font-weight: 400;font-size: 11px;Margin-right: auto;Margin-left: auto;padding-top: 50px;width: 480px;color: #fff;font-family: helvetica'>");
-		email.append("<a style='color: #222; text-decoration:none; outline:none;' href='http://beautifulyears.com' target='_blank' >");
-		email.append("<img style='width:180px;Margin-top:-20px;'src='http://beautifulyears.com/uploaded_files/c5a6c771-a28e-417e-91ae-557112aaa36a.png' />");
+		email.append("<a style='color: #222; text-decoration:none; outline:none;' href='http://joyofage.org' target='_blank' >");
+		email.append("<img style='width:180px;Margin-top:-20px;'src='http://joyofage.org/uploaded_files/c5a6c771-a28e-417e-91ae-557112aaa36a.png' />");
 		email.append("</a>");
 		email.append("</td>");
 		email.append("</tr>");
@@ -117,7 +117,7 @@ public class ShareEmailHelper {
 		email.append("'>");
 		email.append(userName);
 		email.append("</a></u>");
-		email.append("</b> shared a BeautifulYears post with you.");
+		email.append("</b> shared a JoyOfAge post with you.");
 		email.append("</h3>");
 		email.append("</td>");
 		email.append("</tr>");

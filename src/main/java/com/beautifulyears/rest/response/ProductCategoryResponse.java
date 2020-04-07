@@ -13,6 +13,7 @@ public class ProductCategoryResponse implements IResponse {
 	private List<ProductCategoryEntity> productCategoryArray = new ArrayList<ProductCategoryEntity>();
 
 	private static ProductRepository prodRepo;
+	private static String searchTxt;
 
 	@Override
 	public List<ProductCategoryEntity> getResponse() {
@@ -91,7 +92,7 @@ public class ProductCategoryResponse implements IResponse {
 		public ProductCategoryEntity(ProductCategory productCategory, User user) {
 			this.setId(productCategory.getId());
 			this.setName(productCategory.getName());
-			this.setProductCount(ProductCategoryResponse.prodRepo.getCount(null, productCategory.getId()));
+			this.setProductCount(ProductCategoryResponse.prodRepo.getCount(ProductCategoryResponse.searchTxt, productCategory.getId()));
 			if (null != user
 					&& (BYConstants.USER_ROLE_EDITOR.equals(user.getUserRoleId())
 						|| BYConstants.USER_ROLE_SUPER_USER.equals(user.getUserRoleId())
@@ -154,8 +155,9 @@ public class ProductCategoryResponse implements IResponse {
 		this.productCategoryArray.add(new ProductCategoryEntity(productCategory, user));
 	}
 
-	public static ProductCategoryPage getPage(PageImpl<ProductCategory> page, User user, ProductRepository prodRepo ) {
+	public static ProductCategoryPage getPage(PageImpl<ProductCategory> page, User user, ProductRepository prodRepo, String searchTxt ) {
 		ProductCategoryResponse.prodRepo = prodRepo;
+		ProductCategoryResponse.searchTxt = searchTxt;
 		ProductCategoryPage res = new ProductCategoryPage(page, user);
 		return res;
 	}

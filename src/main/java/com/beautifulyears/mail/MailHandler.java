@@ -44,12 +44,12 @@ import com.beautifulyears.util.Util;
  */
 public class MailHandler {
 	private final static Logger logger = Logger.getLogger(MailHandler.class);
-	// private static final String user = "support@beautifulyears.com";
+	// private static final String user = "admin@joyofage.org";
 	// private static final String pass = "BY2015@)!%";
 	// private static final String SMTP = "smtp.gmail.com";
 	// private static final String SMTP_PORT = "587";
-	// private static final String FROM = "support@beautifulyears.com";
-	private static final String FROM = "test@ritzyware.com";
+	// private static final String FROM = "admin@joyofage.org";
+	private static final String FROM = "admin@joyofage.org";
 	// private static final AmazonSimpleEmailServiceClient client = new AmazonSimpleEmailServiceClient(
 	// 		new BasicAWSCredentials("AKIAJGOEKIENWMH5NXBQ",
 	// 				"LcHQh962s+0jyfv/agtrc0yZo0pX2lIINJ5Vgg4y"));

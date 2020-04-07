@@ -47,7 +47,7 @@ public class SiteMapGenerator {
 	private static boolean isInitialized = false;
 
 	private String sitemapPath = "c:/sitemap";
-	private String selfUrl = "https://www.beautifulyears.com";
+	private String selfUrl = "https://www.joyofage.org";
 
 	private final String communityMenuId = "564071623e60f5b66f62df27";
 	private String communityMenuUrl = "/elder-care-forums/564071623e60f5b66f62df27/all";
@@ -68,7 +68,7 @@ public class SiteMapGenerator {
 			"55f06f93e4b04c28cae29280", "55f06fa1e4b04c28cae29281");
 
 	private String shopMenuUrl = "/elder-care-products/55bcad7be4b08970a736784b";
-	private String productServerHost = "qa.beautifulyears.com";
+	private String productServerHost = "qa.joyofage.org";
 	private String productServerPort = "8083";
 
 	private ProductsSiteMapGenerator productsSMG;
