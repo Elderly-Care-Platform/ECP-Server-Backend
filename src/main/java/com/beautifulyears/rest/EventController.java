@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.log4j.Logger;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,11 +28,15 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.beautifulyears.constants.ActivityLogConstants;
 import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.domain.Event;
+import com.beautifulyears.domain.ReportEvent;
 import com.beautifulyears.domain.User;
+import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
+import com.beautifulyears.mail.MailHandler;
 import com.beautifulyears.repository.UserRepository;
 import com.beautifulyears.repository.EventRepository;
+import com.beautifulyears.repository.ReportEventRepository;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.rest.response.EventResponse;
 import com.beautifulyears.rest.response.EventResponse.EventPage;
@@ -51,6 +59,7 @@ public class EventController {
 	private static final Logger logger = Logger
 			.getLogger(EventController.class);
 	private EventRepository eventRepository;
+	private ReportEventRepository reportEventRepository;
 	private UserRepository userRepository;
 	private MongoTemplate mongoTemplate;
 	ActivityLogHandler<Event> logHandler;
@@ -58,10 +67,11 @@ public class EventController {
 
 	@Autowired
 	public EventController(EventRepository eventRepository, UserRepository userRepository,
-			MongoTemplate mongoTemplate) {
+			ReportEventRepository reportEventRepository, MongoTemplate mongoTemplate) {
 		this.eventRepository = eventRepository;
 		this.userRepository = userRepository;
 		this.mongoTemplate = mongoTemplate;
+		this.reportEventRepository = reportEventRepository;
 		logHandler = new EventActivityLogHandler(mongoTemplate);
 		shareLogHandler = new SharedActivityLogHandler(mongoTemplate);
 	}
@@ -282,5 +292,54 @@ public class EventController {
 			throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
 		}
 		return BYGenericResponseHandler.getResponse(currentUser.getFavEvents());
+	}
+
+	/**
+	 * Report service provider
+	 */
+	@RequestMapping(method = { RequestMethod.POST }, value = { "/reportEvent" }, consumes = { "application/json" })
+	@ResponseBody
+	public Object submitReportEvent(@RequestBody ReportEvent reportEvent, HttpServletRequest request,
+			HttpServletResponse res) throws Exception {
+		LoggerUtil.logEntry();
+		User currentUser = Util.getSessionUser(request);
+		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "POST")) {
+			if (reportEvent != null && (!Util.isEmpty(reportEvent.getEventId()))) {
+				try {
+					Query query = new Query();
+					query.addCriteria(Criteria.where("userId").is(reportEvent.getUserId()));
+					UserProfile userProfile = mongoTemplate.findOne(query, UserProfile.class);
+
+					if (userProfile != null) {
+						ReportEvent reportEventExtra = new ReportEvent(reportEvent.getEventId(),
+								currentUser.getId(), reportEvent.getComment());
+
+						reportEvent = reportEventRepository.save(reportEventExtra);
+
+						String body = reportEvent.getComment() + "\r\nEvent Reported By:\r\n"
+								+ userProfile.getBasicProfileInfo().getPrimaryEmail() + "\r\n"
+								+ userProfile.getBasicProfileInfo().getPrimaryPhoneNo();
+						MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
+								"Event Reported By: " + userProfile.getBasicProfileInfo().getFirstName(),
+								body);
+					}
+				} catch (Exception e) {
+					Util.handleException(e);
+				}
+
+				logger.info("new service report entity created with ID: " + reportEvent.getId() + " by User "
+						+ reportEvent.getUserId());
+
+			} else {
+				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
+			}
+		} else {
+			throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
+		}
+		Util.logStats(mongoTemplate, request, "NEW " + reportEvent.getEventId() + " added.",
+		reportEvent.getUserId(), currentUser.getEmail(), reportEvent.getId(), null, null, null,
+				"new  service report entity is added", "SERVICE");
+		return BYGenericResponseHandler.getResponse(reportEvent);
+
 	}
 }
