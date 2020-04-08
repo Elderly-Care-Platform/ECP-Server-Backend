@@ -339,7 +339,6 @@ public class SearchController {
 					jdCategoryService = futureResult.get();
 					for (int i = 0; i < jdCategoryService.getJSONArray("services").length(); i++) {
 						JSONObject jsonObject = jdCategoryService.getJSONArray("services").getJSONObject(i);
-						jsonObject.put("catId", category.getId());
 						// Convert jsonObject to java Hashmap
 						HashMap<String, Object> result = new ObjectMapper().readValue(jsonObject.toString(),
 								HashMap.class);
@@ -761,27 +760,7 @@ public class SearchController {
 		List<ServiceCategories> categories = null;
 		try {
 
-			// JustdialToken JDtoken = null;
-			// List<JustdialToken> JDtokenList = null;
-			// JDtokenList = justDialTokenRepository.findAll();
-			// if (JDtokenList.size() > 0) {
-			// JDtoken = JDtokenList.get(0);
-			// }
-			// // TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-			// Date cuurentdate = new Date();
-			// // Date expireDate = new Date(JDtoken.getExpires()*1000);
-			// // int comp = cuurentdate.compareTo(expireDate);
-			// JustDialHandler JDHandler = new JustDialHandler();
-			// Long currentTime = cuurentdate.getTime() / 1000;
 
-			// if (null == JDtoken || currentTime >= JDtoken.getExpires()) {
-			// JustdialToken JDNewtoken = JDHandler.getNewToken();
-			// JDtoken.setToken(JDNewtoken.getToken());
-			// JDtoken.setExpires(JDNewtoken.getExpires());
-			// justDialTokenRepository.save(JDtoken);
-			// }
-
-			// response = JDHandler.getServiceCategories(JDtoken.getToken());
 			categories = this.serviceCategoriesRepository.findAll();
 
 		} catch (Exception e) {
@@ -789,11 +768,6 @@ public class SearchController {
 			Util.handleException(e);
 			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
 		}
-		// Util.logStats(mongoTemplate, request, "search services", null, null, null,
-		// null, term, filterCriteria,
-		// "search services for term = " + term, "SEARCH");
-		// String newResponse = response.toString();
-		// return response.toString();
 		return BYGenericResponseHandler.getResponse(categories);
 	}
 

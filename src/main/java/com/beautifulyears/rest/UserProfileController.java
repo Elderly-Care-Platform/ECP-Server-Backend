@@ -43,19 +43,23 @@ import com.beautifulyears.constants.ActivityLogConstants;
 import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.constants.DiscussConstants;
 import com.beautifulyears.constants.UserTypes;
+import com.beautifulyears.domain.JustDailServices;
 import com.beautifulyears.domain.ReportService;
+import com.beautifulyears.domain.ServiceCategoriesMapping;
+import com.beautifulyears.domain.ServiceSubCategoryMapping;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserAddress;
 import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
 import com.beautifulyears.mail.MailHandler;
-import com.beautifulyears.repository.JustDialSerivcesRepository;
 import com.beautifulyears.repository.ReportServiceRepository;
+import com.beautifulyears.repository.ServiceCategoriesMappingRepository;
 import com.beautifulyears.repository.UserProfileRepository;
 import com.beautifulyears.repository.UserRepository;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.rest.response.JustDailServiceResponse;
+import com.beautifulyears.rest.response.PageImpl;
 import com.beautifulyears.rest.response.UserProfileResponse;
 import com.beautifulyears.rest.response.UserProfileResponse.UserProfilePage;
 import com.beautifulyears.util.LoggerUtil;
@@ -79,18 +83,18 @@ public class UserProfileController {
 	private ReportServiceRepository reportServiceRepository;
 	private UserProfileRepository userProfileRepository;
 	private ActivityLogHandler<UserProfile> logHandler;
-	private JustDialSerivcesRepository justDialSerivcesRepository;
+	private ServiceCategoriesMappingRepository serviceCategoriesMappingRepository;
 	private MongoTemplate mongoTemplate;
 
 	@Autowired
 	public UserProfileController(UserProfileRepository userProfileRepository,
 			ReportServiceRepository reportServiceRepository, UserRepository userRepository,
-			JustDialSerivcesRepository justDialSerivcesRepository, MongoTemplate mongoTemplate) {
+			ServiceCategoriesMappingRepository serviceCategoriesMappingRepository, MongoTemplate mongoTemplate) {
 		this.userProfileRepository = userProfileRepository;
 		this.reportServiceRepository = reportServiceRepository;
 		this.userRepository = userRepository;
 		this.mongoTemplate = mongoTemplate;
-		this.justDialSerivcesRepository = justDialSerivcesRepository;
+		this.serviceCategoriesMappingRepository = serviceCategoriesMappingRepository;
 		logHandler = new UserProfileLogHandler(mongoTemplate);
 	}
 
@@ -292,7 +296,7 @@ public class UserProfileController {
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
 			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(null,
-					userTypes, city, tagIds, isFeatured, null, pageable, fields), user);
+					userTypes, city, tagIds, isFeatured, null, pageable, fields, null), user);
 			if (profilePage.getContent().size() > 0) {
 				logger.debug("found something");
 			} else {
@@ -343,7 +347,7 @@ public class UserProfileController {
 
 			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
 			userProfilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(
-					null, userTypes, null, null, null, null, pageable, fields), null);
+					null, userTypes, null, null, null, null, pageable, fields, null), null);
 			if (userProfilePage.getContent().size() > 0) {
 				logger.debug("did not find any service providers");
 			}
@@ -767,7 +771,7 @@ public class UserProfileController {
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
 			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(null,
-					userTypes, city, tagIds, isFeatured, null, pageable, fields), user);
+					userTypes, city, tagIds, isFeatured, null, pageable, fields, null), user);
 
 			JSONObject justDailSearchResponse = SearchController.getJustDialSearchServicePage(page, size,
 					JdsearchTerms.get(0), req);
@@ -810,9 +814,12 @@ public class UserProfileController {
 	 * this method allows to get a page of userProfiles based on page number and
 	 * size, also optional filter parameters like service types and city.
 	 */
-	@RequestMapping(method = { RequestMethod.GET }, value = { "/allServices" }, produces = { "application/json" })
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/Services" }, produces = { "application/json" })
 	@ResponseBody
-	public Object getAllServices(@RequestParam(value = "pageNo", required = false, defaultValue = "0") int page,
+	public Object getAllServices(@RequestParam(value = "term", required = false) String term,
+			@RequestParam(value = "parentCatid", required = false) String parentCatid,
+			@RequestParam(value = "catId", required = false) String catId,
+			@RequestParam(value = "pageNo", required = false, defaultValue = "0") int page,
 			@RequestParam(value = "max", required = false, defaultValue = "10") int size,
 			@RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir, HttpServletRequest req,
@@ -847,42 +854,84 @@ public class UserProfileController {
 			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
-			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(null,
-					userTypes, null, null, isFeatured, null, pageable, fields), user);
+
+			List<String> catIds = new ArrayList<String>();
+			// List<String> jdCatIds = new ArrayList<String>();
+
+			if (parentCatid != null && null == catId) {
+
+				ServiceCategoriesMapping serviceCategory = serviceCategoriesMappingRepository.findById(parentCatid);
+
+				for (ServiceSubCategoryMapping subCategory : serviceCategory.getSubCategories()) {
+					for (ServiceSubCategoryMapping.Source source : subCategory.getSource()) {
+						// if (source.getName().equals(BYConstants.SERVICE_SOURCE_JD)) {
+						// jdCatIds.add(source.getCatid());
+						// } else {
+						// catIds.add(source.getCatid());
+						// }
+						catIds.add(source.getCatid());
+					}
+				}
+
+			}
+
+			if (null != catId && "" != catId) {
+				if (catId.contains(",")) {
+					String[] allCatid = catId.split(",");
+					for (String id : allCatid) {
+						catIds.add(id);
+					}
+				} else {
+					catIds.add(catId);
+				}
+				// catIds.add(catId);
+				// Query q = new Query();
+				// q.addCriteria(Criteria.where("subCategories.source.catid").in(catId));
+				// ServiceCategoriesMapping serviceCategory = mongoTemplate.findOne(q,
+				// ServiceCategoriesMapping.class);
+
+				// for (ServiceSubCategoryMapping subCategory :
+				// serviceCategory.getSubCategories()) {
+				// for (ServiceSubCategoryMapping.Source source : subCategory.getSource()) {
+				// }
+				// }
+
+			}
+
+			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(term,
+					userTypes, null, null, isFeatured, null, pageable, fields, catIds), user);
 
 			// Get JD services
 			String sortJdservice = "serviceInfo.compRating";
 
 			Pageable Jdpageable = new PageRequest(page, size, sortDirection, sortJdservice);
-			justDailServicePage = JustDailServiceResponse.getPage(
-					justDialSerivcesRepository.getServiceProvidersByFilterCriteria(null, null, null, Jdpageable));
 
-			response.put("JdService", justDailServicePage);
-			response.put("Dbservice", profilePage);
+			justDailServicePage = JustDailServiceResponse.getPage(getJdServicesPage(term, catIds, Jdpageable));
 
-			// JSONObject justDailSearchResponse =
-			// SearchController.getJustDialSearchServicePage(page, size,
-			// JdsearchTerms.get(0), req);
-			// JSONArray JDresult = justDailSearchResponse.getJSONArray("services");
-			// JSONArray DbserviceList = new JSONArray(profilePage.getContent());
-			// for (int i = 0; i < JDresult.length(); i++) {
-			// JSONObject jsonObject = JDresult.getJSONObject(i);
-			// String jdRating = jsonObject.getString("compRating");
-			// if (jdRating.equals("")) {
-			// jdRating = "0";
-			// }
+			// response.put("JdService", justDailServicePage);
+			// response.put("Dbservice", profilePage);
 
-			// jsonObject.put("ratingPercentage",
-			// getDbServiceRating(Math.round(Float.parseFloat(jdRating))));
-			// DbserviceList.put(jsonObject);
-			// }
+			JSONArray DbserviceList = new JSONArray(profilePage.getContent());
+			JSONArray JDresult = new JSONArray(justDailServicePage.getContent());
 
-			// JSONArray sortedArray = sortJsonArray("ratingPercentage", DbserviceList);
+			for (int i = 0; i < JDresult.length(); i++) {
+				JSONObject service = JDresult.getJSONObject(i);
+				JSONObject jsonObject = service.getJSONObject("serviceInfo");
+				String jdRating = jsonObject.getString("compRating");
+				if (jdRating.equals("")) {
+					jdRating = "0";
+				}
 
-			// long total = profilePage.getTotal() + 50;
-			// response.put("total", total);
-			// response.put("pageIndex", profilePage.getNumber());
-			// response.put("data", sortedArray);
+				jsonObject.put("ratingPercentage", getDbServiceRating(Math.round(Float.parseFloat(jdRating))));
+				DbserviceList.put(jsonObject);
+			}
+
+			JSONArray sortedArray = sortJsonArray("ratingPercentage", DbserviceList);
+
+			long total = profilePage.getTotal() + justDailServicePage.getTotal();
+			response.put("total", total);
+			response.put("pageIndex", profilePage.getNumber());
+			response.put("data", sortedArray);
 
 			if (profilePage.getContent().size() > 0) {
 				logger.debug("found something");
@@ -896,6 +945,69 @@ public class UserProfileController {
 		Util.logStats(mongoTemplate, req, "get service providers", null, null, null, null, null, filterCriteria,
 				"get service providers", "SERVICE");
 		return response.toString();
+	}
+
+	/**
+	 * JD categories list
+	 */
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/serviceCategories" }, produces = { "application/json" })
+	@ResponseBody
+	public Object getServiceCategories(@RequestParam(value = "term", required = false) String term,
+			@RequestParam(value = "parentCatid", required = false) String parentCatid,
+			@RequestParam(value = "catId", required = false) String catId,
+			@RequestParam(value = "pageNo", required = false, defaultValue = "0") int page,
+			@RequestParam(value = "max", required = false, defaultValue = "10") int size,
+			@RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
+			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir, HttpServletRequest request)
+			throws Exception {
+		List<ServiceCategoriesMapping> categories = null;
+		try {
+
+			Integer[] userTypes = { UserTypes.INSTITUTION_SERVICES };
+			/* setting page and sort criteria */
+			Direction sortDirection = Direction.DESC;
+			if (dir != 0) {
+				sortDirection = Direction.ASC;
+			}
+
+			// Get DB services with pagination
+			String sort = "aggrRatingPercentage";
+			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
+
+			// Get JD services
+			String sortJdservice = "serviceInfo.compRating";
+			Pageable Jdpageable = new PageRequest(page, size, sortDirection, sortJdservice);
+
+			categories = this.serviceCategoriesMappingRepository.findAll();
+
+			for (ServiceCategoriesMapping serviceCategory : categories) {
+				List<String> catIds = new ArrayList<String>();
+				for (ServiceSubCategoryMapping subCategory : serviceCategory.getSubCategories()) {
+					List<String> sourceCatIds = new ArrayList<String>();
+
+					for (ServiceSubCategoryMapping.Source source : subCategory.getSource()) {
+						catIds.add(source.getCatid());
+						sourceCatIds.add(source.getCatid());
+					}
+					// Get Sub Categories total services count
+					long subCatTot = userProfileRepository.getServiceProvidersByFilterCriteriaCount(term, userTypes,
+							null, null, isFeatured, null, sourceCatIds, pageable)
+							+ getJdServicesCount(term, sourceCatIds, Jdpageable);
+
+					subCategory.setTotalServices(subCatTot);
+				}
+				// Get Parent Categories total services count
+				long catTot = userProfileRepository.getServiceProvidersByFilterCriteriaCount(term, userTypes, null,
+						null, isFeatured, null, catIds, pageable) + getJdServicesCount(term, catIds, Jdpageable);
+				serviceCategory.setTotalServices(catTot);
+			}
+
+		} catch (Exception e) {
+			// throw e;
+			Util.handleException(e);
+			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
+		}
+		return BYGenericResponseHandler.getResponse(categories);
 	}
 
 	/**
@@ -1022,6 +1134,60 @@ public class UserProfileController {
 			sortedJsonArray.put(jsonValues.get(i));
 		}
 		return sortedJsonArray;
+	}
+
+	public PageImpl<JustDailServices> getJdServicesPage(String name, List<String> catIds, Pageable page) {
+		List<JustDailServices> justDailServiceList = null;
+		Query q = new Query();
+
+		if (null != catIds && catIds.size() > 0) {
+			// for (String id : catIds) {
+			// Criteria criteria = new Criteria();
+			// criteria.orOperator(Criteria.where("serviceInfo.categoryId").is(id));
+			// }
+			q.addCriteria(Criteria.where("serviceInfo.categoryId").in(catIds));
+		}
+
+		if (null != name && "" != name) {
+			// get service by name like %name%
+			q.addCriteria(Criteria.where("serviceInfo.name").regex(name, "i"));
+		} else {
+			q.addCriteria(Criteria.where("serviceInfo.name").exists(true));
+		}
+
+		q.with(page);
+		justDailServiceList = mongoTemplate.find(q, JustDailServices.class);
+
+		long total = this.mongoTemplate.count(q, JustDailServices.class);
+		PageImpl<JustDailServices> justDailServicePage = new PageImpl<JustDailServices>(justDailServiceList, page,
+				total);
+
+		return justDailServicePage;
+	}
+
+	public long getJdServicesCount(String name, List<String> catIds, Pageable page) {
+		long total = 0;
+		Query q = new Query();
+
+		if (null != catIds && catIds.size() > 0) {
+			// for (String id : catIds) {
+			// Criteria criteria = new Criteria();
+			// criteria.orOperator(Criteria.where("serviceInfo.categoryId").is(id));
+			// }
+			q.addCriteria(Criteria.where("serviceInfo.categoryId").in(catIds));
+		}
+
+		if (null != name && "" != name) {
+			// get service by name like %name%
+			q.addCriteria(Criteria.where("serviceInfo.name").regex(name, "i"));
+		} else {
+			q.addCriteria(Criteria.where("serviceInfo.name").exists(true));
+		}
+
+		q.with(page);
+		total = this.mongoTemplate.count(q, JustDailServices.class);
+
+		return total;
 	}
 
 	public static Integer getDbServiceRating(Integer rate) {

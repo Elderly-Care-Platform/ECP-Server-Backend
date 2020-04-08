@@ -24,11 +24,11 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 	@Override
 	public PageImpl<UserProfile> getServiceProvidersByFilterCriteria(String name, Object[] userTypes, String city,
 			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties,
-			Pageable page, List<String> fields) {
+			Pageable page, List<String> fields,List<String> catId) {
 		List<UserProfile> userProfileList = null;
 		Query q = new Query();
 		
-		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name);
+		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name,catId);
 
 		q.with(page);
 		userProfileList = mongoTemplate.find(q, UserProfile.class);
@@ -42,12 +42,14 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 
 	@Override
 	public long getServiceProvidersByFilterCriteriaCount(String name, Object[] userTypes, String city,
-			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties) {
-		List<UserProfile> userProfileList = null;
+			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties,List<String> catId,Pageable page) {
+		// List<UserProfile> userProfileList = null;
 		Query q = new Query();
-		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name);
-		
-		userProfileList = mongoTemplate.find(q, UserProfile.class);
+		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name,catId);
+		if(page != null){
+			q.with(page);
+		}
+		// userProfileList = mongoTemplate.find(q, UserProfile.class);
 
 		long total = this.mongoTemplate.count(q, UserProfile.class);
 		
@@ -55,7 +57,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 	}
 
 	private Query getQuery(Query q, Object[] userTypes, String city,
-			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties, String name) {
+			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties, String name,List<String> catId) {
 		
 		q.addCriteria(Criteria.where("status").in(
 				new Object[] { DiscussConstants.DISCUSS_STATUS_ACTIVE, null }));
@@ -113,6 +115,11 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 		}
 		else{
 			q.addCriteria(Criteria.where("basicProfileInfo.firstName").exists(true));
+		}
+
+
+		if (null != catId && catId.size() > 0) {
+			q.addCriteria(Criteria.where("serviceProviderInfo.catid").in(catId));
 		}
 		return q;
 	}

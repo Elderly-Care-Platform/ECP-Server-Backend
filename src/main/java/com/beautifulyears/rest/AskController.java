@@ -477,7 +477,7 @@ public class AskController {
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
 			userProfilePage = UserProfileResponse.getPage(
 					userProfileRepo.getServiceProvidersByFilterCriteria(
-						searchTxt, userTypes, null, null, null, experties, pageable, fields),
+						searchTxt, userTypes, null, null, null, experties, pageable, fields,null),
 					null,
 					this.askQuesRepo
 				);

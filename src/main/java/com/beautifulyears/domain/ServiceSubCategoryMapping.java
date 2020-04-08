@@ -6,7 +6,8 @@ public class ServiceSubCategoryMapping {
 
 	private List<Source> source;
 	private String category_name;
-
+	private long totalServices=0;
+	 
 	public String getName() {
 		return category_name;
 	}
@@ -51,6 +52,14 @@ public class ServiceSubCategoryMapping {
 			this.catid = catid;
 		}
 
+	}
+
+	public long getTotalServices() {
+		return totalServices;
+	}
+
+	public void setTotalServices(long totalServices) {
+		this.totalServices = totalServices;
 	}
 
 }
