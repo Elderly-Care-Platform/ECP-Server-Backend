@@ -50,10 +50,12 @@ import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
 import com.beautifulyears.mail.MailHandler;
+import com.beautifulyears.repository.JustDialSerivcesRepository;
 import com.beautifulyears.repository.ReportServiceRepository;
 import com.beautifulyears.repository.UserProfileRepository;
 import com.beautifulyears.repository.UserRepository;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
+import com.beautifulyears.rest.response.JustDailServiceResponse;
 import com.beautifulyears.rest.response.UserProfileResponse;
 import com.beautifulyears.rest.response.UserProfileResponse.UserProfilePage;
 import com.beautifulyears.util.LoggerUtil;
@@ -77,16 +79,18 @@ public class UserProfileController {
 	private ReportServiceRepository reportServiceRepository;
 	private UserProfileRepository userProfileRepository;
 	private ActivityLogHandler<UserProfile> logHandler;
+	private JustDialSerivcesRepository justDialSerivcesRepository;
 	private MongoTemplate mongoTemplate;
 
 	@Autowired
 	public UserProfileController(UserProfileRepository userProfileRepository,
 			ReportServiceRepository reportServiceRepository, UserRepository userRepository,
-			MongoTemplate mongoTemplate) {
+			JustDialSerivcesRepository justDialSerivcesRepository, MongoTemplate mongoTemplate) {
 		this.userProfileRepository = userProfileRepository;
 		this.reportServiceRepository = reportServiceRepository;
 		this.userRepository = userRepository;
 		this.mongoTemplate = mongoTemplate;
+		this.justDialSerivcesRepository = justDialSerivcesRepository;
 		logHandler = new UserProfileLogHandler(mongoTemplate);
 	}
 
@@ -786,6 +790,99 @@ public class UserProfileController {
 			response.put("total", total);
 			response.put("pageIndex", profilePage.getNumber());
 			response.put("data", sortedArray);
+
+			if (profilePage.getContent().size() > 0) {
+				logger.debug("found something");
+			} else {
+				logger.debug("did not find anything");
+			}
+		} catch (Exception e) {
+			// Util.handleException(e);
+			return e.toString();
+		}
+		Util.logStats(mongoTemplate, req, "get service providers", null, null, null, null, null, filterCriteria,
+				"get service providers", "SERVICE");
+		return response.toString();
+	}
+
+	/* this method is to get list of service Provider user Profiles. */
+	/*
+	 * this method allows to get a page of userProfiles based on page number and
+	 * size, also optional filter parameters like service types and city.
+	 */
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/allServices" }, produces = { "application/json" })
+	@ResponseBody
+	public Object getAllServices(@RequestParam(value = "pageNo", required = false, defaultValue = "0") int page,
+			@RequestParam(value = "max", required = false, defaultValue = "10") int size,
+			@RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
+			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
+		List<String> filterCriteria = new ArrayList<String>();
+		filterCriteria.add("page = " + page);
+		filterCriteria.add("size = " + size);
+		filterCriteria.add("dir = " + dir);
+		filterCriteria.add("isFeatured = " + isFeatured);
+
+		Integer[] userTypes = { UserTypes.INSTITUTION_SERVICES };
+
+		// String[] JdsearchTerms = { "care hospital clinics nursing home" };
+
+		LoggerUtil.logEntry();
+		User user = Util.getSessionUser(req);
+
+		UserProfileResponse.UserProfilePage profilePage = null;
+		JustDailServiceResponse.JustDailServicesPage justDailServicePage = null;
+		JSONObject response = new JSONObject();
+		try {
+
+			/* setting page and sort criteria */
+			Direction sortDirection = Direction.DESC;
+			if (dir != 0) {
+				sortDirection = Direction.ASC;
+			}
+
+			// Get DB services
+			String sort = "aggrRatingPercentage";
+
+			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
+			List<String> fields = new ArrayList<String>();
+			fields = UserProfilePrivacyHandler.getPublicFields(-1);
+			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(null,
+					userTypes, null, null, isFeatured, null, pageable, fields), user);
+
+			// Get JD services
+			String sortJdservice = "serviceInfo.compRating";
+
+			Pageable Jdpageable = new PageRequest(page, size, sortDirection, sortJdservice);
+			justDailServicePage = JustDailServiceResponse.getPage(
+					justDialSerivcesRepository.getServiceProvidersByFilterCriteria(null, null, null, Jdpageable));
+
+			response.put("JdService", justDailServicePage);
+			response.put("Dbservice", profilePage);
+
+			// JSONObject justDailSearchResponse =
+			// SearchController.getJustDialSearchServicePage(page, size,
+			// JdsearchTerms.get(0), req);
+			// JSONArray JDresult = justDailSearchResponse.getJSONArray("services");
+			// JSONArray DbserviceList = new JSONArray(profilePage.getContent());
+			// for (int i = 0; i < JDresult.length(); i++) {
+			// JSONObject jsonObject = JDresult.getJSONObject(i);
+			// String jdRating = jsonObject.getString("compRating");
+			// if (jdRating.equals("")) {
+			// jdRating = "0";
+			// }
+
+			// jsonObject.put("ratingPercentage",
+			// getDbServiceRating(Math.round(Float.parseFloat(jdRating))));
+			// DbserviceList.put(jsonObject);
+			// }
+
+			// JSONArray sortedArray = sortJsonArray("ratingPercentage", DbserviceList);
+
+			// long total = profilePage.getTotal() + 50;
+			// response.put("total", total);
+			// response.put("pageIndex", profilePage.getNumber());
+			// response.put("data", sortedArray);
 
 			if (profilePage.getContent().size() > 0) {
 				logger.debug("found something");
