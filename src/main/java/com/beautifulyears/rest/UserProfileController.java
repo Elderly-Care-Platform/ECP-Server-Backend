@@ -296,7 +296,7 @@ public class UserProfileController {
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
 			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(null,
-					userTypes, city, tagIds, isFeatured, null, pageable, fields, null), user);
+					userTypes, city, tagIds, isFeatured, null, pageable, fields, null, null), user);
 			if (profilePage.getContent().size() > 0) {
 				logger.debug("found something");
 			} else {
@@ -347,7 +347,7 @@ public class UserProfileController {
 
 			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
 			userProfilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(
-					null, userTypes, null, null, null, null, pageable, fields, null), null);
+					null, userTypes, null, null, null, null, pageable, fields, null, null), null);
 			if (userProfilePage.getContent().size() > 0) {
 				logger.debug("did not find any service providers");
 			}
@@ -771,7 +771,7 @@ public class UserProfileController {
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
 			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(null,
-					userTypes, city, tagIds, isFeatured, null, pageable, fields, null), user);
+					userTypes, city, tagIds, isFeatured, null, pageable, fields, null, null), user,mongoTemplate);
 
 			JSONObject justDailSearchResponse = SearchController.getJustDialSearchServicePage(page, size,
 					JdsearchTerms.get(0), req);
@@ -814,13 +814,13 @@ public class UserProfileController {
 	 * this method allows to get a page of userProfiles based on page number and
 	 * size, also optional filter parameters like service types and city.
 	 */
-	@RequestMapping(method = { RequestMethod.GET }, value = { "/Services" }, produces = { "application/json" })
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/services" }, produces = { "application/json" })
 	@ResponseBody
 	public Object getAllServices(@RequestParam(value = "term", required = false) String term,
 			@RequestParam(value = "parentCatid", required = false) String parentCatid,
 			@RequestParam(value = "catId", required = false) String catId,
 			@RequestParam(value = "pageNo", required = false, defaultValue = "0") int page,
-			@RequestParam(value = "max", required = false, defaultValue = "10") int size,
+			@RequestParam(value = "max", required = false, defaultValue = "0") int size,
 			@RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir, HttpServletRequest req,
 			HttpServletResponse res) throws Exception {
@@ -830,7 +830,13 @@ public class UserProfileController {
 		filterCriteria.add("dir = " + dir);
 		filterCriteria.add("isFeatured = " + isFeatured);
 
+		if (size == 0) {
+			size = 2147483647;
+		}
+
 		Integer[] userTypes = { UserTypes.INSTITUTION_SERVICES };
+		// Check Sources = Edler spring;
+		String ServiceSource = BYConstants.SERVICE_SOURCE_ELDERSPRING;
 
 		// String[] JdsearchTerms = { "care hospital clinics nursing home" };
 
@@ -899,7 +905,7 @@ public class UserProfileController {
 			}
 
 			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(term,
-					userTypes, null, null, isFeatured, null, pageable, fields, catIds), user);
+					userTypes, null, null, isFeatured, null, pageable, fields, catIds, ServiceSource), user,mongoTemplate);
 
 			// Get JD services
 			String sortJdservice = "serviceInfo.compRating";
@@ -956,7 +962,7 @@ public class UserProfileController {
 			@RequestParam(value = "parentCatid", required = false) String parentCatid,
 			@RequestParam(value = "catId", required = false) String catId,
 			@RequestParam(value = "pageNo", required = false, defaultValue = "0") int page,
-			@RequestParam(value = "max", required = false, defaultValue = "10") int size,
+			@RequestParam(value = "max", required = false, defaultValue = "0") int size,
 			@RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir, HttpServletRequest request)
 			throws Exception {
@@ -964,6 +970,12 @@ public class UserProfileController {
 		try {
 
 			Integer[] userTypes = { UserTypes.INSTITUTION_SERVICES };
+			// Check Sources = Edler spring;
+			String ServiceSource = BYConstants.SERVICE_SOURCE_ELDERSPRING;
+
+			if (size == 0) {
+				size = 2147483647;
+			}
 			/* setting page and sort criteria */
 			Direction sortDirection = Direction.DESC;
 			if (dir != 0) {
@@ -991,14 +1003,15 @@ public class UserProfileController {
 					}
 					// Get Sub Categories total services count
 					long subCatTot = userProfileRepository.getServiceProvidersByFilterCriteriaCount(term, userTypes,
-							null, null, isFeatured, null, sourceCatIds, pageable)
+							null, null, isFeatured, null, sourceCatIds, ServiceSource, pageable)
 							+ getJdServicesCount(term, sourceCatIds, Jdpageable);
 
 					subCategory.setTotalServices(subCatTot);
 				}
 				// Get Parent Categories total services count
 				long catTot = userProfileRepository.getServiceProvidersByFilterCriteriaCount(term, userTypes, null,
-						null, isFeatured, null, catIds, pageable) + getJdServicesCount(term, catIds, Jdpageable);
+						null, isFeatured, null, catIds, ServiceSource, pageable)
+						+ getJdServicesCount(term, catIds, Jdpageable);
 				serviceCategory.setTotalServices(catTot);
 			}
 

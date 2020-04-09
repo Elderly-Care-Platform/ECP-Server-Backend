@@ -581,8 +581,8 @@ public class SearchController {
 					for (int j = 0; j < dataInfoList.length(); j++) {
 						dataInfoMap.put(columns.getString(j), dataInfoList.get(j));
 					}
-					dataInfoMap.put("JdCategoryKey", categoryKey);
-					dataInfoMap.put("JdCatId", categoryId);
+					dataInfoMap.put("categoryKey", categoryKey);
+					dataInfoMap.put("categoryId", categoryId);
 					newDataList.put(dataInfoMap);
 				}
 				response.put("services", newDataList);
@@ -658,8 +658,8 @@ public class SearchController {
 				for (int j = 0; j < dataInfoList.length(); j++) {
 					dataInfoMap.put(columns.getString(j), dataInfoList.get(j));
 				}
-				dataInfoMap.put("JdCategoryKey", categoryKey);
-				dataInfoMap.put("JdCatId", categoryId);
+				dataInfoMap.put("categoryKey", categoryKey);
+				dataInfoMap.put("categoryId", categoryId);
 				newDataList.put(dataInfoMap);
 			}
 			response.put("services", newDataList);
@@ -732,8 +732,8 @@ public class SearchController {
 				for (int j = 0; j < dataInfoList.length(); j++) {
 					dataInfoMap.put(columns.getString(j), dataInfoList.get(j));
 				}
-				dataInfoMap.put("JdCategoryKey", categoryKey);
-				dataInfoMap.put("JdCatId", categoryId);
+				dataInfoMap.put("categoryKey", categoryKey);
+				dataInfoMap.put("categoryId", categoryId);
 				newDataList.put(dataInfoMap);
 			}
 			response.put("services", newDataList);
