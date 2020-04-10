@@ -25,7 +25,7 @@ import com.beautifulyears.rest.UserController;
  */
 public class MailHandler {
 	private static final String USER = "admin@joyofage.org";
-	private static final String PASS = "joyofage@123";
+	private static final String PASS = "JoyAge@123!";
 	private static final String SMTP = "smtp.gmail.com";
 	private static final String SMTP_PORT = "587";
 	private static final String FROM = "admin@joyofage.org";
