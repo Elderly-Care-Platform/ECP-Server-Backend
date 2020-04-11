@@ -23,6 +23,9 @@ public class ServiceProviderInfo {
 
 	private int yearsExperience;
 
+	private String source;
+	private List<String> catid;
+
 	private Date incorporationDate;
 
 	private Map<String, List<Menu>> specialities;
@@ -30,18 +33,6 @@ public class ServiceProviderInfo {
 	public ServiceProviderInfo() {
 		super();
 		// TODO Auto-generated constructor stub
-	}
-
-	public ServiceProviderInfo(List<String> services, boolean homeVisits,
-			String website, int yearsExperience, Date incorporationDate,
-			Map<String, List<Menu>> specialities) {
-		super();
-		this.services = services;
-		this.homeVisits = homeVisits;
-		this.website = website;
-		this.yearsExperience = yearsExperience;
-		this.incorporationDate = incorporationDate;
-		this.specialities = specialities;
 	}
 
 	public Map<String, List<Menu>> getSpecialities() {
@@ -94,10 +85,36 @@ public class ServiceProviderInfo {
 
 	@Override
 	public String toString() {
-		return "ServiceProviderInfo [services=" + services + ", homeVisits="
-				+ homeVisits + ", website=" + website + ", yearsExperience="
-				+ yearsExperience + ", incorporationDate=" + incorporationDate
-				+ "]";
+		return "ServiceProviderInfo [services=" + services + ", homeVisits=" + homeVisits + ", website=" + website
+				+ ", yearsExperience=" + yearsExperience + ", incorporationDate=" + incorporationDate + "]";
+	}
+
+	public String getSource() {
+		return source;
+	}
+
+	public void setSource(String source) {
+		this.source = source;
+	}
+
+	public List<String> getCatid() {
+		return catid;
+	}
+
+	public void setCatid(List<String> catid) {
+		this.catid = catid;
+	}
+
+	public ServiceProviderInfo(List<String> services, boolean homeVisits, String website, int yearsExperience,
+			String source, List<String> catid, Date incorporationDate, Map<String, List<Menu>> specialities) {
+		this.services = services;
+		this.homeVisits = homeVisits;
+		this.website = website;
+		this.yearsExperience = yearsExperience;
+		this.source = source;
+		this.catid = catid;
+		this.incorporationDate = incorporationDate;
+		this.specialities = specialities;
 	}
 
 }

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.TimeZone;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -52,7 +51,6 @@ import com.beautifulyears.rest.response.DiscussResponse.DiscussPage;
 import com.beautifulyears.rest.response.HousingResponse;
 import com.beautifulyears.rest.response.HousingResponse.HousingPage;
 import com.beautifulyears.rest.response.PageImpl;
-import com.beautifulyears.rest.response.UserProfileResponse;
 import com.beautifulyears.rest.response.UserProfileResponse.UserProfilePage;
 import com.beautifulyears.util.LoggerUtil;
 import com.beautifulyears.util.Util;
@@ -77,11 +75,11 @@ public class SearchController {
 	private ServiceCategoriesMappingRepository serviceCategoriesMappingRepository;
 
 	@Autowired
-	public SearchController(MongoTemplate mongoTemplate, JustDialTokenRepository justDialTokenRepository,
+	public SearchController(JustDialTokenRepository justDialTokenRepository,
 			ServiceCategoriesRepository serviceCategoriesRepository,
 			JustDialSettingsRepository justDialSettingsRepository,
 			JustDialSerivcesRepository justDialSerivcesRepository,
-			ServiceCategoriesMappingRepository serviceCategoriesMappingRepository) {
+			ServiceCategoriesMappingRepository serviceCategoriesMappingRepository, MongoTemplate mongoTemplate) {
 		SearchController.justDialTokenRepository = justDialTokenRepository;
 		this.mongoTemplate = mongoTemplate;
 		this.serviceCategoriesRepository = serviceCategoriesRepository;
@@ -341,7 +339,6 @@ public class SearchController {
 					jdCategoryService = futureResult.get();
 					for (int i = 0; i < jdCategoryService.getJSONArray("services").length(); i++) {
 						JSONObject jsonObject = jdCategoryService.getJSONArray("services").getJSONObject(i);
-						jsonObject.put("catId", category.getId());
 						// Convert jsonObject to java Hashmap
 						HashMap<String, Object> result = new ObjectMapper().readValue(jsonObject.toString(),
 								HashMap.class);
@@ -358,7 +355,7 @@ public class SearchController {
 							justdailServiceList.add(jdservice);
 						} else {
 							existingSerivceProfiles.setServiceInfo(result);
-							justDialSerivcesRepository.save(existingSerivceProfiles);
+							this.justDialSerivcesRepository.save(existingSerivceProfiles);
 						}
 
 					}

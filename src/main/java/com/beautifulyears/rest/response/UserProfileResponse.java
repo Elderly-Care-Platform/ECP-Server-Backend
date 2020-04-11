@@ -7,15 +7,23 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.domain.AskCategory;
 import com.beautifulyears.domain.BasicProfileInfo;
 import com.beautifulyears.domain.HousingFacility;
 import com.beautifulyears.domain.IndividualProfileInfo;
+import com.beautifulyears.domain.ServiceCategoriesMapping;
 import com.beautifulyears.domain.ServiceProviderInfo;
+import com.beautifulyears.domain.ServiceSubCategoryMapping;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.domain.menu.Tag;
-import com.beautifulyears.repository.AskQuestionRepository; 
+import com.beautifulyears.repository.AskQuestionRepository;
+
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+
 /**
  * @author Nitin
  *
@@ -25,6 +33,7 @@ public class UserProfileResponse implements IResponse {
 	private List<UserProfileEntity> userProfileArray = new ArrayList<UserProfileEntity>();
 
 	private static AskQuestionRepository askQuestionRepo;
+	private static MongoTemplate mongoTemplate;
 
 	@Override
 	public List<UserProfileEntity> getResponse() {
@@ -53,7 +62,7 @@ public class UserProfileResponse implements IResponse {
 		private String workTitle;
 		private List<AskCategory> experties;
 		private long answersCount;
-
+		private String catName;
 
 		private List<UserProfileResponse.UserProfileEntity> serviceBranches = new ArrayList<UserProfileResponse.UserProfileEntity>();
 		private List<HousingFacility> facilities = new ArrayList<HousingFacility>();
@@ -79,10 +88,10 @@ public class UserProfileResponse implements IResponse {
 				this.setReviewedByUser(true);
 			}
 
-			if(UserProfileResponse.askQuestionRepo != null){
-				this.setAnswersCount(UserProfileResponse.askQuestionRepo.getCount(null, null, null, profile.getId(), true));
-			}
-			else{
+			if (UserProfileResponse.askQuestionRepo != null) {
+				this.setAnswersCount(
+						UserProfileResponse.askQuestionRepo.getCount(null, null, null, profile.getId(), true));
+			} else {
 				this.setAnswersCount(0);
 			}
 
@@ -99,8 +108,29 @@ public class UserProfileResponse implements IResponse {
 			}
 
 			for (UserProfile profileBranches : profile.getServiceBranches()) {
-				this.serviceBranches.add(UserProfileResponse
-						.getUserProfileEntity(profileBranches, user));
+				this.serviceBranches.add(UserProfileResponse.getUserProfileEntity(profileBranches, user));
+			}
+
+			if (null != profile.getServiceProviderInfo().getSource()
+					&& profile.getServiceProviderInfo().getCatid().size() > 0) {
+
+				Query query = new Query();
+				query.addCriteria(
+						Criteria.where("subCategories.source.catid").in(profile.getServiceProviderInfo().getCatid()));
+
+				ServiceCategoriesMapping service = UserProfileResponse.mongoTemplate.findOne(query,
+						ServiceCategoriesMapping.class);
+
+				for (ServiceSubCategoryMapping subCategory : service.getSubCategories()) {
+
+					for (ServiceSubCategoryMapping.Source source : subCategory.getSource()) {
+						if (source.getName().equals(BYConstants.SERVICE_SOURCE_ELDERSPRING)
+								&& source.getCatid().equals(profile.getServiceProviderInfo().getCatid().get(0))) {
+							setCatName(subCategory.getName());
+						}
+					}
+				}
+
 			}
 
 		}
@@ -117,8 +147,7 @@ public class UserProfileResponse implements IResponse {
 			return serviceBranches;
 		}
 
-		public void setServiceBranches(
-				List<UserProfileResponse.UserProfileEntity> serviceBranches) {
+		public void setServiceBranches(List<UserProfileResponse.UserProfileEntity> serviceBranches) {
 			this.serviceBranches = serviceBranches;
 		}
 
@@ -214,8 +243,7 @@ public class UserProfileResponse implements IResponse {
 			return serviceProviderInfo;
 		}
 
-		public void setServiceProviderInfo(
-				ServiceProviderInfo serviceProviderInfo) {
+		public void setServiceProviderInfo(ServiceProviderInfo serviceProviderInfo) {
 			this.serviceProviderInfo = serviceProviderInfo;
 		}
 
@@ -290,6 +318,14 @@ public class UserProfileResponse implements IResponse {
 		public void setAnswersCount(long answersCount) {
 			this.answersCount = answersCount;
 		}
+
+		public String getCatName() {
+			return catName;
+		}
+
+		public void setCatName(String catName) {
+			this.catName = catName;
+		}
 	}
 
 	public static class UserProfilePage {
@@ -307,8 +343,7 @@ public class UserProfileResponse implements IResponse {
 			this.lastPage = page.isLastPage();
 			this.number = page.getNumber();
 			for (UserProfile profile : page.getContent()) {
-				this.content.add(new UserProfileResponse.UserProfileEntity(
-						profile, user));
+				this.content.add(new UserProfileResponse.UserProfileEntity(profile, user));
 			}
 			this.size = page.getSize();
 			this.total = page.getTotal();
@@ -366,7 +401,8 @@ public class UserProfileResponse implements IResponse {
 		}
 	}
 
-	public static UserProfilePage getPage(PageImpl<UserProfile> page, User user, AskQuestionRepository askQuestionRepo ) {
+	public static UserProfilePage getPage(PageImpl<UserProfile> page, User user,
+			AskQuestionRepository askQuestionRepo) {
 		UserProfileResponse.askQuestionRepo = askQuestionRepo;
 		UserProfilePage res = new UserProfilePage(page, user);
 		return res;
@@ -378,8 +414,14 @@ public class UserProfileResponse implements IResponse {
 		return res;
 	}
 
-	public static UserProfileEntity getUserProfileEntity(
-			UserProfile userProfile, User user) {
+	public static UserProfilePage getPage(PageImpl<UserProfile> page, User user, MongoTemplate mongoTemplate) {
+		UserProfileResponse.askQuestionRepo = null;
+		UserProfileResponse.mongoTemplate = mongoTemplate;
+		UserProfilePage res = new UserProfilePage(page, user);
+		return res;
+	}
+
+	public static UserProfileEntity getUserProfileEntity(UserProfile userProfile, User user) {
 		UserProfileEntity res = null;
 		if (null != userProfile) {
 			res = new UserProfileEntity(userProfile, user);
