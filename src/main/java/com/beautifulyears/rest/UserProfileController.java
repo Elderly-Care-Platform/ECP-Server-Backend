@@ -171,9 +171,7 @@ public class UserProfileController {
 	public Object getUserServiceProviderbyID(@PathVariable(value = "userId") String userId, HttpServletRequest req,
 			HttpServletResponse res) throws Exception {
 		List<Integer> serviceTypes = new ArrayList<Integer>();
-		serviceTypes.add(UserTypes.INDIVIDUAL_PROFESSIONAL);
-		serviceTypes.add(UserTypes.INSTITUTION_NGO);
-		serviceTypes.add(UserTypes.INSTITUTION_BRANCH);
+		serviceTypes.add(UserTypes.INSTITUTION_SERVICES);
 
 		LoggerUtil.logEntry();
 		UserProfile userProfile = null;
