@@ -79,7 +79,7 @@ public class SearchController {
 			ServiceCategoriesRepository serviceCategoriesRepository,
 			JustDialSettingsRepository justDialSettingsRepository,
 			JustDialSerivcesRepository justDialSerivcesRepository,
-			ServiceCategoriesMappingRepository serviceCategoriesMappingRepository,MongoTemplate mongoTemplate) {
+			ServiceCategoriesMappingRepository serviceCategoriesMappingRepository, MongoTemplate mongoTemplate) {
 		SearchController.justDialTokenRepository = justDialTokenRepository;
 		this.mongoTemplate = mongoTemplate;
 		this.serviceCategoriesRepository = serviceCategoriesRepository;
@@ -353,7 +353,7 @@ public class SearchController {
 							JustDailServices jdservice = new JustDailServices();
 							jdservice.setServiceInfo(result);
 							justdailServiceList.add(jdservice);
-						}else{
+						} else {
 							existingSerivceProfiles.setServiceInfo(result);
 							this.justDialSerivcesRepository.save(existingSerivceProfiles);
 						}
@@ -362,8 +362,8 @@ public class SearchController {
 				}
 
 			}
-			if(justdailServiceList.size() > 0){
-				this.justDialSerivcesRepository.save(justdailServiceList);
+			if (justdailServiceList.size() > 0) {
+				justDialSerivcesRepository.save(justdailServiceList);
 			}
 		} catch (Exception e) {
 			// throw e;
@@ -760,7 +760,6 @@ public class SearchController {
 		List<ServiceCategories> categories = null;
 		try {
 
-
 			categories = this.serviceCategoriesRepository.findAll();
 
 		} catch (Exception e) {
@@ -768,6 +767,7 @@ public class SearchController {
 			Util.handleException(e);
 			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
 		}
+
 		return BYGenericResponseHandler.getResponse(categories);
 	}
 
