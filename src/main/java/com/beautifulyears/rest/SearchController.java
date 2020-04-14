@@ -353,18 +353,20 @@ public class SearchController {
 							JustDailServices jdservice = new JustDailServices();
 							jdservice.setServiceInfo(result);
 							justdailServiceList.add(jdservice);
+							justDialSerivcesRepository.save(jdservice);
 						} else {
 							existingSerivceProfiles.setServiceInfo(result);
-							this.justDialSerivcesRepository.save(existingSerivceProfiles);
+							justDialSerivcesRepository.save(existingSerivceProfiles);
 						}
 
 					}
 				}
 
 			}
-			if (justdailServiceList.size() > 0) {
-				justDialSerivcesRepository.save(justdailServiceList);
-			}
+
+			// if (justdailServiceList.size() > 0) {
+			// 	justDialSerivcesRepository.save(justdailServiceList);
+			// }
 		} catch (Exception e) {
 			// throw e;
 			Util.handleException(e);
