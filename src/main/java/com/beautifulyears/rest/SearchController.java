@@ -319,7 +319,10 @@ public class SearchController {
 		Integer limit = Jdsettings.get(0).getLimit();
 		// Get all DB categories
 		List<ServiceCategoriesMapping> allCategories = this.serviceCategoriesMappingRepository.findAll();
-		List<JustDailServices> justdailServiceList = new ArrayList<>();
+		// List<JustDailServices> justdailServiceList = new ArrayList<>();
+		HashMap<String,Integer> jdResponse = new HashMap<>();
+		Integer newRec =0;
+		Integer updatedRec = 0;
 
 		try {
 			for (ServiceCategoriesMapping category : allCategories) {
@@ -352,18 +355,21 @@ public class SearchController {
 						if (existingSerivceProfiles == null) {
 							JustDailServices jdservice = new JustDailServices();
 							jdservice.setServiceInfo(result);
-							justdailServiceList.add(jdservice);
+							// justdailServiceList.add(jdservice);
 							justDialSerivcesRepository.save(jdservice);
+							newRec ++;
 						} else {
 							existingSerivceProfiles.setServiceInfo(result);
 							justDialSerivcesRepository.save(existingSerivceProfiles);
+							updatedRec++;
 						}
 
 					}
 				}
 
 			}
-
+			jdResponse.put("Total Records Added", newRec);
+			jdResponse.put("Total Records Updated", updatedRec);
 			// if (justdailServiceList.size() > 0) {
 			// 	justDialSerivcesRepository.save(justdailServiceList);
 			// }
@@ -373,7 +379,7 @@ public class SearchController {
 			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
 		}
 		// return jsonarray.toString();
-		return BYGenericResponseHandler.getResponse(justdailServiceList);
+		return BYGenericResponseHandler.getResponse(jdResponse);
 		// justDailSearchResponse.put("services", jsonarray);
 	}
 
