@@ -10,4 +10,6 @@ public interface AskQuestionReplyRepositoryCustom {
 	public PageImpl<AskQuestionReply> getPage(String searchTxt, String questionId, Pageable pageable);
 
 	public long getCount(String searchTxt, String questionId);
+	
+	public long getReplyCount(String questionId, String answeredById);
 }

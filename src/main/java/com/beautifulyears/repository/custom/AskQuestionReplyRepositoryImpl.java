@@ -6,7 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-
+import org.bson.types.ObjectId;
 import com.beautifulyears.domain.AskQuestionReply;
 import com.beautifulyears.rest.response.PageImpl;
 
@@ -44,6 +44,16 @@ public class AskQuestionReplyRepositoryImpl implements AskQuestionReplyRepositor
 		long count = 0;
 		Query query = new Query();
 		query = getQuery(query, searchTxt, questionId);
+		count = this.mongoTemplate.count(query, AskQuestionReply.class);
+		return count;
+	}
+
+	@Override
+	public long getReplyCount(String questionId, String answerById) {
+		long count = 0;
+		Query query = new Query();
+		query.addCriteria(Criteria.where("askQuestionId").is(questionId));
+		query.addCriteria(Criteria.where("user.$id").is(new ObjectId(answerById)));
 		count = this.mongoTemplate.count(query, AskQuestionReply.class);
 		return count;
 	}
