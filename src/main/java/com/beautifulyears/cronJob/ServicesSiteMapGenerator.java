@@ -57,7 +57,7 @@ public class ServicesSiteMapGenerator implements Runnable {
 			// ------------------------for all professional and institution
 			// profiles
 			UserProfileController profileCtrl = new UserProfileController(
-					userProfileRepository, null,userRepository,mongoTemplate);
+					userProfileRepository, null,userRepository,null,mongoTemplate);
 
 			@SuppressWarnings("unchecked")
 			ResponseEntity<BYGenericResponseHandler.ByGenericResponse> profileResponse = (ResponseEntity<BYGenericResponseHandler.ByGenericResponse>) profileCtrl

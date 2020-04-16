@@ -4,12 +4,14 @@ import java.util.HashMap;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "justdial_services")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JustDailServices {
 
+    @Id
     private String id;
     private HashMap<String, Object> serviceInfo;
 

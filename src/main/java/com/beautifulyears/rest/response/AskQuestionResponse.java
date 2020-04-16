@@ -212,7 +212,7 @@ public class AskQuestionResponse implements IResponse {
 				this.setAskedByProfile(AskQuestionResponse.userProfileRepo.findByUserId(askQues.getAskedBy().getId()));
 			}
 			
-			this.setReplyCount(AskQuestionResponse.askQuesReplyRepo.getCount(null,askQues.getId() ));
+			this.setReplyCount(AskQuestionResponse.askQuesReplyRepo.getReplyCount(askQues.getId(),askQues.getAnsweredBy().getUserId() ));
 			if (null != user
 					&& (BYConstants.USER_ROLE_EDITOR.equals(user.getUserRoleId())
 						|| BYConstants.USER_ROLE_SUPER_USER.equals(user.getUserRoleId())
