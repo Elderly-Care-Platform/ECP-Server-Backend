@@ -24,11 +24,11 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 	@Override
 	public PageImpl<UserProfile> getServiceProvidersByFilterCriteria(String name, Object[] userTypes, String city,
 			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties, Pageable page, List<String> fields,
-			List<String> catId, String source) {
+			List<String> catId, String source,Boolean verified) {
 		List<UserProfile> userProfileList = null;
 		Query q = new Query();
 
-		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name, catId, source);
+		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name, catId, source,verified);
 
 		q.with(page);
 
@@ -43,10 +43,10 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 	@Override
 	public long getServiceProvidersByFilterCriteriaCount(String name, Object[] userTypes, String city,
 			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties, List<String> catId, String source,
-			Pageable page) {
+			Pageable page,Boolean verified) {
 		// List<UserProfile> userProfileList = null;
 		Query q = new Query();
-		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name, catId, source);
+		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name, catId, source,verified);
 		if (page != null) {
 			q.with(page);
 		}
@@ -58,7 +58,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 	}
 
 	private Query getQuery(Query q, Object[] userTypes, String city, List<ObjectId> tagIds, Boolean isFeatured,
-			List<ObjectId> experties, String name, List<String> catId, String source) {
+			List<ObjectId> experties, String name, List<String> catId, String source,Boolean verified) {
 
 		q.addCriteria(Criteria.where("status").in(new Object[] { DiscussConstants.DISCUSS_STATUS_ACTIVE, null }));
 		if (null != userTypes && userTypes.length > 0) {
@@ -67,6 +67,10 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 
 		if (null != isFeatured) {
 			q.addCriteria(Criteria.where("isFeatured").is(isFeatured));
+		}
+
+		if (null != verified) {
+			q.addCriteria(Criteria.where("verified").is(verified));
 		}
 
 		if (null != tagIds && tagIds.size() > 0) {
