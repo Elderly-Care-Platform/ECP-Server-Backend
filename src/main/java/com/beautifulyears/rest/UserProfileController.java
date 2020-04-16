@@ -294,7 +294,7 @@ public class UserProfileController {
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
 			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(null,
-					userTypes, city, tagIds, isFeatured, null, pageable, fields, null, null), user);
+					userTypes, city, tagIds, isFeatured, null, pageable, fields, null, null,null), user);
 			if (profilePage.getContent().size() > 0) {
 				logger.debug("found something");
 			} else {
@@ -345,7 +345,7 @@ public class UserProfileController {
 
 			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
 			userProfilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(
-					null, userTypes, null, null, null, null, pageable, fields, null, null), null);
+					null, userTypes, null, null, null, null, pageable, fields, null, null,null), null);
 			if (userProfilePage.getContent().size() > 0) {
 				logger.debug("did not find any service providers");
 			}
@@ -769,7 +769,7 @@ public class UserProfileController {
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
 			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(null,
-					userTypes, city, tagIds, isFeatured, null, pageable, fields, null, null), user,mongoTemplate);
+					userTypes, city, tagIds, isFeatured, null, pageable, fields, null, null,null), user, mongoTemplate);
 
 			JSONObject justDailSearchResponse = SearchController.getJustDialSearchServicePage(page, size,
 					JdsearchTerms.get(0), req);
@@ -819,14 +819,15 @@ public class UserProfileController {
 			@RequestParam(value = "catId", required = false) String catId,
 			@RequestParam(value = "pageNo", required = false, defaultValue = "0") int page,
 			@RequestParam(value = "max", required = false, defaultValue = "0") int size,
-			@RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
+			@RequestParam(value = "isVerified", required = false) Boolean verified,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir, HttpServletRequest req,
 			HttpServletResponse res) throws Exception {
 		List<String> filterCriteria = new ArrayList<String>();
 		filterCriteria.add("page = " + page);
 		filterCriteria.add("size = " + size);
 		filterCriteria.add("dir = " + dir);
-		filterCriteria.add("isFeatured = " + isFeatured);
+
+
 
 		if (size == 0) {
 			size = 2147483647;
@@ -903,14 +904,15 @@ public class UserProfileController {
 			}
 
 			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(term,
-					userTypes, null, null, isFeatured, null, pageable, fields, catIds, ServiceSource), user,mongoTemplate);
+					userTypes, null, null, null, null, pageable, fields, catIds, ServiceSource,verified), user,
+					mongoTemplate);
 
 			// Get JD services
 			String sortJdservice = "serviceInfo.compRating";
 
 			Pageable Jdpageable = new PageRequest(page, size, sortDirection, sortJdservice);
 
-			justDailServicePage = JustDailServiceResponse.getPage(getJdServicesPage(term, catIds, Jdpageable));
+			justDailServicePage = JustDailServiceResponse.getPage(getJdServicesPage(term, catIds, Jdpageable,verified));
 
 			// response.put("JdService", justDailServicePage);
 			// response.put("Dbservice", profilePage);
@@ -961,7 +963,7 @@ public class UserProfileController {
 			@RequestParam(value = "catId", required = false) String catId,
 			@RequestParam(value = "pageNo", required = false, defaultValue = "0") int page,
 			@RequestParam(value = "max", required = false, defaultValue = "0") int size,
-			@RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
+			@RequestParam(value = "isVerified", required = false) Boolean verified,
 			@RequestParam(value = "dir", required = false, defaultValue = "0") int dir, HttpServletRequest request)
 			throws Exception {
 		List<ServiceCategoriesMapping> categories = null;
@@ -1001,15 +1003,15 @@ public class UserProfileController {
 					}
 					// Get Sub Categories total services count
 					long subCatTot = userProfileRepository.getServiceProvidersByFilterCriteriaCount(term, userTypes,
-							null, null, isFeatured, null, sourceCatIds, ServiceSource, pageable)
-							+ getJdServicesCount(term, sourceCatIds, Jdpageable);
+							null, null, null, null, sourceCatIds, ServiceSource, pageable,verified)
+							+ getJdServicesCount(term, sourceCatIds, Jdpageable,verified);
 
 					subCategory.setTotalServices(subCatTot);
 				}
 				// Get Parent Categories total services count
 				long catTot = userProfileRepository.getServiceProvidersByFilterCriteriaCount(term, userTypes, null,
-						null, isFeatured, null, catIds, ServiceSource, pageable)
-						+ getJdServicesCount(term, catIds, Jdpageable);
+						null, null, null, catIds, ServiceSource, pageable,verified)
+						+ getJdServicesCount(term, catIds, Jdpageable,verified);
 				serviceCategory.setTotalServices(catTot);
 			}
 
@@ -1147,7 +1149,8 @@ public class UserProfileController {
 		return sortedJsonArray;
 	}
 
-	public PageImpl<JustDailServices> getJdServicesPage(String name, List<String> catIds, Pageable page) {
+	public PageImpl<JustDailServices> getJdServicesPage(String name, List<String> catIds, Pageable page,
+			Boolean verified) {
 		List<JustDailServices> justDailServiceList = null;
 		Query q = new Query();
 
@@ -1166,6 +1169,10 @@ public class UserProfileController {
 			q.addCriteria(Criteria.where("serviceInfo.name").exists(true));
 		}
 
+		if (null != verified && true == verified) {
+			q.addCriteria(Criteria.where("serviceInfo.verified").is("1"));
+		}
+
 		q.with(page);
 		justDailServiceList = mongoTemplate.find(q, JustDailServices.class);
 
@@ -1176,7 +1183,7 @@ public class UserProfileController {
 		return justDailServicePage;
 	}
 
-	public long getJdServicesCount(String name, List<String> catIds, Pageable page) {
+	public long getJdServicesCount(String name, List<String> catIds, Pageable page,Boolean verified) {
 		long total = 0;
 		Query q = new Query();
 
@@ -1193,6 +1200,10 @@ public class UserProfileController {
 			q.addCriteria(Criteria.where("serviceInfo.name").regex(name, "i"));
 		} else {
 			q.addCriteria(Criteria.where("serviceInfo.name").exists(true));
+		}
+
+		if (null != verified && true == verified) {
+			q.addCriteria(Criteria.where("serviceInfo.verified").is("1"));
 		}
 
 		q.with(page);
