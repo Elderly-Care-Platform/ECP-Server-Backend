@@ -145,14 +145,14 @@ public class AskController {
 				askQuesExpert = userProfileRepo.findOne(askQues.getAnsweredBy().getId());
 				logHandler.addLog(askQues, ActivityLogConstants.CRUD_TYPE_CREATE, request);
 				logger.info("new ask question entity created with ID: " + askQues.getId());
-				MailHandler.sendMailToUserId(askQuesExpert.getUserId(), "ECP - New Question for you", 
+				MailHandler.sendMailToUserId(askQuesExpert.getUserId(), "JoyOfAge - New Question for you", 
 				"Hi,<br/>"+
 
 				"This is to inform that a new question has been asked by one of elders who is seeking help / some informtion.<br/>"+
 				" Question Asked is '" + askQues.getQuestion() + "'<br/>"+
 				"Requesting you to please respond.<br/><br/>"+
 				"Best Regards<br/>"+
-				"ECP Team");
+				"JoyOfAge Team");
 			} else {
 				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
 			}
@@ -412,22 +412,22 @@ public class AskController {
 				AskQuestion question = askQuesRepo.findOne(askQuestionReply.getAskQuestionId());
 				if(question.getAskedBy().getId().equals(askQuestionReplyExtracted.getUser().getId())){
 					question.setAnswered(false);
-					MailHandler.sendMailToUserId(question.getAnsweredBy().getUserId(), "ECP - Response from user", 
+					MailHandler.sendMailToUserId(question.getAnsweredBy().getUserId(), "JoyOfAge - Response from user", 
 						"Hi,<br/>"+
 						"This is to inform that questioner responded to question answered by you .<br/>"+
 						" Question was '" + question.getQuestion() + "'<br/>"+
 						"Requesting you to please respond.<br/><br/>"+
 						"Best Regards<br/>"+
-						"ECP Team");
+						"JoyOfAge Team");
 				}
 				else{
 					question.setAnswered(true);
-					MailHandler.sendMailToUserId(question.getAskedBy().getId(), "ECP - Response from expert", 
+					MailHandler.sendMailToUserId(question.getAskedBy().getId(), "JoyOfAge - Response from expert", 
 						"Hi,<br/>"+
 						"This is to inform that expert replied to question asked by you.<br/>"+
 						" Question was '" + question.getQuestion() + "'<br/>"+
 						"Best Regards<br/>"+
-						"ECP Team");
+						"JoyOfAge Team");
 				}
 				askQuesRepo.save(question);
 				logHandlerRep.addLog(askQuestionReply, ActivityLogConstants.CRUD_TYPE_CREATE, request);
