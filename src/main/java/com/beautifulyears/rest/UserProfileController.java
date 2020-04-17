@@ -294,7 +294,7 @@ public class UserProfileController {
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
 			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(null,
-					userTypes, city, tagIds, isFeatured, null, pageable, fields, null, null, null,null), user);
+					userTypes, city, tagIds, isFeatured, null, pageable, fields, null, null, null, null), user);
 			if (profilePage.getContent().size() > 0) {
 				logger.debug("found something");
 			} else {
@@ -345,7 +345,7 @@ public class UserProfileController {
 
 			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
 			userProfilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(
-					null, userTypes, null, null, null, null, pageable, fields, null, null, null,null), null);
+					null, userTypes, null, null, null, null, pageable, fields, null, null, null, null), null);
 			if (userProfilePage.getContent().size() > 0) {
 				logger.debug("did not find any service providers");
 			}
@@ -769,7 +769,7 @@ public class UserProfileController {
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
 			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(null,
-					userTypes, city, tagIds, isFeatured, null, pageable, fields, null, null, null,null), user,
+					userTypes, city, tagIds, isFeatured, null, pageable, fields, null, null, null, null), user,
 					mongoTemplate);
 
 			JSONObject justDailSearchResponse = SearchController.getJustDialSearchServicePage(page, size,
@@ -868,12 +868,22 @@ public class UserProfileController {
 				List<ServiceCategoriesMapping> searchCategories = mongoTemplate.find(q, ServiceCategoriesMapping.class);
 
 				for (ServiceCategoriesMapping serviceCategory : searchCategories) {
+					Boolean isSearchByCategory = false;
+					if (serviceCategory.getName().toLowerCase().contains(term.toLowerCase())) {
+						isSearchByCategory = true;
+					}
 
 					for (ServiceSubCategoryMapping subCategory : serviceCategory.getSubCategories()) {
-						for (ServiceSubCategoryMapping.Source source : subCategory.getSource()) {
 
-							catIds.add(source.getCatid());
+						for (ServiceSubCategoryMapping.Source source : subCategory.getSource()) {
+							if(!isSearchByCategory && subCategory.getName().toLowerCase().contains(term.toLowerCase())){
+								catIds.add(source.getCatid());
+							}else if(isSearchByCategory){
+								catIds.add(source.getCatid());
+							}
+							
 						}
+
 					}
 				}
 			}
@@ -903,9 +913,10 @@ public class UserProfileController {
 
 			}
 
-			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(term,
-					userTypes, null, null, null, null, pageable, fields, catIds, ServiceSource, verified,searchBynameOrCatid), user,
-					mongoTemplate);
+			profilePage = UserProfileResponse.getPage(
+					userProfileRepository.getServiceProvidersByFilterCriteria(term, userTypes, null, null, null, null,
+							pageable, fields, catIds, ServiceSource, verified, searchBynameOrCatid),
+					user, mongoTemplate);
 
 			// Get JD services
 			String sortJdservice = "serviceInfo.compRating";
@@ -913,7 +924,7 @@ public class UserProfileController {
 			Pageable Jdpageable = new PageRequest(page, size, sortDirection, sortJdservice);
 
 			justDailServicePage = JustDailServiceResponse
-					.getPage(getJdServicesPage(term, catIds, Jdpageable, verified,searchBynameOrCatid));
+					.getPage(getJdServicesPage(term, catIds, Jdpageable, verified, searchBynameOrCatid));
 
 			// response.put("JdService", justDailServicePage);
 			// response.put("Dbservice", profilePage);
@@ -1151,7 +1162,7 @@ public class UserProfileController {
 	}
 
 	public PageImpl<JustDailServices> getJdServicesPage(String name, List<String> catIds, Pageable page,
-			Boolean verified,Boolean searchBynameOrCatid) {
+			Boolean verified, Boolean searchBynameOrCatid) {
 		List<JustDailServices> justDailServiceList = null;
 		Query q = new Query();
 
