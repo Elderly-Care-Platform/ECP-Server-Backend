@@ -24,11 +24,12 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 	@Override
 	public PageImpl<UserProfile> getServiceProvidersByFilterCriteria(String name, Object[] userTypes, String city,
 			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties, Pageable page, List<String> fields,
-			List<String> catId, String source,Boolean verified) {
+			List<String> catId, String source, Boolean verified, Boolean searchBynameOrCatid) {
 		List<UserProfile> userProfileList = null;
 		Query q = new Query();
 
-		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name, catId, source,verified);
+		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name, catId, source, verified,
+				searchBynameOrCatid);
 
 		q.with(page);
 
@@ -43,10 +44,10 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 	@Override
 	public long getServiceProvidersByFilterCriteriaCount(String name, Object[] userTypes, String city,
 			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties, List<String> catId, String source,
-			Pageable page,Boolean verified) {
+			Pageable page, Boolean verified) {
 		// List<UserProfile> userProfileList = null;
 		Query q = new Query();
-		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name, catId, source,verified);
+		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name, catId, source, verified, null);
 		if (page != null) {
 			q.with(page);
 		}
@@ -58,7 +59,8 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 	}
 
 	private Query getQuery(Query q, Object[] userTypes, String city, List<ObjectId> tagIds, Boolean isFeatured,
-			List<ObjectId> experties, String name, List<String> catId, String source,Boolean verified) {
+			List<ObjectId> experties, String name, List<String> catId, String source, Boolean verified,
+			Boolean searchBynameOrCatid) {
 
 		q.addCriteria(Criteria.where("status").in(new Object[] { DiscussConstants.DISCUSS_STATUS_ACTIVE, null }));
 		if (null != userTypes && userTypes.length > 0) {
@@ -69,7 +71,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 			q.addCriteria(Criteria.where("isFeatured").is(isFeatured));
 		}
 
-		if (null != verified) {
+		if (null != verified && false != verified) {
 			q.addCriteria(Criteria.where("verified").is(verified));
 		}
 
@@ -97,7 +99,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 
 			catList = this.mongoTemplate.find(query, AskCategory.class);
 			List<String> catStrList = new ArrayList<String>();
-			if (catList != null) {
+			if (catList != null && catList.size() > 0) {
 				Iterator<AskCategory> catListIterator = catList.iterator();
 				while (catListIterator.hasNext()) {
 					catStrList.add(catListIterator.next().getId());
@@ -105,14 +107,21 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 				q.addCriteria(new Criteria().orOperator(Criteria.where("experties").in(catStrList),
 						Criteria.where("basicProfileInfo.firstName").regex(name, "i")));
 			} else {
-				q.addCriteria(Criteria.where("basicProfileInfo.firstName").regex(name, "i"));
+				if(null == searchBynameOrCatid || false == searchBynameOrCatid){
+					q.addCriteria(Criteria.where("basicProfileInfo.firstName").regex(name, "i"));
+				}
 			}
 		} else {
 			q.addCriteria(Criteria.where("basicProfileInfo.firstName").exists(true));
 		}
 
 		if (null != catId && catId.size() > 0) {
-			q.addCriteria(Criteria.where("serviceProviderInfo.catid").in(catId));
+			if (null != searchBynameOrCatid && false != searchBynameOrCatid) {
+				q.addCriteria(new Criteria().orOperator(Criteria.where("serviceProviderInfo.catid").in(catId),
+						Criteria.where("basicProfileInfo.firstName").regex(name, "i")));
+			} else {
+				q.addCriteria(Criteria.where("serviceProviderInfo.catid").in(catId));
+			}
 		}
 
 		if (null != source && "" != source) {
