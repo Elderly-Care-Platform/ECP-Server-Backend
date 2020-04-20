@@ -46,15 +46,17 @@ public class Session implements Serializable {
 			this.setPhoneNumber(user.getPhoneNumber());
 			this.setUserName(user.getUserName());
 			this.setUser(user);
-			if (user.getUserRegType() == BYConstants.USER_REG_TYPE_FULL
-					|| user.getUserRegType() == BYConstants.USER_REG_TYPE_SOCIAL) {
-				if (isPasswordEntered) {
-					this.sessionType = BYConstants.SESSION_TYPE_FULL;
-				} else {
-					this.sessionType = BYConstants.SESSION_TYPE_PARTIAL;
+			if(user.getUserRegType() != null){
+				if (user.getUserRegType() == BYConstants.USER_REG_TYPE_FULL
+						|| user.getUserRegType() == BYConstants.USER_REG_TYPE_SOCIAL) {
+					if (isPasswordEntered) {
+						this.sessionType = BYConstants.SESSION_TYPE_FULL;
+					} else {
+						this.sessionType = BYConstants.SESSION_TYPE_PARTIAL;
+					}
+				} else if (user.getUserRegType() == BYConstants.USER_REG_TYPE_GUEST) {
+					this.sessionType = BYConstants.SESSION_TYPE_GUEST;
 				}
-			} else if (user.getUserRegType() == BYConstants.USER_REG_TYPE_GUEST) {
-				this.sessionType = BYConstants.SESSION_TYPE_GUEST;
 			}
 		}
 		String ipAddress = req.getHeader("X-FORWARDED-FOR");
