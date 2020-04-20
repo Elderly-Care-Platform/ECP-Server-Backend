@@ -861,29 +861,23 @@ public class UserProfileController {
 
 			// Search categories using search terms
 			if (term != null && term != "" && parentCatid == null && catId == null) {
-				searchBynameOrCatid = true;
 				Query q = new Query();
-				q.addCriteria(new Criteria().orOperator(Criteria.where("name").regex(term, "i"),
-						Criteria.where("subCategories.category_name").regex(term, "i")));
+				q.addCriteria(Criteria.where("subCategories.category_name").regex(term, "i"));
+
 				List<ServiceCategoriesMapping> searchCategories = mongoTemplate.find(q, ServiceCategoriesMapping.class);
+				if (searchCategories.size() > 0) {
+					searchBynameOrCatid = true;
+					for (ServiceCategoriesMapping serviceCategory : searchCategories) {
 
-				for (ServiceCategoriesMapping serviceCategory : searchCategories) {
-					Boolean isSearchByCategory = false;
-					if (serviceCategory.getName().toLowerCase().contains(term.toLowerCase())) {
-						isSearchByCategory = true;
-					}
+						for (ServiceSubCategoryMapping subCategory : serviceCategory.getSubCategories()) {
 
-					for (ServiceSubCategoryMapping subCategory : serviceCategory.getSubCategories()) {
-
-						for (ServiceSubCategoryMapping.Source source : subCategory.getSource()) {
-							if(!isSearchByCategory && subCategory.getName().toLowerCase().contains(term.toLowerCase())){
-								catIds.add(source.getCatid());
-							}else if(isSearchByCategory){
-								catIds.add(source.getCatid());
+							for (ServiceSubCategoryMapping.Source source : subCategory.getSource()) {
+								if (subCategory.getName().toLowerCase().contains(term.toLowerCase())) {
+									catIds.add(source.getCatid());
+								}
 							}
-							
-						}
 
+						}
 					}
 				}
 			}
