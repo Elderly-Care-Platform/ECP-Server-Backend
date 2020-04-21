@@ -106,7 +106,10 @@ public class UserProfileController {
 	public Object getUserProfilebyID(@PathVariable(value = "userId") String userId, HttpServletRequest req,
 			HttpServletResponse res) throws Exception {
 		LoggerUtil.logEntry();
-		// User sessionUser = Util.getSessionUser(req);
+		User sessionUser = Util.getSessionUser(req);
+		if (null == sessionUser || null == req.getSession().getAttribute("session") || !sessionUser.getId().equals(userId)) {
+			throw new BYException(BYErrorCodes.INVALID_SESSION);
+		}
 		User userInfo = UserController.getUser(userId);
 		UserProfile userProfile = null;
 
