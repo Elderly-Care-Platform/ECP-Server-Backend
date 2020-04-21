@@ -142,7 +142,8 @@ public class UserController {
 		@RequestParam(value = "token", required = true) String token, HttpServletRequest req, HttpServletResponse res)
 		throws Exception {
 			String email = null;
-			String socialId = "";
+			String name = "";
+			String socialId = null;
 			LoggerUtil.logEntry();
 			Session session = killSession(req, res);
 			JSONObject response = null;
@@ -159,6 +160,12 @@ public class UserController {
 				response = new JSONObject(b.toString());
 				if(response != null && response.has("email")){
 					email = response.getString("email");
+					if(response.has("name")){
+						name = response.getString("name");
+					}
+					if(response.has("id")){
+						socialId = response.getString("id");
+					}
 				}
 			}
 			else if(platform.equals("facebook")){
@@ -174,6 +181,12 @@ public class UserController {
 				response = new JSONObject(b.toString());
 				if(response != null && response.has("email")){
 					email = response.getString("email");
+					if(response.has("name")){
+						name = response.getString("name");
+					}
+					if(response.has("id")){
+						socialId = response.getString("id");
+					}
 				}
 			}
 			
@@ -185,7 +198,7 @@ public class UserController {
 				user = mongoTemplate.findOne(q, User.class);
 				if (null == user) {
 					logger.debug("User does not exist");
-					user = new User( email, BYConstants.USER_ID_TYPE_EMAIL, BYConstants.USER_REG_TYPE_FULL, 
+					user = new User( name, BYConstants.USER_ID_TYPE_EMAIL, BYConstants.USER_REG_TYPE_FULL, 
 					null, email, null,
 					null,null,
 					socialId, platform,
