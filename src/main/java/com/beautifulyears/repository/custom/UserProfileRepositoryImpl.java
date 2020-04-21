@@ -14,6 +14,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import com.beautifulyears.constants.DiscussConstants;
 import com.beautifulyears.constants.UserTypes;
 import com.beautifulyears.domain.AskCategory;
+import com.beautifulyears.domain.ServiceCategoriesMapping;
+import com.beautifulyears.domain.ServiceSubCategoryMapping;
 import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.rest.response.PageImpl;
 
@@ -44,10 +46,11 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 	@Override
 	public long getServiceProvidersByFilterCriteriaCount(String name, Object[] userTypes, String city,
 			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties, List<String> catId, String source,
-			Pageable page, Boolean verified) {
+			Pageable page, Boolean verified, Boolean searchBynameOrCatid) {
 		// List<UserProfile> userProfileList = null;
 		Query q = new Query();
-		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name, catId, source, verified, null);
+		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name, catId, source, verified,
+				searchBynameOrCatid);
 		if (page != null) {
 			q.with(page);
 		}
@@ -107,7 +110,38 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 				q.addCriteria(new Criteria().orOperator(Criteria.where("experties").in(catStrList),
 						Criteria.where("basicProfileInfo.firstName").regex(name, "i")));
 			} else {
-				if(null == searchBynameOrCatid || false == searchBynameOrCatid){
+				// Services search by name starts here.
+				if (searchBynameOrCatid) {
+
+					Query categoryQuery = new Query();
+					categoryQuery.addCriteria(Criteria.where("subCategories.category_name").regex(name, "i"));
+
+					List<ServiceCategoriesMapping> searchCategories = mongoTemplate.find(categoryQuery,
+							ServiceCategoriesMapping.class);
+					if (searchCategories.size() > 0) {
+						List<String> matchCategories = new ArrayList<String>();
+						for (ServiceCategoriesMapping serviceCategory : searchCategories) {
+
+							for (ServiceSubCategoryMapping subCategory : serviceCategory.getSubCategories()) {
+
+								for (ServiceSubCategoryMapping.Source catSources : subCategory.getSource()) {
+									if (subCategory.getName().toLowerCase().contains(name.toLowerCase())) {
+										matchCategories.add(catSources.getCatid());
+									}
+								}
+
+							}
+						}
+
+						q.addCriteria(new Criteria().orOperator(
+								Criteria.where("serviceProviderInfo.catid").in(matchCategories),
+								Criteria.where("basicProfileInfo.firstName").regex(name, "i")));
+
+					} else {
+						q.addCriteria(Criteria.where("basicProfileInfo.firstName").regex(name, "i"));
+					}
+
+				} else {
 					q.addCriteria(Criteria.where("basicProfileInfo.firstName").regex(name, "i"));
 				}
 			}
@@ -116,12 +150,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 		}
 
 		if (null != catId && catId.size() > 0) {
-			if (null != searchBynameOrCatid && false != searchBynameOrCatid) {
-				q.addCriteria(new Criteria().orOperator(Criteria.where("serviceProviderInfo.catid").in(catId),
-						Criteria.where("basicProfileInfo.firstName").regex(name, "i")));
-			} else {
-				q.addCriteria(Criteria.where("serviceProviderInfo.catid").in(catId));
-			}
+			q.addCriteria(Criteria.where("serviceProviderInfo.catid").in(catId));
 		}
 
 		if (null != source && "" != source) {

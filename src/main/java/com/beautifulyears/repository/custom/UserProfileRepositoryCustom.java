@@ -9,7 +9,7 @@ import com.beautifulyears.rest.response.PageImpl;
 
 public interface UserProfileRepositoryCustom {
 	public PageImpl<UserProfile> getServiceProvidersByFilterCriteria(String name, Object[] userTypes, String city, List<ObjectId> tagIds,Boolean isFeatured, List<ObjectId> experties, Pageable page,List<String> fields,List<String> catId,String source,Boolean verified,Boolean searchBynameOrCatid);
-	public long getServiceProvidersByFilterCriteriaCount(String name, Object[] userTypes, String city, List<ObjectId> tagIds,Boolean isFeatured, List<ObjectId> experties,List<String> catId,String source,Pageable page,Boolean verified);
+	public long getServiceProvidersByFilterCriteriaCount(String name, Object[] userTypes, String city, List<ObjectId> tagIds,Boolean isFeatured, List<ObjectId> experties,List<String> catId,String source,Pageable page,Boolean verified,Boolean searchBynameOrCatid);
 	public PageImpl<UserProfile> findAllUserProfiles(Pageable pageable);
 	public UserProfile findByUserId(String userId);
 }

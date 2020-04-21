@@ -100,8 +100,8 @@ public class AskCategoryResponse implements IResponse {
 			Integer[] userTypes = { UserTypes.ASK_EXPERT};
 			List<ObjectId> experties = new ArrayList<ObjectId>();
 			experties.add( new ObjectId(askCategory.getId()));
-			long countWithoutSearch = AskCategoryResponse.userProfileRepo.getServiceProvidersByFilterCriteriaCount(null, userTypes, null, null, null, experties,null,null,null,null);
-			long countWithSearch = AskCategoryResponse.userProfileRepo.getServiceProvidersByFilterCriteriaCount(AskCategoryResponse.searchTxt, userTypes, null, null, null, experties,null,null,null,null);
+			long countWithoutSearch = AskCategoryResponse.userProfileRepo.getServiceProvidersByFilterCriteriaCount(null, userTypes, null, null, null, experties,null,null,null,null,null);
+			long countWithSearch = AskCategoryResponse.userProfileRepo.getServiceProvidersByFilterCriteriaCount(AskCategoryResponse.searchTxt, userTypes, null, null, null, experties,null,null,null,null,null);
 			this.setQuestionCount(countWithSearch);
 			if(countWithoutSearch > 0){
 				this.setShow(true);
