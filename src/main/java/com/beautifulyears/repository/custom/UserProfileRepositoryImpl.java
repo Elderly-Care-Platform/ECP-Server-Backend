@@ -109,42 +109,41 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 				}
 				q.addCriteria(new Criteria().orOperator(Criteria.where("experties").in(catStrList),
 						Criteria.where("basicProfileInfo.firstName").regex(name, "i")));
-			} else {
+			} else if (searchBynameOrCatid) {
 				// Services search by name starts here.
-				if (searchBynameOrCatid) {
 
-					Query categoryQuery = new Query();
-					categoryQuery.addCriteria(Criteria.where("subCategories.category_name").regex(name, "i"));
+				Query categoryQuery = new Query();
+				categoryQuery.addCriteria(Criteria.where("subCategories.category_name").regex(name, "i"));
 
-					List<ServiceCategoriesMapping> searchCategories = mongoTemplate.find(categoryQuery,
-							ServiceCategoriesMapping.class);
-					if (searchCategories.size() > 0) {
-						List<String> matchCategories = new ArrayList<String>();
-						for (ServiceCategoriesMapping serviceCategory : searchCategories) {
+				List<ServiceCategoriesMapping> searchCategories = mongoTemplate.find(categoryQuery,
+						ServiceCategoriesMapping.class);
+				if (searchCategories.size() > 0) {
+					List<String> matchCategories = new ArrayList<String>();
+					for (ServiceCategoriesMapping serviceCategory : searchCategories) {
 
-							for (ServiceSubCategoryMapping subCategory : serviceCategory.getSubCategories()) {
+						for (ServiceSubCategoryMapping subCategory : serviceCategory.getSubCategories()) {
 
-								for (ServiceSubCategoryMapping.Source catSources : subCategory.getSource()) {
-									if (subCategory.getName().toLowerCase().contains(name.toLowerCase())) {
-										matchCategories.add(catSources.getCatid());
-									}
+							for (ServiceSubCategoryMapping.Source catSources : subCategory.getSource()) {
+								if (subCategory.getName().toLowerCase().contains(name.toLowerCase())) {
+									matchCategories.add(catSources.getCatid());
 								}
-
 							}
+
 						}
-
-						q.addCriteria(new Criteria().orOperator(
-								Criteria.where("serviceProviderInfo.catid").in(matchCategories),
-								Criteria.where("basicProfileInfo.firstName").regex(name, "i")));
-
-					} else {
-						q.addCriteria(Criteria.where("basicProfileInfo.firstName").regex(name, "i"));
 					}
+
+					q.addCriteria(
+							new Criteria().orOperator(Criteria.where("serviceProviderInfo.catid").in(matchCategories),
+									Criteria.where("basicProfileInfo.firstName").regex(name, "i")));
 
 				} else {
 					q.addCriteria(Criteria.where("basicProfileInfo.firstName").regex(name, "i"));
 				}
+
+			} else {
+				q.addCriteria(Criteria.where("basicProfileInfo.firstName").regex(name, "i"));
 			}
+
 		} else {
 			q.addCriteria(Criteria.where("basicProfileInfo.firstName").exists(true));
 		}
