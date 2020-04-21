@@ -95,23 +95,8 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 		}
 
 		if (null != name && "" != name) {
-			// get category list
-			List<AskCategory> catList = null;
-			Query query = new Query();
-			query.addCriteria(Criteria.where("name").regex(name, "i"));
-
-			catList = this.mongoTemplate.find(query, AskCategory.class);
-			List<String> catStrList = new ArrayList<String>();
-			if (catList != null && catList.size() > 0) {
-				Iterator<AskCategory> catListIterator = catList.iterator();
-				while (catListIterator.hasNext()) {
-					catStrList.add(catListIterator.next().getId());
-				}
-				q.addCriteria(new Criteria().orOperator(Criteria.where("experties").in(catStrList),
-						Criteria.where("basicProfileInfo.firstName").regex(name, "i")));
-			} else if (searchBynameOrCatid) {
+			if (searchBynameOrCatid) {
 				// Services search by name starts here.
-
 				Query categoryQuery = new Query();
 				categoryQuery.addCriteria(Criteria.where("subCategories.category_name").regex(name, "i"));
 
@@ -141,7 +126,25 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 				}
 
 			} else {
-				q.addCriteria(Criteria.where("basicProfileInfo.firstName").regex(name, "i"));
+
+				// Get Expert category list
+				List<AskCategory> catList = null;
+				Query query = new Query();
+				query.addCriteria(Criteria.where("name").regex(name, "i"));
+
+				catList = this.mongoTemplate.find(query, AskCategory.class);
+				List<String> catStrList = new ArrayList<String>();
+				if (catList != null && catList.size() > 0) {
+					Iterator<AskCategory> catListIterator = catList.iterator();
+					while (catListIterator.hasNext()) {
+						catStrList.add(catListIterator.next().getId());
+					}
+					q.addCriteria(new Criteria().orOperator(Criteria.where("experties").in(catStrList),
+							Criteria.where("basicProfileInfo.firstName").regex(name, "i")));
+				} else {
+					q.addCriteria(Criteria.where("basicProfileInfo.firstName").regex(name, "i"));
+				}
+
 			}
 
 		} else {
