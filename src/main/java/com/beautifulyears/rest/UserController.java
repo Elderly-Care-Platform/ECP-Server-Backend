@@ -345,7 +345,7 @@ public class UserController {
 	/**
 	 * Send OTP
 	 */
-	@RequestMapping(value = "/sendOtp", method = RequestMethod.GET)
+	@RequestMapping(value = "/sendOtp", method = RequestMethod.POST)
 	public @ResponseBody Object sendOtp(@RequestParam(value = "mobile", required = true) String mobileNo,
 			HttpServletRequest req, HttpServletResponse res) throws Exception {
 		LoggerUtil.logEntry();
@@ -367,7 +367,7 @@ public class UserController {
 	/**
 	 * Verify OTP
 	 */
-	@RequestMapping(value = "/otpLogin", method = RequestMethod.GET)
+	@RequestMapping(value = "/otpLogin", method = RequestMethod.POST)
 	public @ResponseBody Object otpLogin(@RequestParam(value = "mobile", required = true) String mobileNo,
 			@RequestParam(value = "otp", required = true) String otp, HttpServletRequest req, HttpServletResponse res)
 			throws Exception {
@@ -412,7 +412,7 @@ public class UserController {
 	/**
 	 * Resend OTP
 	 */
-	@RequestMapping(value = "/resendOtp", method = RequestMethod.GET)
+	@RequestMapping(value = "/resendOtp", method = RequestMethod.POST)
 	public @ResponseBody Object resendOtp(@RequestParam(value = "mobile", required = true) String mobileNo,
 			HttpServletRequest req, HttpServletResponse res) throws Exception {
 		LoggerUtil.logEntry();

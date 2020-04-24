@@ -143,7 +143,7 @@ public class SearchController {
 	/**
 	 * Search Service (autocomplete)
 	 */
-	@RequestMapping(method = { RequestMethod.GET }, value = { "/servicePageSearch" }, produces = { "application/json" })
+	@RequestMapping(method = { RequestMethod.POST }, value = { "/servicePageSearch" }, produces = { "application/json" })
 	@ResponseBody
 	public Object getServicePage(@RequestParam(value = "term", required = false) String term,
 			@RequestParam(value = "catName", required = false) String catName,
