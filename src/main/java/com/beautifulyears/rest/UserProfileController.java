@@ -106,7 +106,10 @@ public class UserProfileController {
 	public Object getUserProfilebyID(@PathVariable(value = "userId") String userId, HttpServletRequest req,
 			HttpServletResponse res) throws Exception {
 		LoggerUtil.logEntry();
-		// User sessionUser = Util.getSessionUser(req);
+		User sessionUser = Util.getSessionUser(req);
+		if (null == sessionUser || null == req.getSession().getAttribute("session") || !sessionUser.getId().equals(userId)) {
+			throw new BYException(BYErrorCodes.INVALID_SESSION);
+		}
 		User userInfo = UserController.getUser(userId);
 		UserProfile userProfile = null;
 
@@ -294,7 +297,7 @@ public class UserProfileController {
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
 			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(null,
-					userTypes, city, tagIds, isFeatured, null, pageable, fields, null, null,null), user);
+					userTypes, city, tagIds, isFeatured, null, pageable, fields, null, null, null, false), user);
 			if (profilePage.getContent().size() > 0) {
 				logger.debug("found something");
 			} else {
@@ -345,7 +348,7 @@ public class UserProfileController {
 
 			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
 			userProfilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(
-					null, userTypes, null, null, null, null, pageable, fields, null, null,null), null);
+					null, userTypes, null, null, null, null, pageable, fields, null, null, null, false), null);
 			if (userProfilePage.getContent().size() > 0) {
 				logger.debug("did not find any service providers");
 			}
@@ -375,59 +378,78 @@ public class UserProfileController {
 				if (null != currentUser && SessionController.checkCurrentSessionFor(req, "SUBMIT_PROFILE")) {
 					logger.debug("current user details" + currentUser.toString());
 					if (userProfile.getUserId() != null && userProfile.getUserId().equals(currentUser.getId())) {
+						Query q = new Query();
+						User existingUser = null;
+						q.addCriteria(Criteria.where("id").ne( new ObjectId(currentUser.getId())));
 						if (!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryEmail())
-								&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE) {
-							Query q = new Query();
-							User existingUser = null;
-							UserProfile existinprofile = null;
-							Criteria criteria = Criteria.where("email")
-									.is(userProfile.getBasicProfileInfo().getPrimaryEmail());
-							q.addCriteria(criteria);
+							&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE) {
+							q.addCriteria(
+								Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail())
+							);
 							existingUser = mongoTemplate.findOne(q, User.class);
-							if (null != existingUser && !currentUser.getId().equals(existingUser.getId())) {
-								existingUser.setPhoneNumber(currentUser.getPhoneNumber());
-								existingUser = UserController.saveUser(existingUser);
-								Query q2 = new Query();
-								q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
-								existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
-								if (null != existinprofile) {
-									existinprofile.getBasicProfileInfo()
-											.setPrimaryPhoneNo(currentUser.getPhoneNumber());
-									existinprofile.getBasicProfileInfo()
-											.setDescription(existinprofile.getBasicProfileInfo().getShortDescription());
-									existinprofile = userProfileRepository.save(existinprofile);
-								}
-								UserController.deleteUser(currentUser);
-								UserController userControl = new UserController(userRepository, mongoTemplate);
-								return userControl.login(existingUser, req, res);
-							}
-
 						} else if (!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())
-								&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_EMAIL) {
-							Query q = new Query();
-							User existingUser = null;
-							UserProfile existinprofile = null;
-							Criteria criteria = Criteria.where("phoneNumber")
-									.is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo());
-							q.addCriteria(criteria);
+							&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_EMAIL) {
+							q.addCriteria(
+								Criteria.where("phoneNumber").is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())
+							);
 							existingUser = mongoTemplate.findOne(q, User.class);
-							if (null != existingUser && !currentUser.getId().equals(existingUser.getId())) {
-								existingUser.setEmail(currentUser.getEmail());
-								existingUser = UserController.saveUser(existingUser);
-								Query q2 = new Query();
-								q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
-								existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
-								if (null != existinprofile) {
-									existinprofile.getBasicProfileInfo().setPrimaryEmail(currentUser.getEmail());
-									existinprofile.getBasicProfileInfo()
-											.setDescription(existinprofile.getBasicProfileInfo().getShortDescription());
-									existinprofile = userProfileRepository.save(existinprofile);
-								}
-								UserController.deleteUser(currentUser);
-								UserController userControl = new UserController(userRepository, mongoTemplate);
-								return userControl.login(existingUser, req, res);
-							}
 						}
+						if (null != existingUser){
+							throw new BYException(BYErrorCodes.USER_DETAILS_EXIST);
+						}
+						// if (!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryEmail())
+						// 		&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE) {
+						// 	Query q = new Query();
+						// 	User existingUser = null;
+						// 	UserProfile existinprofile = null;
+						// 	Criteria criteria = Criteria.where("email")
+						// 			.is(userProfile.getBasicProfileInfo().getPrimaryEmail());
+						// 	q.addCriteria(criteria);
+						// 	existingUser = mongoTemplate.findOne(q, User.class);
+						// 	if (null != existingUser && !currentUser.getId().equals(existingUser.getId())) {
+						// 		existingUser.setPhoneNumber(currentUser.getPhoneNumber());
+						// 		existingUser = UserController.saveUser(existingUser);
+						// 		Query q2 = new Query();
+						// 		q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
+						// 		existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
+						// 		if (null != existinprofile) {
+						// 			existinprofile.getBasicProfileInfo()
+						// 					.setPrimaryPhoneNo(currentUser.getPhoneNumber());
+						// 			existinprofile.getBasicProfileInfo()
+						// 					.setDescription(existinprofile.getBasicProfileInfo().getShortDescription());
+						// 			existinprofile = userProfileRepository.save(existinprofile);
+						// 		}
+						// 		UserController.deleteUser(currentUser);
+						// 		UserController userControl = new UserController(userRepository, mongoTemplate);
+						// 		return userControl.login(existingUser, req, res);
+						// 	}
+
+						// } else if (!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())
+						// 		&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_EMAIL) {
+						// 	Query q = new Query();
+						// 	User existingUser = null;
+						// 	UserProfile existinprofile = null;
+						// 	Criteria criteria = Criteria.where("phoneNumber")
+						// 			.is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo());
+						// 	q.addCriteria(criteria);
+						// 	existingUser = mongoTemplate.findOne(q, User.class);
+						// 	if (null != existingUser && !currentUser.getId().equals(existingUser.getId())) {
+						// 		existingUser.setEmail(currentUser.getEmail());
+						// 		existingUser = UserController.saveUser(existingUser);
+						// 		Query q2 = new Query();
+						// 		q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
+						// 		existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
+						// 		if (null != existinprofile) {
+						// 			existinprofile.getBasicProfileInfo().setPrimaryEmail(currentUser.getEmail());
+						// 			existinprofile.getBasicProfileInfo()
+						// 					.setDescription(existinprofile.getBasicProfileInfo().getShortDescription());
+						// 			existinprofile = userProfileRepository.save(existinprofile);
+						// 		}
+						// 		UserController.deleteUser(currentUser);
+						// 		UserController userControl = new UserController(userRepository, mongoTemplate);
+						// 		return userControl.login(existingUser, req, res);
+						// 	}
+						// }
 
 						if (this.userProfileRepository.findByUserId(userProfile.getUserId()) == null) {
 							profile = new UserProfile();
@@ -500,7 +522,20 @@ public class UserProfileController {
 						userProfile.getBasicProfileInfo()
 								.setDescription(userProfile.getBasicProfileInfo().getShortDescription());
 						profile = userProfileRepository.save(userProfile);
-
+						boolean saveUser = false;
+						if(userProfile.getBasicProfileInfo().getPrimaryEmail() != null &&
+						!userProfile.getBasicProfileInfo().getPrimaryEmail().equals("")){
+							currentUser.setEmail(userProfile.getBasicProfileInfo().getPrimaryEmail());
+							saveUser = true;
+						}
+						if(userProfile.getBasicProfileInfo().getPrimaryPhoneNo() != null &&
+							!userProfile.getBasicProfileInfo().getPrimaryPhoneNo().equals("")){
+							currentUser.setPhoneNumber(userProfile.getBasicProfileInfo().getPrimaryPhoneNo());
+							saveUser = true;
+						}
+						if(saveUser == true){
+							userRepository.save(currentUser);
+						}
 					} else {
 						throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
 					}
@@ -769,7 +804,8 @@ public class UserProfileController {
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
 			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(null,
-					userTypes, city, tagIds, isFeatured, null, pageable, fields, null, null,null), user, mongoTemplate);
+					userTypes, city, tagIds, isFeatured, null, pageable, fields, null, null, null, false), user,
+					mongoTemplate);
 
 			JSONObject justDailSearchResponse = SearchController.getJustDialSearchServicePage(page, size,
 					JdsearchTerms.get(0), req);
@@ -827,8 +863,6 @@ public class UserProfileController {
 		filterCriteria.add("size = " + size);
 		filterCriteria.add("dir = " + dir);
 
-
-
 		if (size == 0) {
 			size = 2147483647;
 		}
@@ -836,8 +870,6 @@ public class UserProfileController {
 		Integer[] userTypes = { UserTypes.INSTITUTION_SERVICES };
 		// Check Sources = Edler spring;
 		String ServiceSource = BYConstants.SERVICE_SOURCE_ELDERSPRING;
-
-		// String[] JdsearchTerms = { "care hospital clinics nursing home" };
 
 		LoggerUtil.logEntry();
 		User user = Util.getSessionUser(req);
@@ -859,25 +891,17 @@ public class UserProfileController {
 			Pageable pageable = new PageRequest(page, size, sortDirection, sort);
 			List<String> fields = new ArrayList<String>();
 			fields = UserProfilePrivacyHandler.getPublicFields(-1);
-
 			List<String> catIds = new ArrayList<String>();
-			// List<String> jdCatIds = new ArrayList<String>();
+			boolean searchBynameOrCatid = true;
 
 			if (parentCatid != null && null == catId) {
-
 				ServiceCategoriesMapping serviceCategory = serviceCategoriesMappingRepository.findById(parentCatid);
-
 				for (ServiceSubCategoryMapping subCategory : serviceCategory.getSubCategories()) {
 					for (ServiceSubCategoryMapping.Source source : subCategory.getSource()) {
-						// if (source.getName().equals(BYConstants.SERVICE_SOURCE_JD)) {
-						// jdCatIds.add(source.getCatid());
-						// } else {
-						// catIds.add(source.getCatid());
-						// }
+
 						catIds.add(source.getCatid());
 					}
 				}
-
 			}
 
 			if (null != catId && "" != catId) {
@@ -889,30 +913,20 @@ public class UserProfileController {
 				} else {
 					catIds.add(catId);
 				}
-				// catIds.add(catId);
-				// Query q = new Query();
-				// q.addCriteria(Criteria.where("subCategories.source.catid").in(catId));
-				// ServiceCategoriesMapping serviceCategory = mongoTemplate.findOne(q,
-				// ServiceCategoriesMapping.class);
-
-				// for (ServiceSubCategoryMapping subCategory :
-				// serviceCategory.getSubCategories()) {
-				// for (ServiceSubCategoryMapping.Source source : subCategory.getSource()) {
-				// }
-				// }
-
 			}
 
-			profilePage = UserProfileResponse.getPage(userProfileRepository.getServiceProvidersByFilterCriteria(term,
-					userTypes, null, null, null, null, pageable, fields, catIds, ServiceSource,verified), user,
-					mongoTemplate);
+			profilePage = UserProfileResponse.getPage(
+					userProfileRepository.getServiceProvidersByFilterCriteria(term, userTypes, null, null, null, null,
+							pageable, fields, catIds, ServiceSource, verified, searchBynameOrCatid),
+					user, mongoTemplate);
 
 			// Get JD services
 			String sortJdservice = "serviceInfo.compRating";
 
 			Pageable Jdpageable = new PageRequest(page, size, sortDirection, sortJdservice);
 
-			justDailServicePage = JustDailServiceResponse.getPage(getJdServicesPage(term, catIds, Jdpageable,verified));
+			justDailServicePage = JustDailServiceResponse
+					.getPage(getJdServicesPage(term, catIds, Jdpageable, verified));
 
 			// response.put("JdService", justDailServicePage);
 			// response.put("Dbservice", profilePage);
@@ -996,22 +1010,21 @@ public class UserProfileController {
 				List<String> catIds = new ArrayList<String>();
 				for (ServiceSubCategoryMapping subCategory : serviceCategory.getSubCategories()) {
 					List<String> sourceCatIds = new ArrayList<String>();
-
 					for (ServiceSubCategoryMapping.Source source : subCategory.getSource()) {
 						catIds.add(source.getCatid());
 						sourceCatIds.add(source.getCatid());
 					}
 					// Get Sub Categories total services count
 					long subCatTot = userProfileRepository.getServiceProvidersByFilterCriteriaCount(term, userTypes,
-							null, null, null, null, sourceCatIds, ServiceSource, pageable,verified)
-							+ getJdServicesCount(term, sourceCatIds, Jdpageable,verified);
+							null, null, null, null, sourceCatIds, ServiceSource, pageable, verified, true)
+							+ getJdServicesCount(term, sourceCatIds, Jdpageable, verified);
 
 					subCategory.setTotalServices(subCatTot);
 				}
 				// Get Parent Categories total services count
 				long catTot = userProfileRepository.getServiceProvidersByFilterCriteriaCount(term, userTypes, null,
-						null, null, null, catIds, ServiceSource, pageable,verified)
-						+ getJdServicesCount(term, catIds, Jdpageable,verified);
+						null, null, null, catIds, ServiceSource, pageable, verified, true)
+						+ getJdServicesCount(term, catIds, Jdpageable, verified);
 				serviceCategory.setTotalServices(catTot);
 			}
 
@@ -1154,24 +1167,7 @@ public class UserProfileController {
 		List<JustDailServices> justDailServiceList = null;
 		Query q = new Query();
 
-		if (null != catIds && catIds.size() > 0) {
-			// for (String id : catIds) {
-			// Criteria criteria = new Criteria();
-			// criteria.orOperator(Criteria.where("serviceInfo.categoryId").is(id));
-			// }
-			q.addCriteria(Criteria.where("serviceInfo.categoryId").in(catIds));
-		}
-
-		if (null != name && "" != name) {
-			// get service by name like %name%
-			q.addCriteria(Criteria.where("serviceInfo.name").regex(name, "i"));
-		} else {
-			q.addCriteria(Criteria.where("serviceInfo.name").exists(true));
-		}
-
-		if (null != verified && true == verified) {
-			q.addCriteria(Criteria.where("serviceInfo.verified").is("1"));
-		}
+		q = getJdServiceQuery(q, name, catIds, verified);
 
 		q.with(page);
 		justDailServiceList = mongoTemplate.find(q, JustDailServices.class);
@@ -1183,28 +1179,56 @@ public class UserProfileController {
 		return justDailServicePage;
 	}
 
-	public long getJdServicesCount(String name, List<String> catIds, Pageable page,Boolean verified) {
-		long total = 0;
-		Query q = new Query();
-
-		if (null != catIds && catIds.size() > 0) {
-			// for (String id : catIds) {
-			// Criteria criteria = new Criteria();
-			// criteria.orOperator(Criteria.where("serviceInfo.categoryId").is(id));
-			// }
-			q.addCriteria(Criteria.where("serviceInfo.categoryId").in(catIds));
-		}
+	private Query getJdServiceQuery(Query q, String name, List<String> catIds, Boolean verified) {
 
 		if (null != name && "" != name) {
-			// get service by name like %name%
-			q.addCriteria(Criteria.where("serviceInfo.name").regex(name, "i"));
+			Query categoryQuery = new Query();
+			categoryQuery.addCriteria(Criteria.where("subCategories.category_name").regex(name, "i"));
+
+			List<ServiceCategoriesMapping> searchCategories = mongoTemplate.find(categoryQuery,
+					ServiceCategoriesMapping.class);
+			if (searchCategories.size() > 0) {
+				List<String> matchCategories = new ArrayList<String>();
+				for (ServiceCategoriesMapping serviceCategory : searchCategories) {
+
+					for (ServiceSubCategoryMapping subCategory : serviceCategory.getSubCategories()) {
+
+						for (ServiceSubCategoryMapping.Source source : subCategory.getSource()) {
+							if (subCategory.getName().toLowerCase().contains(name.toLowerCase())) {
+								matchCategories.add(source.getCatid());
+							}
+						}
+
+					}
+				}
+
+				q.addCriteria(new Criteria().orOperator(Criteria.where("serviceInfo.categoryId").in(matchCategories),
+						Criteria.where("serviceInfo.name").regex(name, "i")));
+
+			} else {
+				// get service by name like %name%
+				q.addCriteria(Criteria.where("serviceInfo.name").regex(name, "i"));
+			}
+
 		} else {
 			q.addCriteria(Criteria.where("serviceInfo.name").exists(true));
+		}
+
+		if (null != catIds && catIds.size() > 0) {
+			q.addCriteria(Criteria.where("serviceInfo.categoryId").in(catIds));
 		}
 
 		if (null != verified && true == verified) {
 			q.addCriteria(Criteria.where("serviceInfo.verified").is("1"));
 		}
+		return q;
+	}
+
+	public long getJdServicesCount(String name, List<String> catIds, Pageable page, Boolean verified) {
+		long total = 0;
+		Query q = new Query();
+
+		q = getJdServiceQuery(q, name, catIds, verified);
 
 		q.with(page);
 		total = this.mongoTemplate.count(q, JustDailServices.class);

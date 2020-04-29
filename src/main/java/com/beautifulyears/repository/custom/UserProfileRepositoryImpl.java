@@ -14,6 +14,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import com.beautifulyears.constants.DiscussConstants;
 import com.beautifulyears.constants.UserTypes;
 import com.beautifulyears.domain.AskCategory;
+import com.beautifulyears.domain.ServiceCategoriesMapping;
+import com.beautifulyears.domain.ServiceSubCategoryMapping;
 import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.rest.response.PageImpl;
 
@@ -24,11 +26,12 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 	@Override
 	public PageImpl<UserProfile> getServiceProvidersByFilterCriteria(String name, Object[] userTypes, String city,
 			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties, Pageable page, List<String> fields,
-			List<String> catId, String source,Boolean verified) {
+			List<String> catId, String source, Boolean verified, Boolean searchBynameOrCatid) {
 		List<UserProfile> userProfileList = null;
 		Query q = new Query();
 
-		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name, catId, source,verified);
+		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name, catId, source, verified,
+				searchBynameOrCatid);
 
 		q.with(page);
 
@@ -43,10 +46,11 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 	@Override
 	public long getServiceProvidersByFilterCriteriaCount(String name, Object[] userTypes, String city,
 			List<ObjectId> tagIds, Boolean isFeatured, List<ObjectId> experties, List<String> catId, String source,
-			Pageable page,Boolean verified) {
+			Pageable page, Boolean verified, Boolean searchBynameOrCatid) {
 		// List<UserProfile> userProfileList = null;
 		Query q = new Query();
-		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name, catId, source,verified);
+		q = getQuery(q, userTypes, city, tagIds, isFeatured, experties, name, catId, source, verified,
+				searchBynameOrCatid);
 		if (page != null) {
 			q.with(page);
 		}
@@ -58,7 +62,8 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 	}
 
 	private Query getQuery(Query q, Object[] userTypes, String city, List<ObjectId> tagIds, Boolean isFeatured,
-			List<ObjectId> experties, String name, List<String> catId, String source,Boolean verified) {
+			List<ObjectId> experties, String name, List<String> catId, String source, Boolean verified,
+			Boolean searchBynameOrCatid) {
 
 		q.addCriteria(Criteria.where("status").in(new Object[] { DiscussConstants.DISCUSS_STATUS_ACTIVE, null }));
 		if (null != userTypes && userTypes.length > 0) {
@@ -69,7 +74,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 			q.addCriteria(Criteria.where("isFeatured").is(isFeatured));
 		}
 
-		if (null != verified) {
+		if (null != verified && false != verified) {
 			q.addCriteria(Criteria.where("verified").is(verified));
 		}
 
@@ -90,23 +95,58 @@ public class UserProfileRepositoryImpl implements UserProfileRepositoryCustom {
 		}
 
 		if (null != name && "" != name) {
-			// get category list
-			List<AskCategory> catList = null;
-			Query query = new Query();
-			query.addCriteria(Criteria.where("name").regex(name, "i"));
+			if (searchBynameOrCatid) {
+				// Services search by name starts here.
+				Query categoryQuery = new Query();
+				categoryQuery.addCriteria(Criteria.where("subCategories.category_name").regex(name, "i"));
 
-			catList = this.mongoTemplate.find(query, AskCategory.class);
-			List<String> catStrList = new ArrayList<String>();
-			if (catList != null) {
-				Iterator<AskCategory> catListIterator = catList.iterator();
-				while (catListIterator.hasNext()) {
-					catStrList.add(catListIterator.next().getId());
+				List<ServiceCategoriesMapping> searchCategories = mongoTemplate.find(categoryQuery,
+						ServiceCategoriesMapping.class);
+				if (searchCategories.size() > 0) {
+					List<String> matchCategories = new ArrayList<String>();
+					for (ServiceCategoriesMapping serviceCategory : searchCategories) {
+
+						for (ServiceSubCategoryMapping subCategory : serviceCategory.getSubCategories()) {
+
+							for (ServiceSubCategoryMapping.Source catSources : subCategory.getSource()) {
+								if (subCategory.getName().toLowerCase().contains(name.toLowerCase())) {
+									matchCategories.add(catSources.getCatid());
+								}
+							}
+
+						}
+					}
+
+					q.addCriteria(
+							new Criteria().orOperator(Criteria.where("serviceProviderInfo.catid").in(matchCategories),
+									Criteria.where("basicProfileInfo.firstName").regex(name, "i")));
+
+				} else {
+					q.addCriteria(Criteria.where("basicProfileInfo.firstName").regex(name, "i"));
 				}
-				q.addCriteria(new Criteria().orOperator(Criteria.where("experties").in(catStrList),
-						Criteria.where("basicProfileInfo.firstName").regex(name, "i")));
+
 			} else {
-				q.addCriteria(Criteria.where("basicProfileInfo.firstName").regex(name, "i"));
+
+				// Get Expert category list
+				List<AskCategory> catList = null;
+				Query query = new Query();
+				query.addCriteria(Criteria.where("name").regex(name, "i"));
+
+				catList = this.mongoTemplate.find(query, AskCategory.class);
+				List<String> catStrList = new ArrayList<String>();
+				if (catList != null && catList.size() > 0) {
+					Iterator<AskCategory> catListIterator = catList.iterator();
+					while (catListIterator.hasNext()) {
+						catStrList.add(catListIterator.next().getId());
+					}
+					q.addCriteria(new Criteria().orOperator(Criteria.where("experties").in(catStrList),
+							Criteria.where("basicProfileInfo.firstName").regex(name, "i")));
+				} else {
+					q.addCriteria(Criteria.where("basicProfileInfo.firstName").regex(name, "i"));
+				}
+
 			}
+
 		} else {
 			q.addCriteria(Criteria.where("basicProfileInfo.firstName").exists(true));
 		}

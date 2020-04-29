@@ -21,6 +21,7 @@ public class ByWebAppInitializer implements
 	@Override
 	public void onStartup(ServletContext servletContext)
 			throws ServletException {
+		servletContext.getSessionCookieConfig().setSecure(true);
 		System.out.println("***Starting by application ***");
 		ByWebAppInitializer.servletContext = servletContext;
 		//root path used in logs config

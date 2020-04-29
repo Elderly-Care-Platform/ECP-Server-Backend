@@ -267,7 +267,7 @@ public class EventController {
 		return BYGenericResponseHandler.getResponse(obj);
 	}
 
-	@RequestMapping(method = { RequestMethod.GET },value = { "/markfav" }, produces = { "application/json" })
+	@RequestMapping(method = { RequestMethod.POST },value = { "/markfav" }, produces = { "application/json" })
 	@ResponseBody
 	public Object markEventFav(
 		@RequestParam(value = "eventId", required = true) String eventId,

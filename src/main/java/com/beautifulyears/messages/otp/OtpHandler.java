@@ -1,16 +1,12 @@
 package com.beautifulyears.messages.otp;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.beautifulyears.util.LoggerUtil;
@@ -64,9 +60,9 @@ public class OtpHandler {
 		return response;
 	}
 
-	public String verifyOtp(String mobileNo, String otp) {
+	public JSONObject verifyOtp(String mobileNo, String otp) {
 		LoggerUtil.logEntry();
-		String response = null;
+		JSONObject response = null;
 		try {
 
 			String postUrl = this.baseUrl + this.verfiyOtp;
@@ -90,8 +86,7 @@ public class OtpHandler {
 			while ((inputLine = in.readLine()) != null)
 				b.append(inputLine + "\n");
 			in.close();
-			response = b.toString();
-			logger.debug(response);
+			response = new JSONObject(b.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("ERROR in verifying Otp message. " + e);
