@@ -514,6 +514,20 @@ public class UserProfileController {
 		User currentUser = Util.getSessionUser(req);
 		try {
 			if ((userProfile != null) && (userId != null)) {
+				Query q = new Query();
+				User existingUser = null;
+				q.addCriteria(Criteria.where("id").ne( new ObjectId(currentUser.getId())));
+				q.addCriteria(
+					new Criteria().orOperator(
+						Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail()),
+						Criteria.where("phoneNumber").is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())) 
+				);
+				
+				existingUser = mongoTemplate.findOne(q, User.class);
+				if (null != existingUser){
+					throw new BYException(BYErrorCodes.USER_DETAILS_EXIST);
+				}
+
 				if (null != currentUser && SessionController.checkCurrentSessionFor(req, "SUBMIT_PROFILE")) {
 					if (userProfile.getUserId().equals(currentUser.getId())) {
 						// profile = userProfileRepository.findByUserId(userId);
