@@ -50,9 +50,11 @@ import com.beautifulyears.domain.ServiceSubCategoryMapping;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserAddress;
 import com.beautifulyears.domain.UserProfile;
+import com.beautifulyears.domain.UserProfileOtp;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
 import com.beautifulyears.mail.MailHandler;
+import com.beautifulyears.messages.otp.OtpHandler;
 import com.beautifulyears.repository.ReportServiceRepository;
 import com.beautifulyears.repository.ServiceCategoriesMappingRepository;
 import com.beautifulyears.repository.UserProfileRepository;
@@ -481,7 +483,7 @@ public class UserProfileController {
 						} else {
 							// throw new BYException(
 							// BYErrorCodes.USER_ALREADY_EXIST);
-							return updateUserProfile(userProfile, userProfile.getUserId(), req, res);
+							return updateUserProfile((UserProfileOtp) userProfile, userProfile.getUserId(), req, res);
 						}
 					} else {
 						throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
@@ -506,46 +508,67 @@ public class UserProfileController {
 	 */
 	@RequestMapping(method = { RequestMethod.PUT }, value = { "/{userId}" }, consumes = { "application/json" })
 	@ResponseBody
-	public Object updateUserProfile(@RequestBody UserProfile userProfile, @PathVariable(value = "userId") String userId,
+	public Object updateUserProfile(@RequestBody UserProfileOtp userProfileOtp, @PathVariable(value = "userId") String userId,
 			HttpServletRequest req, HttpServletResponse res) throws Exception {
 
 		LoggerUtil.logEntry();
+		UserProfile userProfile = userProfileOtp.getUserProfileObj();
 		UserProfile profile = null;
 		User currentUser = Util.getSessionUser(req);
 		try {
-			if ((userProfile != null) && (userId != null)) {
-				if (null != currentUser && SessionController.checkCurrentSessionFor(req, "SUBMIT_PROFILE")) {
-					if (userProfile.getUserId().equals(currentUser.getId())) {
-						// profile = userProfileRepository.findByUserId(userId);
+			OtpHandler otpHandler = new OtpHandler();
+			JSONObject otpResp = otpHandler.verifyOtp(currentUser.getPhoneNumber(),userProfileOtp.getOtp());
+			if(otpResp!= null && otpResp.has("type") && otpResp.getString("type").equals("success")){
+				if ((userProfile != null) && (userId != null)) {
+					Query q = new Query();
+					User existingUser = null;
+					q.addCriteria(Criteria.where("id").ne( new ObjectId(currentUser.getId())));
+					q.addCriteria(
+						new Criteria().orOperator(
+							Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail()),
+							Criteria.where("phoneNumber").is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())) 
+					);
+					
+					existingUser = mongoTemplate.findOne(q, User.class);
+					if (null != existingUser){
+						throw new BYException(BYErrorCodes.USER_DETAILS_EXIST);
+					}
 
-						// profile = mergeProfile(profile, userProfile, currentUser, req);
-						userProfile.getBasicProfileInfo()
-								.setDescription(userProfile.getBasicProfileInfo().getShortDescription());
-						profile = userProfileRepository.save(userProfile);
-						boolean saveUser = false;
-						if(userProfile.getBasicProfileInfo().getPrimaryEmail() != null &&
-						!userProfile.getBasicProfileInfo().getPrimaryEmail().equals("")){
-							currentUser.setEmail(userProfile.getBasicProfileInfo().getPrimaryEmail());
-							saveUser = true;
-						}
-						if(userProfile.getBasicProfileInfo().getPrimaryPhoneNo() != null &&
-							!userProfile.getBasicProfileInfo().getPrimaryPhoneNo().equals("")){
-							currentUser.setPhoneNumber(userProfile.getBasicProfileInfo().getPrimaryPhoneNo());
-							saveUser = true;
-						}
-						if(saveUser == true){
-							userRepository.save(currentUser);
+					if (null != currentUser && SessionController.checkCurrentSessionFor(req, "SUBMIT_PROFILE")) {
+						if (userProfile.getUserId().equals(currentUser.getId())) {
+							// profile = userProfileRepository.findByUserId(userId);
+
+							// profile = mergeProfile(profile, userProfile, currentUser, req);
+							userProfile.getBasicProfileInfo()
+									.setDescription(userProfile.getBasicProfileInfo().getShortDescription());
+							profile = userProfileRepository.save(userProfile);
+							boolean saveUser = false;
+							if(userProfile.getBasicProfileInfo().getPrimaryEmail() != null &&
+							!userProfile.getBasicProfileInfo().getPrimaryEmail().equals("")){
+								currentUser.setEmail(userProfile.getBasicProfileInfo().getPrimaryEmail());
+								saveUser = true;
+							}
+							if(userProfile.getBasicProfileInfo().getPrimaryPhoneNo() != null &&
+								!userProfile.getBasicProfileInfo().getPrimaryPhoneNo().equals("")){
+								currentUser.setPhoneNumber(userProfile.getBasicProfileInfo().getPrimaryPhoneNo());
+								saveUser = true;
+							}
+							if(saveUser == true){
+								userRepository.save(currentUser);
+							}
+						} else {
+							throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
 						}
 					} else {
-						throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
+						throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
 					}
-				} else {
-					throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
+				}
+				else {
+					throw new BYException(BYErrorCodes.MISSING_PARAMETER);
 				}
 			}
-
 			else {
-				throw new BYException(BYErrorCodes.MISSING_PARAMETER);
+				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
 			}
 		} catch (Exception e) {
 			Util.handleException(e);

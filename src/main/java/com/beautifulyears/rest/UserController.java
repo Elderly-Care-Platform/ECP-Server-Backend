@@ -474,11 +474,11 @@ public class UserController {
 				&& (userRoleId.equals(UserRolePermissions.USER) || userRoleId.equals(UserRolePermissions.WRITER))) {
 			return new User(userName, userIdType, userRegType, password, email, phoneNumber, verificationCode,
 					verificationCodeExpiry, socialSignOnId, socialSignOnPlatform, passwordCode, passwordCodeExpiry,
-					userRoleId, "In-Active", userTags,favEvents);
+					userRoleId, "Active", userTags,favEvents);
 		} else {
 			return new User(userName, userIdType, userRegType, password, email, phoneNumber, verificationCode,
 					verificationCodeExpiry, socialSignOnId, socialSignOnPlatform, passwordCode, passwordCodeExpiry,
-					userRoleId, "In-Active", userTags,favEvents);
+					userRoleId, "Active", userTags,favEvents);
 		}
 	}
 
