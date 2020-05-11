@@ -43,7 +43,9 @@ import com.beautifulyears.constants.ActivityLogConstants;
 import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.constants.DiscussConstants;
 import com.beautifulyears.constants.UserTypes;
+import com.beautifulyears.domain.Hobbies;
 import com.beautifulyears.domain.JustDailServices;
+import com.beautifulyears.domain.Language;
 import com.beautifulyears.domain.ReportService;
 import com.beautifulyears.domain.ServiceCategoriesMapping;
 import com.beautifulyears.domain.ServiceSubCategoryMapping;
@@ -109,7 +111,8 @@ public class UserProfileController {
 			HttpServletResponse res) throws Exception {
 		LoggerUtil.logEntry();
 		User sessionUser = Util.getSessionUser(req);
-		if (null == sessionUser || null == req.getSession().getAttribute("session") || !sessionUser.getId().equals(userId)) {
+		if (null == sessionUser || null == req.getSession().getAttribute("session")
+				|| !sessionUser.getId().equals(userId)) {
 			throw new BYException(BYErrorCodes.INVALID_SESSION);
 		}
 		User userInfo = UserController.getUser(userId);
@@ -382,75 +385,78 @@ public class UserProfileController {
 					if (userProfile.getUserId() != null && userProfile.getUserId().equals(currentUser.getId())) {
 						Query q = new Query();
 						User existingUser = null;
-						q.addCriteria(Criteria.where("id").ne( new ObjectId(currentUser.getId())));
+						q.addCriteria(Criteria.where("id").ne(new ObjectId(currentUser.getId())));
 						if (!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryEmail())
-							&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE) {
+								&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE) {
 							q.addCriteria(
-								Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail())
-							);
+									Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail()));
 							existingUser = mongoTemplate.findOne(q, User.class);
 						} else if (!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())
-							&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_EMAIL) {
-							q.addCriteria(
-								Criteria.where("phoneNumber").is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())
-							);
+								&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_EMAIL) {
+							q.addCriteria(Criteria.where("phoneNumber")
+									.is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo()));
 							existingUser = mongoTemplate.findOne(q, User.class);
 						}
-						if (null != existingUser){
+						if (null != existingUser) {
 							throw new BYException(BYErrorCodes.USER_DETAILS_EXIST);
 						}
 						// if (!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryEmail())
-						// 		&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE) {
-						// 	Query q = new Query();
-						// 	User existingUser = null;
-						// 	UserProfile existinprofile = null;
-						// 	Criteria criteria = Criteria.where("email")
-						// 			.is(userProfile.getBasicProfileInfo().getPrimaryEmail());
-						// 	q.addCriteria(criteria);
-						// 	existingUser = mongoTemplate.findOne(q, User.class);
-						// 	if (null != existingUser && !currentUser.getId().equals(existingUser.getId())) {
-						// 		existingUser.setPhoneNumber(currentUser.getPhoneNumber());
-						// 		existingUser = UserController.saveUser(existingUser);
-						// 		Query q2 = new Query();
-						// 		q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
-						// 		existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
-						// 		if (null != existinprofile) {
-						// 			existinprofile.getBasicProfileInfo()
-						// 					.setPrimaryPhoneNo(currentUser.getPhoneNumber());
-						// 			existinprofile.getBasicProfileInfo()
-						// 					.setDescription(existinprofile.getBasicProfileInfo().getShortDescription());
-						// 			existinprofile = userProfileRepository.save(existinprofile);
-						// 		}
-						// 		UserController.deleteUser(currentUser);
-						// 		UserController userControl = new UserController(userRepository, mongoTemplate);
-						// 		return userControl.login(existingUser, req, res);
-						// 	}
+						// && currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE) {
+						// Query q = new Query();
+						// User existingUser = null;
+						// UserProfile existinprofile = null;
+						// Criteria criteria = Criteria.where("email")
+						// .is(userProfile.getBasicProfileInfo().getPrimaryEmail());
+						// q.addCriteria(criteria);
+						// existingUser = mongoTemplate.findOne(q, User.class);
+						// if (null != existingUser &&
+						// !currentUser.getId().equals(existingUser.getId())) {
+						// existingUser.setPhoneNumber(currentUser.getPhoneNumber());
+						// existingUser = UserController.saveUser(existingUser);
+						// Query q2 = new Query();
+						// q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
+						// existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
+						// if (null != existinprofile) {
+						// existinprofile.getBasicProfileInfo()
+						// .setPrimaryPhoneNo(currentUser.getPhoneNumber());
+						// existinprofile.getBasicProfileInfo()
+						// .setDescription(existinprofile.getBasicProfileInfo().getShortDescription());
+						// existinprofile = userProfileRepository.save(existinprofile);
+						// }
+						// UserController.deleteUser(currentUser);
+						// UserController userControl = new UserController(userRepository,
+						// mongoTemplate);
+						// return userControl.login(existingUser, req, res);
+						// }
 
-						// } else if (!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())
-						// 		&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_EMAIL) {
-						// 	Query q = new Query();
-						// 	User existingUser = null;
-						// 	UserProfile existinprofile = null;
-						// 	Criteria criteria = Criteria.where("phoneNumber")
-						// 			.is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo());
-						// 	q.addCriteria(criteria);
-						// 	existingUser = mongoTemplate.findOne(q, User.class);
-						// 	if (null != existingUser && !currentUser.getId().equals(existingUser.getId())) {
-						// 		existingUser.setEmail(currentUser.getEmail());
-						// 		existingUser = UserController.saveUser(existingUser);
-						// 		Query q2 = new Query();
-						// 		q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
-						// 		existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
-						// 		if (null != existinprofile) {
-						// 			existinprofile.getBasicProfileInfo().setPrimaryEmail(currentUser.getEmail());
-						// 			existinprofile.getBasicProfileInfo()
-						// 					.setDescription(existinprofile.getBasicProfileInfo().getShortDescription());
-						// 			existinprofile = userProfileRepository.save(existinprofile);
-						// 		}
-						// 		UserController.deleteUser(currentUser);
-						// 		UserController userControl = new UserController(userRepository, mongoTemplate);
-						// 		return userControl.login(existingUser, req, res);
-						// 	}
+						// } else if
+						// (!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())
+						// && currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_EMAIL) {
+						// Query q = new Query();
+						// User existingUser = null;
+						// UserProfile existinprofile = null;
+						// Criteria criteria = Criteria.where("phoneNumber")
+						// .is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo());
+						// q.addCriteria(criteria);
+						// existingUser = mongoTemplate.findOne(q, User.class);
+						// if (null != existingUser &&
+						// !currentUser.getId().equals(existingUser.getId())) {
+						// existingUser.setEmail(currentUser.getEmail());
+						// existingUser = UserController.saveUser(existingUser);
+						// Query q2 = new Query();
+						// q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
+						// existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
+						// if (null != existinprofile) {
+						// existinprofile.getBasicProfileInfo().setPrimaryEmail(currentUser.getEmail());
+						// existinprofile.getBasicProfileInfo()
+						// .setDescription(existinprofile.getBasicProfileInfo().getShortDescription());
+						// existinprofile = userProfileRepository.save(existinprofile);
+						// }
+						// UserController.deleteUser(currentUser);
+						// UserController userControl = new UserController(userRepository,
+						// mongoTemplate);
+						// return userControl.login(existingUser, req, res);
+						// }
 						// }
 
 						if (this.userProfileRepository.findByUserId(userProfile.getUserId()) == null) {
@@ -508,8 +514,9 @@ public class UserProfileController {
 	 */
 	@RequestMapping(method = { RequestMethod.PUT }, value = { "/{userId}" }, consumes = { "application/json" })
 	@ResponseBody
-	public Object updateUserProfile(@RequestBody UserProfileOtp userProfileOtp, @PathVariable(value = "userId") String userId,
-			HttpServletRequest req, HttpServletResponse res) throws Exception {
+	public Object updateUserProfile(@RequestBody UserProfileOtp userProfileOtp,
+			@PathVariable(value = "userId") String userId, HttpServletRequest req, HttpServletResponse res)
+			throws Exception {
 
 		LoggerUtil.logEntry();
 		UserProfile userProfile = userProfileOtp.getUserProfileObj();
@@ -517,20 +524,18 @@ public class UserProfileController {
 		User currentUser = Util.getSessionUser(req);
 		try {
 			OtpHandler otpHandler = new OtpHandler();
-			JSONObject otpResp = otpHandler.verifyOtp(currentUser.getPhoneNumber(),userProfileOtp.getOtp());
-			if(otpResp!= null && otpResp.has("type") && otpResp.getString("type").equals("success")){
+			JSONObject otpResp = otpHandler.verifyOtp(currentUser.getPhoneNumber(), userProfileOtp.getOtp());
+			if (otpResp != null && otpResp.has("type") && otpResp.getString("type").equals("success")) {
 				if ((userProfile != null) && (userId != null)) {
 					Query q = new Query();
 					User existingUser = null;
-					q.addCriteria(Criteria.where("id").ne( new ObjectId(currentUser.getId())));
-					q.addCriteria(
-						new Criteria().orOperator(
+					q.addCriteria(Criteria.where("id").ne(new ObjectId(currentUser.getId())));
+					q.addCriteria(new Criteria().orOperator(
 							Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail()),
-							Criteria.where("phoneNumber").is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())) 
-					);
-					
+							Criteria.where("phoneNumber").is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())));
+
 					existingUser = mongoTemplate.findOne(q, User.class);
-					if (null != existingUser){
+					if (null != existingUser) {
 						throw new BYException(BYErrorCodes.USER_DETAILS_EXIST);
 					}
 
@@ -543,17 +548,17 @@ public class UserProfileController {
 									.setDescription(userProfile.getBasicProfileInfo().getShortDescription());
 							profile = userProfileRepository.save(userProfile);
 							boolean saveUser = false;
-							if(userProfile.getBasicProfileInfo().getPrimaryEmail() != null &&
-							!userProfile.getBasicProfileInfo().getPrimaryEmail().equals("")){
+							if (userProfile.getBasicProfileInfo().getPrimaryEmail() != null
+									&& !userProfile.getBasicProfileInfo().getPrimaryEmail().equals("")) {
 								currentUser.setEmail(userProfile.getBasicProfileInfo().getPrimaryEmail());
 								saveUser = true;
 							}
-							if(userProfile.getBasicProfileInfo().getPrimaryPhoneNo() != null &&
-								!userProfile.getBasicProfileInfo().getPrimaryPhoneNo().equals("")){
+							if (userProfile.getBasicProfileInfo().getPrimaryPhoneNo() != null
+									&& !userProfile.getBasicProfileInfo().getPrimaryPhoneNo().equals("")) {
 								currentUser.setPhoneNumber(userProfile.getBasicProfileInfo().getPrimaryPhoneNo());
 								saveUser = true;
 							}
-							if(saveUser == true){
+							if (saveUser == true) {
 								userRepository.save(currentUser);
 							}
 						} else {
@@ -562,12 +567,10 @@ public class UserProfileController {
 					} else {
 						throw new BYException(BYErrorCodes.USER_LOGIN_REQUIRED);
 					}
-				}
-				else {
+				} else {
 					throw new BYException(BYErrorCodes.MISSING_PARAMETER);
 				}
-			}
-			else {
+			} else {
 				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
 			}
 		} catch (Exception e) {
@@ -1110,6 +1113,56 @@ public class UserProfileController {
 				reportService.getUserId(), currentUser.getEmail(), reportService.getId(), null, null, null,
 				"new  service report entity is added", "SERVICE");
 		return BYGenericResponseHandler.getResponse(reportService);
+
+	}
+
+	/**
+	 * Add new language for user Profile
+	 */
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/languages" }, produces = { "application/json" })
+	@ResponseBody
+	public Object addLanguage(@RequestParam(value = "name", required = false) String name, HttpServletRequest request,
+			HttpServletResponse res) throws Exception {
+		List<Language> languages = null;
+		try {
+
+			if (name != null && name != "") {
+				Language newLanguage = new Language();
+				newLanguage.setName(name);
+				mongoTemplate.save(newLanguage);
+			}
+			languages = mongoTemplate.findAll(Language.class);
+		} catch (Exception e) {
+			// throw e;
+			Util.handleException(e);
+			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
+		}
+		return BYGenericResponseHandler.getResponse(languages);
+
+	}
+
+	/**
+	 * Add new hobbies for user Profile
+	 */
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/hobbies" }, produces = { "application/json" })
+	@ResponseBody
+	public Object addHobbies(@RequestParam(value = "name", required = false) String name, HttpServletRequest request,
+			HttpServletResponse res) throws Exception {
+		List<Hobbies> hobbies = null;
+		try {
+
+			if (name != null && name != "") {
+				Hobbies newHobby = new Hobbies();
+				newHobby.setName(name);
+				mongoTemplate.save(newHobby);
+			}
+			hobbies = mongoTemplate.findAll(Hobbies.class);
+		} catch (Exception e) {
+			// throw e;
+			Util.handleException(e);
+			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
+		}
+		return BYGenericResponseHandler.getResponse(hobbies);
 
 	}
 
