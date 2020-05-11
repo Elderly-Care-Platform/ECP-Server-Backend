@@ -18,7 +18,7 @@ public class IndividualProfileInfo {
 
 	private int gender; // 0: female, 1: male.
 
-	private Date dob;
+	private String dob;
 
 	private Map<String, Date> otherDates;
 
@@ -76,11 +76,11 @@ public class IndividualProfileInfo {
 		this.gender = gender;
 	}
 
-	public Date getDob() {
+	public String getDob() {
 		return dob;
 	}
 
-	public void setDob(Date dob) {
+	public void setDob(String dob) {
 		this.dob = dob;
 	}
 
