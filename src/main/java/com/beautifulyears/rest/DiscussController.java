@@ -34,6 +34,7 @@ import com.beautifulyears.domain.Discuss;
 import com.beautifulyears.domain.LinkInfo;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserProfile;
+import com.beautifulyears.domain.menu.Menu;
 import com.beautifulyears.domain.menu.Tag;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
@@ -445,10 +446,28 @@ public class DiscussController {
 			int discussStatus = discuss.getStatus();
 			List<String> topicId = discuss.getTopicId();
 			List<Tag> systemTags = new ArrayList<Tag>();
-			for (Tag tag : discuss.getSystemTags()) {
-				Tag newTag = mongoTemplate.findById(tag.getId(), Tag.class);
-				systemTags.add(newTag);
+
+			
+			if(discuss.getSystemTags().size() > 0){
+				for (Tag tag : discuss.getSystemTags()) {
+					Tag newTag = mongoTemplate.findById(tag.getId(), Tag.class);
+					systemTags.add(newTag);
+				}
 			}
+			else{
+				Query queryTg = new Query();
+				queryTg.addCriteria(Criteria.where("name").is("NOT_YET_CLASSIFIED"));
+				Tag defaultTag = mongoTemplate.findOne(queryTg, Tag.class);
+				
+				Query queryMn = new Query();
+				queryMn.addCriteria( Criteria.where("tags.$id").in( new ObjectId( defaultTag.getId() )) );
+				Menu defaultMn = mongoTemplate.findOne(queryMn, Menu.class);
+
+				systemTags.add(defaultTag);
+				topicId.add(defaultMn.getId()); 
+			}
+
+			
 
 			Query query = new Query();
 			query.addCriteria(Criteria.where("userId").is(discuss.getUserId()));
