@@ -16,7 +16,7 @@ public class IndividualProfileInfo {
 	@TextIndexed(weight = 1)
 	private String lastName;
 
-	private int gender; // 0: female, 1: male.
+	private Integer gender; // 0: female, 1: male.
 
 	private String dob;
 
@@ -68,11 +68,11 @@ public class IndividualProfileInfo {
 		this.lastName = lastName;
 	}
 
-	public int getGender() {
+	public Integer getGender() {
 		return gender;
 	}
 
-	public void setGender(int gender) {
+	public void setGender(Integer gender) {
 		this.gender = gender;
 	}
 
