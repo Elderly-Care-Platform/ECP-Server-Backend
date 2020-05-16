@@ -43,9 +43,13 @@ import com.beautifulyears.constants.ActivityLogConstants;
 import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.constants.DiscussConstants;
 import com.beautifulyears.constants.UserTypes;
+import com.beautifulyears.domain.EmotionalChallenges;
+import com.beautifulyears.domain.HealthChallenges;
 import com.beautifulyears.domain.Hobbies;
+import com.beautifulyears.domain.InterestAreas;
 import com.beautifulyears.domain.JustDailServices;
 import com.beautifulyears.domain.Language;
+import com.beautifulyears.domain.OtherChallenges;
 import com.beautifulyears.domain.ReportService;
 import com.beautifulyears.domain.ServiceCategoriesMapping;
 import com.beautifulyears.domain.ServiceSubCategoryMapping;
@@ -1165,6 +1169,103 @@ public class UserProfileController {
 		}
 		return BYGenericResponseHandler.getResponse(hobbies);
 
+	}
+
+	/**
+	 * Add new interest for user Profile
+	 */
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/interestAreas" }, produces = { "application/json" })
+	@ResponseBody
+	public Object addInterest(@RequestParam(value = "name", required = false) String name, HttpServletRequest request,
+			HttpServletResponse res) throws Exception {
+		List<InterestAreas> interestAreas = null;
+		try {
+
+			if (name != null && name != "") {
+				InterestAreas newInterest = new InterestAreas();
+				newInterest.setName(name);
+				mongoTemplate.save(newInterest);
+			}
+			interestAreas = mongoTemplate.findAll(InterestAreas.class);
+		} catch (Exception e) {
+			// throw e;
+			Util.handleException(e);
+			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
+		}
+		return BYGenericResponseHandler.getResponse(interestAreas);
+	}
+
+	/**
+	 * Add new health Challenges for user Profile
+	 */
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/healthChallenges" }, produces = { "application/json" })
+	@ResponseBody
+	public Object addHealthChallenges(@RequestParam(value = "name", required = false) String name,
+			HttpServletRequest request, HttpServletResponse res) throws Exception {
+		List<HealthChallenges> healthChallenges = null;
+		try {
+
+			if (name != null && name != "") {
+				HealthChallenges newChallenges = new HealthChallenges();
+				newChallenges.setName(name);
+				mongoTemplate.save(newChallenges);
+			}
+			healthChallenges = mongoTemplate.findAll(HealthChallenges.class);
+		} catch (Exception e) {
+			// throw e;
+			Util.handleException(e);
+			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
+		}
+		return BYGenericResponseHandler.getResponse(healthChallenges);
+	}
+
+	/**
+	 * Add new emotional Challenges for user Profile
+	 */
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/emotionalChallenges" }, produces = {
+			"application/json" })
+	@ResponseBody
+	public Object addEmotionalChallenges(@RequestParam(value = "name", required = false) String name,
+			HttpServletRequest request, HttpServletResponse res) throws Exception {
+		List<EmotionalChallenges> emotionalChallenges = null;
+		try {
+
+			if (name != null && name != "") {
+				EmotionalChallenges newChallenges = new EmotionalChallenges();
+				newChallenges.setName(name);
+				mongoTemplate.save(newChallenges);
+			}
+			emotionalChallenges = mongoTemplate.findAll(EmotionalChallenges.class);
+		} catch (Exception e) {
+			// throw e;
+			Util.handleException(e);
+			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
+		}
+		return BYGenericResponseHandler.getResponse(emotionalChallenges);
+	}
+
+	/**
+	 * Add new emotional Challenges for user Profile
+	 */
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/otherChallenges" }, produces = { "application/json" })
+	@ResponseBody
+	public Object addOtherChallenges(@RequestParam(value = "name", required = false) String name,
+			HttpServletRequest request, HttpServletResponse res) throws Exception {
+		List<OtherChallenges> otherChallenges = null;
+		try {
+
+			if (name != null && name != "") {
+				OtherChallenges newChallenges = new OtherChallenges();
+				newChallenges.setName(name);
+				mongoTemplate.save(newChallenges);
+			}
+			otherChallenges = mongoTemplate.findAll(OtherChallenges.class);
+		} catch (Exception e) {
+			// throw e;
+			Util.handleException(e);
+			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
+		}
+		return BYGenericResponseHandler.getResponse(otherChallenges);
 	}
 
 	private UserProfile mergeProfile(UserProfile oldProfile, UserProfile newProfile, User currentUser,
