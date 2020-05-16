@@ -7,11 +7,14 @@ import java.util.List;
 import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.domain.Product;
 import com.beautifulyears.domain.ProductCategory;
+import com.beautifulyears.domain.ProductRating;
 import com.beautifulyears.domain.User;
+import com.beautifulyears.repository.ProductRatingRepository;
 
 public class ProductResponse implements IResponse {
 
 	private List<ProductEntity> productArray = new ArrayList<ProductEntity>();
+	private static ProductRatingRepository productRatingRepository;
 
 	@Override
 	public List<ProductEntity> getResponse() {
@@ -98,6 +101,8 @@ public class ProductResponse implements IResponse {
 		private Date createdAt = new Date();
 		private Date lastModifiedAt = new Date();	
 		private boolean isEditableByUser = false;
+		private int ratingCount;
+		
 
 		public ProductEntity(Product product, User user) {
 			this.setId(product.getId());
@@ -122,6 +127,11 @@ public class ProductResponse implements IResponse {
 				)) {
 				this.setEditableByUser(true);
 			}
+
+			List<ProductRating> allProductRatings = new ArrayList<ProductRating>();
+			allProductRatings = productRatingRepository.findByProductId(product.getId());
+
+			this.setRatingCount(allProductRatings.size());
 		}
 
 		public boolean isEditableByUser() {
@@ -252,6 +262,14 @@ public class ProductResponse implements IResponse {
 			this.lastModifiedAt = lastModifiedAt;
 		}
 
+		public int getRatingCount() {
+			return ratingCount;
+		}
+
+		public void setRatingCount(int ratingCount) {
+			this.ratingCount = ratingCount;
+		}
+
 		
 		
 	}
@@ -276,7 +294,8 @@ public class ProductResponse implements IResponse {
 		this.productArray.add(new ProductEntity(product, user));
 	}
 
-	public static ProductPage getPage(PageImpl<Product> page, User user) {
+	public static ProductPage getPage(PageImpl<Product> page, User user,ProductRatingRepository productRatingRepo) {
+		productRatingRepository = productRatingRepo;
 		ProductPage res = new ProductPage(page, user);
 		return res;
 	}

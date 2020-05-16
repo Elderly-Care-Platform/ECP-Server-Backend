@@ -226,7 +226,7 @@ public class HomeSearchController {
 
 			Pageable pageable = new PageRequest(pageIndex, pageSize, sortDirection, sort);
 			page = productRepo.getPage(searchTxt, productCategory, pageable);
-			productPage = ProductResponse.getPage(page, currentUser);
+			productPage = ProductResponse.getPage(page, currentUser,null);
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
