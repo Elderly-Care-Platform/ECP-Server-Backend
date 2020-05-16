@@ -485,7 +485,7 @@ public class AskController {
 					userProfileRepo.getServiceProvidersByFilterCriteria(
 						searchTxt, userTypes, null, null, null, experties, pageable, fields,null,null,null,false),
 					null,
-					this.askQuesRepo
+					this.quesReplyRepo
 				);
 			if (userProfilePage.getContent().size() > 0) {
 				logger.debug("did not find any ask question expert");

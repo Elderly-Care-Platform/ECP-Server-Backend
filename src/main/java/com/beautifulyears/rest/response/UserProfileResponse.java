@@ -18,7 +18,7 @@ import com.beautifulyears.domain.ServiceSubCategoryMapping;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.domain.menu.Tag;
-import com.beautifulyears.repository.AskQuestionRepository;
+import com.beautifulyears.repository.AskQuestionReplyRepository;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -32,7 +32,7 @@ public class UserProfileResponse implements IResponse {
 
 	private List<UserProfileEntity> userProfileArray = new ArrayList<UserProfileEntity>();
 
-	private static AskQuestionRepository askQuestionRepo;
+	private static AskQuestionReplyRepository quesReplyRepo;
 	private static MongoTemplate mongoTemplate;
 
 	@Override
@@ -61,7 +61,7 @@ public class UserProfileResponse implements IResponse {
 		private int age;
 		private String workTitle;
 		private List<AskCategory> experties;
-		private long answersCount;
+		private long replyCount;
 		private String catName;
 
 		private List<UserProfileResponse.UserProfileEntity> serviceBranches = new ArrayList<UserProfileResponse.UserProfileEntity>();
@@ -88,11 +88,11 @@ public class UserProfileResponse implements IResponse {
 				this.setReviewedByUser(true);
 			}
 
-			if (UserProfileResponse.askQuestionRepo != null) {
-				this.setAnswersCount(
-						UserProfileResponse.askQuestionRepo.getCount(null, null, null, profile.getId(), true));
+			if (UserProfileResponse.quesReplyRepo != null) {
+				this.setReplyCount(
+						UserProfileResponse.quesReplyRepo.getReplyCount(profile.getUserId()));
 			} else {
-				this.setAnswersCount(0);
+				this.setReplyCount(0);
 			}
 
 			this.setRatingCount(profile.getRatedBy().size());
@@ -311,12 +311,12 @@ public class UserProfileResponse implements IResponse {
 			this.experties = experties;
 		}
 
-		public long getAnswersCount() {
-			return answersCount;
+		public long getReplyCount() {
+			return replyCount;
 		}
 
-		public void setAnswersCount(long answersCount) {
-			this.answersCount = answersCount;
+		public void setReplyCount(long replyCount) {
+			this.replyCount = replyCount;
 		}
 
 		public String getCatName() {
@@ -402,20 +402,20 @@ public class UserProfileResponse implements IResponse {
 	}
 
 	public static UserProfilePage getPage(PageImpl<UserProfile> page, User user,
-			AskQuestionRepository askQuestionRepo) {
-		UserProfileResponse.askQuestionRepo = askQuestionRepo;
+		AskQuestionReplyRepository quesReplyRepo) {
+		UserProfileResponse.quesReplyRepo = quesReplyRepo;
 		UserProfilePage res = new UserProfilePage(page, user);
 		return res;
 	}
 
 	public static UserProfilePage getPage(PageImpl<UserProfile> page, User user) {
-		UserProfileResponse.askQuestionRepo = null;
+		UserProfileResponse.quesReplyRepo = null;
 		UserProfilePage res = new UserProfilePage(page, user);
 		return res;
 	}
 
 	public static UserProfilePage getPage(PageImpl<UserProfile> page, User user, MongoTemplate mongoTemplate) {
-		UserProfileResponse.askQuestionRepo = null;
+		UserProfileResponse.quesReplyRepo = null;
 		UserProfileResponse.mongoTemplate = mongoTemplate;
 		UserProfilePage res = new UserProfilePage(page, user);
 		return res;

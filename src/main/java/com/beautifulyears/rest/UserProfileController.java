@@ -112,7 +112,8 @@ public class UserProfileController {
 		LoggerUtil.logEntry();
 		User sessionUser = Util.getSessionUser(req);
 		if (null == sessionUser || null == req.getSession().getAttribute("session")
-				|| !sessionUser.getId().equals(userId)) {
+				|| !(sessionUser.getUserRoleId().equals(BYConstants.USER_ROLE_EXPERT) || 
+					sessionUser.getId().equals(userId) ) ) {
 			throw new BYException(BYErrorCodes.INVALID_SESSION);
 		}
 		User userInfo = UserController.getUser(userId);

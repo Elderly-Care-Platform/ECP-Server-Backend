@@ -12,4 +12,5 @@ public interface AskQuestionReplyRepositoryCustom {
 	public long getCount(String searchTxt, String questionId);
 	
 	public long getReplyCount(String questionId, String answeredById);
+	public long getReplyCount(String answeredById);
 }
