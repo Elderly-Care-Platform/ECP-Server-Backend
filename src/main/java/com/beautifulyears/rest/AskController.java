@@ -420,7 +420,7 @@ public class AskController {
 						"<br/><br/>Sincerely,"+
 						"<br/>Bot@JoyofAge" +
 						"<br/><img style=\"background-color:#212942;padding:5px\" src=\"http://dev.joyofage.org/assets/images/Nav_logo.png\" alt=\"Logo JoyOfAge\">" +
-						"<br/>PS: Please ignore this email alert if you have already responded to this question.");
+						"<br/>PS: Please ignore this email alert if you have already viewed the expert’s response");
 				}
 				else{
 					question.setAnswered(true);
