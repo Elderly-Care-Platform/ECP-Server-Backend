@@ -413,14 +413,15 @@ public class AskController {
 				AskQuestion question = askQuesRepo.findOne(askQuestionReply.getAskQuestionId());
 				if(question.getAskedBy().getId().equals(askQuestionReplyExtracted.getUser().getId())){
 					question.setAnswered(false);
-					MailHandler.sendMailToUserId(question.getAnsweredBy().getUserId(), "A Joy of Age community member has added more details to a question for you", 
-						"Hi "+question.getAnsweredBy().getBasicProfileInfo().getFirstName()+",<br/>"+
-						"You have received more details to a private question from one of our community members related to your area of expertise.  Please log onto the Joy of Age website at www.joyofage.org to respond to our community member. "+
-						"<br/><br/>Thank you for your continued service to the Joy of Age community members."+
-						"<br/><br/>Sincerely,"+
-						"<br/>Bot@JoyofAge" +
-						"<br/><img style=\"background-color:#212942;padding:5px\" src=\"http://dev.joyofage.org/assets/images/Nav_logo.png\" alt=\"Logo JoyOfAge\">" +
-						"<br/>PS: Please ignore this email alert if you have already viewed the expert’s response");
+					MailHandler.sendMailToUserId(question.getAnsweredBy().getUserId(), "A question from the Joy of Age community member", 
+					"Hi "+question.getAnsweredBy().getBasicProfileInfo().getFirstName()+","+
+					"<br/><br/>One of our community member, "+ question.getAskedBy().getUserName() +" has asked a question related to your area of expertise. To see the question please sign into the Joy of Age website."+
+					"<br/><br/>In case you have any questions or need clarifications while responding to the question please reach out to admin@joyofage.org "+
+					"<br/><br/>Thank you for your continued support for the Joy of Age community for elders." +
+					"<br/><br/>Sincerely,"+
+					"<br/>Bot@JoyofAge" +
+					"<br/><img style=\"background-color:#212942;padding:5px\" src=\"http://dev.joyofage.org/assets/images/Nav_logo.png\" alt=\"Logo JoyOfAge\">" +
+					"<br/>PS: Please ignore this email alert if you have already responded to this question.");
 				}
 				else{
 					question.setAnswered(true);
