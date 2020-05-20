@@ -14,6 +14,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
+import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.constants.DiscussConstants;
 import com.beautifulyears.domain.Discuss;
 import com.beautifulyears.domain.menu.Menu;
@@ -54,7 +55,7 @@ public class DiscussRepositoryImpl implements DiscussRepositoryCustom {
 			// get category list
 			List<Menu> catList = null;
 			Query query = new Query();
-			query.addCriteria(Criteria.where("parentMenuId").is("564071623e60f5b66f62df27"));
+			query.addCriteria(Criteria.where("parentMenuId").is(BYConstants.DISCUSSION_PARENT_MENU_ID));
 			if(searchTxt != null && !searchTxt.isEmpty()){
 				query.addCriteria(Criteria.where("displayMenuName").regex(searchTxt,"i"));
 			}

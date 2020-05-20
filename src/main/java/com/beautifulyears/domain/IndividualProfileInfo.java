@@ -16,9 +16,9 @@ public class IndividualProfileInfo {
 	@TextIndexed(weight = 1)
 	private String lastName;
 
-	private int gender; // 0: female, 1: male.
+	private Integer gender; // 0: female, 1: male.
 
-	private Date dob;
+	private String dob;
 
 	private Map<String, Date> otherDates;
 
@@ -68,19 +68,19 @@ public class IndividualProfileInfo {
 		this.lastName = lastName;
 	}
 
-	public int getGender() {
+	public Integer getGender() {
 		return gender;
 	}
 
-	public void setGender(int gender) {
+	public void setGender(Integer gender) {
 		this.gender = gender;
 	}
 
-	public Date getDob() {
+	public String getDob() {
 		return dob;
 	}
 
-	public void setDob(Date dob) {
+	public void setDob(String dob) {
 		this.dob = dob;
 	}
 

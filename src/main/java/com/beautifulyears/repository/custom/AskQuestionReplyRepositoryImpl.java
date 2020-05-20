@@ -58,4 +58,12 @@ public class AskQuestionReplyRepositoryImpl implements AskQuestionReplyRepositor
 		return count;
 	}
 
+	@Override
+	public long getReplyCount(String answerById) {
+		long count = 0;
+		Query query = new Query();
+		query.addCriteria(Criteria.where("user.$id").is(new ObjectId(answerById)));
+		count = this.mongoTemplate.count(query, AskQuestionReply.class);
+		return count;
+	}
 }

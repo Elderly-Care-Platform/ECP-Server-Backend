@@ -145,16 +145,15 @@ public class AskController {
 				askQuesExpert = userProfileRepo.findOne(askQues.getAnsweredBy().getId());
 				logHandler.addLog(askQues, ActivityLogConstants.CRUD_TYPE_CREATE, request);
 				logger.info("new ask question entity created with ID: " + askQues.getId());
-				MailHandler.sendMailToUserId(askQuesExpert.getUserId(), "JoyOfAge - New Question for you", 
-				"Hi "+ askQuesExpert.getBasicProfileInfo().getFirstName() +",<br/>"+
-				"One of our users has asked a question related to your area of expertise.<br/><br/>"+
-				"<b>" + askQues.getQuestion() + "</b><br/>"+
-				askQues.getDescription() + "<br/><br/>"+
-				"Please log on to <www.joyofage.org> to respond. In case you have any questions or need clarifications while responding to the question please reach out to admin@joyofage.org<br/><br/>"+
-				"Please ignore this email alert if you have already responded to this question." +
-				"<br/><br/>Best Regards<br/>" +
-				"<img style=\"background-color:#212942;padding:5px\" src=\"http://dev.joyofage.org/assets/images/Nav_logo.png\" alt=\"Logo JoyOfAge\">" +
-				"<br/><br/>JoyOfAge Team");
+				MailHandler.sendMailToUserId(askQuesExpert.getUserId(), "A question from the Joy of Age community member", 
+						"Hi "+askQuesExpert.getBasicProfileInfo().getFirstName()+","+
+						"<br/><br/>One of our community member, "+ askQues.getAskedBy().getUserName() +" has asked a question related to your area of expertise. To see the question please sign into the Joy of Age website."+
+						"<br/><br/>In case you have any questions or need clarifications while responding to the question please reach out to admin@joyofage.org "+
+						"<br/><br/>Thank you for your continued support for the Joy of Age community for elders." +
+						"<br/><br/>Sincerely,"+
+						"<br/>Bot@JoyofAge" +
+						"<br/><img style=\"background-color:#212942;padding:5px\" src=\"http://dev.joyofage.org/assets/images/Nav_logo.png\" alt=\"Logo JoyOfAge\">" +
+						"<br/>PS: Please ignore this email alert if you have already responded to this question.");
 			} else {
 				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
 			}
@@ -414,26 +413,26 @@ public class AskController {
 				AskQuestion question = askQuesRepo.findOne(askQuestionReply.getAskQuestionId());
 				if(question.getAskedBy().getId().equals(askQuestionReplyExtracted.getUser().getId())){
 					question.setAnswered(false);
-					MailHandler.sendMailToUserId(question.getAnsweredBy().getUserId(), "JoyOfAge - Response from user", 
-						"Hi,<br/>"+
-						"This is to inform that questioner responded to question "+
-						"<b>" + question.getQuestion() + "</b> "+
-						"answered by you. Some more details provided by questioner as follows.<br/><br/>"+
-						askQuestionReply.getReply() + "<br/>" + 
-						"Requesting you to please respond."+
-						"<br/><br/>Best Regards<br/>" +
-						"<img style=\"background-color:#212942;padding:5px\" src=\"http://dev.joyofage.org/assets/images/Nav_logo.png\" alt=\"Logo JoyOfAge\">" +
-						"<br/><br/>JoyOfAge Team");
+					MailHandler.sendMailToUserId(question.getAnsweredBy().getUserId(), "A question from the Joy of Age community member", 
+					"Hi "+question.getAnsweredBy().getBasicProfileInfo().getFirstName()+","+
+					"<br/><br/>One of our community member, "+ question.getAskedBy().getUserName() +" has asked a question related to your area of expertise. To see the question please sign into the Joy of Age website."+
+					"<br/><br/>In case you have any questions or need clarifications while responding to the question please reach out to admin@joyofage.org "+
+					"<br/><br/>Thank you for your continued support for the Joy of Age community for elders." +
+					"<br/><br/>Sincerely,"+
+					"<br/>Bot@JoyofAge" +
+					"<br/><img style=\"background-color:#212942;padding:5px\" src=\"http://dev.joyofage.org/assets/images/Nav_logo.png\" alt=\"Logo JoyOfAge\">" +
+					"<br/>PS: Please ignore this email alert if you have already responded to this question.");
 				}
 				else{
 					question.setAnswered(true);
-					MailHandler.sendMailToUserId(question.getAskedBy().getId(), "JoyOfAge - Response from expert", 
-						"Hi,<br/>"+
-						"This is to inform that expert replied to question <b>"+question.getQuestion()+"</b> asked by you.<br/>"+
-						"Expert reply is as follows.<br/><br/>"+askQuestionReply.getReply() + 
-						"<br/><br/>Best Regards<br/>" +
-						"<img style=\"background-color:#212942;padding:5px\" src=\"http://dev.joyofage.org/assets/images/Nav_logo.png\" alt=\"Logo JoyOfAge\">" +
-						"<br/><br/>JoyOfAge Team");
+					MailHandler.sendMailToUserId(question.getAskedBy().getId(), "A Joy of Age Expert has responded to your question", 
+						"Hi "+question.getAskedBy().getUserName()+","+
+						"<br/><br/>Our Joy of Age expert, "+ question.getAnsweredBy().getBasicProfileInfo().getFirstName() +" has responded to your question.  To see the response please sign into the Joy of Age website."+
+						"<br/><br/>Thank you for being an active member of the Joy of Age community for elders."+ 
+						"<br/><br/>Sincerely,"+
+						"<br/>Bot@JoyofAge" +
+						"<br/><img style=\"background-color:#212942;padding:5px\" src=\"http://dev.joyofage.org/assets/images/Nav_logo.png\" alt=\"Logo JoyOfAge\">" +
+						"<br/>PS: Please ignore this email alert if you have already responded to this question.");
 				}
 				askQuesRepo.save(question);
 				logHandlerRep.addLog(askQuestionReply, ActivityLogConstants.CRUD_TYPE_CREATE, request);
@@ -485,7 +484,7 @@ public class AskController {
 					userProfileRepo.getServiceProvidersByFilterCriteria(
 						searchTxt, userTypes, null, null, null, experties, pageable, fields,null,null,null,false),
 					null,
-					this.askQuesRepo
+					this.quesReplyRepo
 				);
 			if (userProfilePage.getContent().size() > 0) {
 				logger.debug("did not find any ask question expert");
