@@ -116,8 +116,8 @@ public class UserProfileController {
 		LoggerUtil.logEntry();
 		User sessionUser = Util.getSessionUser(req);
 		if (null == sessionUser || null == req.getSession().getAttribute("session")
-				|| !(sessionUser.getUserRoleId().equals(BYConstants.USER_ROLE_EXPERT) || 
-					sessionUser.getId().equals(userId) ) ) {
+				|| !(sessionUser.getUserRoleId().equals(BYConstants.USER_ROLE_EXPERT)
+						|| sessionUser.getId().equals(userId))) {
 			throw new BYException(BYErrorCodes.INVALID_SESSION);
 		}
 		User userInfo = UserController.getUser(userId);
@@ -1080,11 +1080,17 @@ public class UserProfileController {
 			if (reportService != null && (!Util.isEmpty(reportService.getServiceId()))) {
 				try {
 					UserProfile userProfile = null;
+					JustDailServices JdService = null;
 
 					// Get service
 					Query query = new Query();
 					query.addCriteria(Criteria.where("id").is(reportService.getServiceId()));
 					userProfile = mongoTemplate.findOne(query, UserProfile.class);
+
+					// Get JD service
+					Query jdQuery = new Query();
+					jdQuery.addCriteria(Criteria.where("serviceInfo.docid").is(reportService.getServiceId()));
+					JdService = mongoTemplate.findOne(jdQuery, JustDailServices.class);
 
 					if (userProfile != null) {
 						ReportService reportServiceExtra = new ReportService(reportService.getServiceId(),
@@ -1100,6 +1106,18 @@ public class UserProfileController {
 										+ ", cause: " + reportService.getCause(),
 								body);
 
+					} else if (JdService != null) {
+						ReportService reportServiceExtra = new ReportService(reportService.getServiceId(),
+								currentUser.getId(), reportService.getCause(), reportService.getComment());
+
+						reportService = reportServiceRepository.save(reportServiceExtra);
+						String body = reportService.getComment() + "\r\nService Contact\r\n"
+								+ JdService.getServiceInfo().get("email") + "\r\n"
+								+ JdService.getServiceInfo().get("contact");
+						MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
+								"Justdial Service Provider Reported: Name: " + JdService.getServiceInfo().get("name")
+										+ ", cause: " + reportService.getCause(),
+								body);
 					}
 				} catch (Exception e) {
 					Util.handleException(e);
