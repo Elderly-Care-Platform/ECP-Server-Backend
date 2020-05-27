@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.mail.MailHandler;
 import com.beautifulyears.util.Util;
@@ -46,9 +47,8 @@ public class Mailer {
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "", produces = MediaType.TEXT_PLAIN_VALUE)
-	public @ResponseBody Object sendBulkMail(
-			@RequestBody List<String> emails,
-			HttpServletRequest req, HttpServletResponse res) throws Exception {
+	public @ResponseBody Object sendBulkMail(@RequestBody List<String> emails, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
 		User currentUser = Util.getSessionUser(req);
 		StringBuffer userEmails = new StringBuffer();
 
@@ -60,8 +60,7 @@ public class Mailer {
 					if (null != email) {
 						userEmails.append(email).append(",");
 						Thread.sleep(1000);
-						MailHandler.sendMultipleMail(Arrays.asList(email),
-								subject, text);
+						MailHandler.sendMultipleMail(Arrays.asList(email), subject, text);
 					}
 
 				}
@@ -72,8 +71,7 @@ public class Mailer {
 					if (null != user.getEmail()) {
 						userEmails.append(user.getEmail()).append(",");
 						Thread.sleep(1000);
-						MailHandler.sendMultipleMail(
-								Arrays.asList(user.getEmail()), subject, text);
+						MailHandler.sendMultipleMail(Arrays.asList(user.getEmail()), subject, text);
 					}
 
 				}
@@ -81,6 +79,16 @@ public class Mailer {
 
 		}
 		return "{\"name\":\"" + userEmails.toString() + "\"}";
+	}
+
+	@RequestMapping(method = RequestMethod.GET, value = "toAdmin", produces = MediaType.TEXT_PLAIN_VALUE)
+	public @ResponseBody Object sendMailToAdmin(@RequestParam(value = "message", required = true) String message,
+			@RequestParam(value = "subject", required = false, defaultValue = "") String subject,
+			HttpServletRequest req, HttpServletResponse res) throws Exception {
+
+		MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS, subject, message);
+
+		return "{\"status\":\"" + "Email Sent to admin" + "\"}";
 	}
 
 }
