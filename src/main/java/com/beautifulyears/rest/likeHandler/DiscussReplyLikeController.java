@@ -209,7 +209,7 @@ public class DiscussReplyLikeController extends LikeController<DiscussReply> {
 						resourceUtil.getResource("likedBy"), userName,
 						replyTypeString, title, likedBy, url, url);
 				MailHandler.sendMailToUserId(LikedEntity.getUserId(), "Your "
-						+ replyTypeString + " was liked on beautifulYears.com",
+						+ replyTypeString + " was liked on joyofage.org",
 						body);
 			}
 		} catch (Exception e) {

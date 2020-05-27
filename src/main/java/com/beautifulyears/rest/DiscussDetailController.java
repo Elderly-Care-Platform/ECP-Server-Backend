@@ -398,7 +398,7 @@ public class DiscussDetailController {
 						.sendMailToUserId(
 								discuss.getUserId(),
 								replyTypeString
-										+ " is posted on your content at beautifulYears.com",
+										+ " is posted on your content at joyofage.org",
 								body);
 			}
 		} catch (Exception e) {
@@ -426,7 +426,7 @@ public class DiscussDetailController {
 				MailHandler
 						.sendMailToUserId(
 								reply.getUserId(),
-								"A comment is posted on your comment at beautifulYears.com",
+								"A comment is posted on your comment at joyofage.org",
 								body);
 			}
 		} catch (Exception e) {
