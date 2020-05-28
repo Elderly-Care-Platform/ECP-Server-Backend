@@ -401,7 +401,7 @@ public class ReviewController {
 					String path = review.getUrl();
 					String body = MessageFormat.format(resourceUtil.getResource("reviewOnProfile"), userName, path);
 					MailHandler.sendMailToUserId(reviewedEntity.getUserId(),
-							"Your " + replyTypeString + " was reviewed on beautifulYears.com", body);
+							"Your " + replyTypeString + " was reviewed on joyofage.org", body);
 				}
 				break;
 			default:
