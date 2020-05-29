@@ -39,6 +39,8 @@ import com.beautifulyears.domain.ServiceSubCategory;
 import com.beautifulyears.domain.ServiceSubCategoryMapping;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserProfile;
+import com.beautifulyears.exceptions.BYErrorCodes;
+import com.beautifulyears.exceptions.BYException;
 import com.beautifulyears.justdial.JustDialHandler;
 import com.beautifulyears.repository.JustDialSerivcesRepository;
 import com.beautifulyears.repository.JustDialSettingsRepository;
@@ -143,7 +145,8 @@ public class SearchController {
 	/**
 	 * Search Service (autocomplete)
 	 */
-	@RequestMapping(method = { RequestMethod.POST }, value = { "/servicePageSearch" }, produces = { "application/json" })
+	@RequestMapping(method = { RequestMethod.POST }, value = { "/servicePageSearch" }, produces = {
+			"application/json" })
 	@ResponseBody
 	public Object getServicePage(@RequestParam(value = "term", required = false) String term,
 			@RequestParam(value = "catName", required = false) String catName,
@@ -317,11 +320,15 @@ public class SearchController {
 		// Get record limit from setting
 		List<JustDailSetting> Jdsettings = justDialSettingsRepository.findAll();
 		Integer limit = Jdsettings.get(0).getLimit();
+		if (Jdsettings == null || limit == 0 || limit == null) {
+			throw new BYException(BYErrorCodes.NO_JD_SETTINGS);
+		}
+
 		// Get all DB categories
 		List<ServiceCategoriesMapping> allCategories = this.serviceCategoriesMappingRepository.findAll();
 		// List<JustDailServices> justdailServiceList = new ArrayList<>();
-		HashMap<String,Integer> jdResponse = new HashMap<>();
-		Integer newRec =0;
+		HashMap<String, Integer> jdResponse = new HashMap<>();
+		Integer newRec = 0;
 		Integer updatedRec = 0;
 
 		try {
@@ -357,7 +364,7 @@ public class SearchController {
 							jdservice.setServiceInfo(result);
 							// justdailServiceList.add(jdservice);
 							justDialSerivcesRepository.save(jdservice);
-							newRec ++;
+							newRec++;
 						} else {
 							existingSerivceProfiles.setServiceInfo(result);
 							justDialSerivcesRepository.save(existingSerivceProfiles);
@@ -371,7 +378,7 @@ public class SearchController {
 			jdResponse.put("Total Records Added", newRec);
 			jdResponse.put("Total Records Updated", updatedRec);
 			// if (justdailServiceList.size() > 0) {
-			// 	justDialSerivcesRepository.save(justdailServiceList);
+			// justDialSerivcesRepository.save(justdailServiceList);
 			// }
 		} catch (Exception e) {
 			// throw e;
