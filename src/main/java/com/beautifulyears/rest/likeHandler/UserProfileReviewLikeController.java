@@ -125,7 +125,7 @@ public class UserProfileReviewLikeController extends
 						resourceUtil.getResource("likedBy"), userName,
 						replyTypeString, title, likedBy, url, url);
 				MailHandler.sendMailToUserId(likedEntity.getUserId(), "Your "
-						+ replyTypeString + " was liked on beautifulYears.com",
+						+ replyTypeString + " was liked on joyofage.org",
 						body);
 			}
 		} catch (Exception e) {

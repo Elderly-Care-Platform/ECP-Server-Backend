@@ -182,7 +182,7 @@ public class DiscussLikeController extends LikeController<Discuss> {
 						resourceUtil.getResource("likedBy"), userName,
 						"content", title, likingUser, url, url);
 				MailHandler.sendMailToUserId(LikedEntity.getUserId(),
-						"Your content was liked on beautifulYears.com", body);
+						"Your content was liked on joyofage.org", body);
 			}
 		} catch (Exception e) {
 			logger.error(BYErrorCodes.ERROR_IN_SENDING_MAIL);
