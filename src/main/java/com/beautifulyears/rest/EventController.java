@@ -324,7 +324,7 @@ public class EventController {
 
 						MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
 								"Alert: An Event Organizer has been reported by a member!",
-								"The event organizer "+ event.getOrganiser() +" for the event <Title of the Event> has been reported by <Reporting user’s name>.  Please log into the Administrator panel to review the report."+
+								"The event organizer "+ event.getOrganiser() +" for the event " + event.getTitle() + " has been reported by " + currentUser.getUserName() + ".  Please log into the Administrator panel to review the report."+
 								"<br/><br/>Based on your review please take necessary actions and inform "+ currentUser.getUserName() +" the actions that you are taking.  If necessary please inform the Event Organizer "+ event.getOrganiser() +" about the report against the event."+ 
 								"<br/><br/>Sincerely,"+
 								"<br/>Bot@JoyofAge" +
