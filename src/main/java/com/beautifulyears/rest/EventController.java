@@ -121,13 +121,14 @@ public class EventController {
 					event.getCapacity(), 
 					event.getEntryFee(), 
 					event.getEventType(), 
-					event.getStatus(), 
+					1, 
 					event.getAddress(), 
 					event.getLandmark(), 
 					event.getLanguages(), 
 					event.getOrganiser(), 
 					event.getOrgPhone(), 
-					event.getOrgEmail());
+					event.getOrgEmail(),
+					currentUser.getId());
 
 				event = eventRepository.save(eventExtracted);
 				logHandler.addLog(event, ActivityLogConstants.CRUD_TYPE_CREATE, request);
@@ -321,12 +322,14 @@ public class EventController {
 
 						reportEvent = reportEventRepository.save(reportEventExtra);
 
-						String body = reportEvent.getComment() + "\r\nEvent Reported By:\r\n"
-								+ userProfile.getBasicProfileInfo().getPrimaryEmail() + "\r\n"
-								+ userProfile.getBasicProfileInfo().getPrimaryPhoneNo();
 						MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
-								"Event Reported: " + event.getTitle(),
-								body);
+								"Alert: An Event Organizer has been reported by a member!",
+								"The event organizer "+ event.getOrganiser() +" for the event <Title of the Event> has been reported by <Reporting user’s name>.  Please log into the Administrator panel to review the report."+
+								"<br/><br/>Based on your review please take necessary actions and inform "+ currentUser.getUserName() +" the actions that you are taking.  If necessary please inform the Event Organizer "+ event.getOrganiser() +" about the report against the event."+ 
+								"<br/><br/>Sincerely,"+
+								"<br/>Bot@JoyofAge" +
+								"<br/><img style=\"background-color:#212942;padding:5px\" src=\"http://dev.joyofage.org/assets/images/Nav_logo.png\" alt=\"Logo JoyOfAge\">" +
+								"<br/>PS: Please ignore this email alert if you have already responded to this question.");
 					}
 				} catch (Exception e) {
 					Util.handleException(e);
