@@ -1092,33 +1092,52 @@ public class UserProfileController {
 					jdQuery.addCriteria(Criteria.where("serviceInfo.docid").is(reportService.getServiceId()));
 					JdService = mongoTemplate.findOne(jdQuery, JustDailServices.class);
 
-					if (userProfile != null) {
-						ReportService reportServiceExtra = new ReportService(reportService.getServiceId(),
-								currentUser.getId(), reportService.getCause(), reportService.getComment());
-
-						reportService = reportServiceRepository.save(reportServiceExtra);
-
-						String body = reportService.getComment() + "\r\nService Contact\r\n"
-								+ userProfile.getBasicProfileInfo().getPrimaryEmail() + "\r\n"
-								+ userProfile.getBasicProfileInfo().getPrimaryPhoneNo();
-						MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
-								"Service Provider Reported: Name: " + userProfile.getBasicProfileInfo().getFirstName()
-										+ ", cause: " + reportService.getCause(),
-								body);
-
-					} else if (JdService != null) {
-						ReportService reportServiceExtra = new ReportService(reportService.getServiceId(),
-								currentUser.getId(), reportService.getCause(), reportService.getComment());
-
-						reportService = reportServiceRepository.save(reportServiceExtra);
-						String body = reportService.getComment() + "\r\nService Contact\r\n"
-								+ JdService.getServiceInfo().get("email") + "\r\n"
-								+ JdService.getServiceInfo().get("contact");
-						MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
-								"Justdial Service Provider Reported: Name: " + JdService.getServiceInfo().get("name")
-										+ ", cause: " + reportService.getCause(),
-								body);
+					ReportService reportServiceExtra = new ReportService(reportService.getServiceId(),
+							currentUser.getId(), reportService.getCause(), reportService.getComment());
+					reportService = reportServiceRepository.save(reportServiceExtra);
+					String name = "";
+					if(JdService != null){
+						name = "" + JdService.getServiceInfo().get("name");
 					}
+					else if(userProfile != null){
+						name = userProfile.getBasicProfileInfo().getFirstName();
+					}
+					MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
+								"Alert: A service provider has been reported by a member!",
+								"The service provider "+ name +" reported by "+ currentUser.getUserName() +".  Please log into the Administrator panel to review the report."+
+								"<br/><br/>Based on your review please take necessary actions and inform "+ currentUser.getUserName() +" the actions that you are taking."+ 
+								"<br/><br/>Sincerely,"+
+								"<br/>Bot@JoyofAge" +
+								"<br/><img style=\"background-color:#212942;padding:5px\" src=\"http://dev.joyofage.org/assets/images/Nav_logo.png\" alt=\"Logo JoyOfAge\">" +
+								"<br/>PS: Please ignore this email alert if you have already responded to this question.");
+
+					// if (userProfile != null) {
+					// 	ReportService reportServiceExtra = new ReportService(reportService.getServiceId(),
+					// 			currentUser.getId(), reportService.getCause(), reportService.getComment());
+
+					// 	reportService = reportServiceRepository.save(reportServiceExtra);
+
+					// 	String body = reportService.getComment() + "\r\nService Contact\r\n"
+					// 			+ userProfile.getBasicProfileInfo().getPrimaryEmail() + "\r\n"
+					// 			+ userProfile.getBasicProfileInfo().getPrimaryPhoneNo();
+					// 	MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
+					// 			"Service Provider Reported: Name: " + userProfile.getBasicProfileInfo().getFirstName()
+					// 					+ ", cause: " + reportService.getCause(),
+					// 			body);
+
+					// } else if (JdService != null) {
+					// 	ReportService reportServiceExtra = new ReportService(reportService.getServiceId(),
+					// 			currentUser.getId(), reportService.getCause(), reportService.getComment());
+
+					// 	reportService = reportServiceRepository.save(reportServiceExtra);
+					// 	String body = reportService.getComment() + "\r\nService Contact\r\n"
+					// 			+ JdService.getServiceInfo().get("email") + "\r\n"
+					// 			+ JdService.getServiceInfo().get("contact");
+					// 	MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
+					// 			"Justdial Service Provider Reported: Name: " + JdService.getServiceInfo().get("name")
+					// 					+ ", cause: " + reportService.getCause(),
+					// 			body);
+					// }
 				} catch (Exception e) {
 					Util.handleException(e);
 				}
