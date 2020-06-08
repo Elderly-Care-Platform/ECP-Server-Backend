@@ -32,11 +32,13 @@ import com.beautifulyears.domain.Discuss;
 import com.beautifulyears.domain.HousingFacility;
 import com.beautifulyears.domain.JustDailServices;
 import com.beautifulyears.domain.JustDailSetting;
+import com.beautifulyears.domain.JustDialServicesLogs;
 import com.beautifulyears.domain.JustdialToken;
 import com.beautifulyears.domain.ServiceCategories;
 import com.beautifulyears.domain.ServiceCategoriesMapping;
 import com.beautifulyears.domain.ServiceSubCategory;
 import com.beautifulyears.domain.ServiceSubCategoryMapping;
+import com.beautifulyears.domain.ServicesStatus;
 import com.beautifulyears.domain.User;
 import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.exceptions.BYErrorCodes;
@@ -317,21 +319,28 @@ public class SearchController {
 	@ResponseBody
 	public Object fetchJustDailServices(HttpServletRequest request) throws Exception {
 
-		// Get record limit from setting
-		List<JustDailSetting> Jdsettings = justDialSettingsRepository.findAll();
-		Integer limit = Jdsettings.get(0).getLimit();
-		if (Jdsettings == null || limit == 0 || limit == null) {
-			throw new BYException(BYErrorCodes.NO_JD_SETTINGS);
-		}
-
-		// Get all DB categories
-		List<ServiceCategoriesMapping> allCategories = this.serviceCategoriesMappingRepository.findAll();
-		// List<JustDailServices> justdailServiceList = new ArrayList<>();
+		// Record service log
+		JustDialServicesLogs JdServiceLog = new JustDialServicesLogs();
+		JdServiceLog.setExecutionStart(new Date());
 		HashMap<String, Integer> jdResponse = new HashMap<>();
-		Integer newRec = 0;
-		Integer updatedRec = 0;
-
+		// Get record limit from setting
 		try {
+			List<JustDailSetting> Jdsettings = justDialSettingsRepository.findAll();
+			Integer limit = Jdsettings.get(0).getLimit();
+			if (Jdsettings == null || limit == 0 || limit == null) {
+				JdServiceLog.setError(BYErrorCodes.NO_JD_SETTINGS.getMsg());
+				JdServiceLog.setStatus(ServicesStatus.FAILURE);
+				JdServiceLog.setExecutionEnd(new Date());
+				mongoTemplate.save(JdServiceLog);
+				throw new BYException(BYErrorCodes.NO_JD_SETTINGS);
+			}
+
+			// Get all DB categories
+			List<ServiceCategoriesMapping> allCategories = this.serviceCategoriesMappingRepository.findAll();
+			// List<JustDailServices> justdailServiceList = new ArrayList<>();
+			Integer newRec = 0;
+			Integer updatedRec = 0;
+
 			for (ServiceCategoriesMapping category : allCategories) {
 				List<CompletableFuture<JSONObject>> allFutures = new ArrayList<>();
 				for (ServiceSubCategoryMapping subCategory : category.getSubCategories()) {
@@ -377,11 +386,22 @@ public class SearchController {
 			}
 			jdResponse.put("Total Records Added", newRec);
 			jdResponse.put("Total Records Updated", updatedRec);
+
+			JdServiceLog.setStatus(ServicesStatus.SUCCESS);
+			JdServiceLog.setRecordsAdded(newRec);
+			JdServiceLog.setRecordsUpdated(updatedRec);
+			JdServiceLog.setExecutionEnd(new Date());
+			mongoTemplate.save(JdServiceLog);
 			// if (justdailServiceList.size() > 0) {
 			// justDialSerivcesRepository.save(justdailServiceList);
 			// }
 		} catch (Exception e) {
 			// throw e;
+			JdServiceLog.setError(e.toString());
+			JdServiceLog.setStatus(ServicesStatus.FAILURE);
+			JdServiceLog.setExecutionEnd(new Date());
+			mongoTemplate.save(JdServiceLog);
+
 			Util.handleException(e);
 			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
 		}
