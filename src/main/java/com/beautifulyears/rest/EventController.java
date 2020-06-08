@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.beautifulyears.constants.ActivityLogConstants;
 import com.beautifulyears.constants.BYConstants;
+import com.beautifulyears.constants.EventConstants;
 import com.beautifulyears.domain.Event;
 import com.beautifulyears.domain.ReportEvent;
 import com.beautifulyears.domain.User;
@@ -121,7 +122,7 @@ public class EventController {
 					event.getCapacity(), 
 					event.getEntryFee(), 
 					event.getEventType(), 
-					1, 
+					EventConstants.EVENT_STATUS_SUGGESTED, 
 					event.getAddress(), 
 					event.getLandmark(), 
 					event.getLanguages(), 
