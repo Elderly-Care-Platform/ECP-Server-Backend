@@ -69,6 +69,7 @@ public class AskController {
 	private AskQuestionRepository askQuesRepo;
 	private AskCategoryRepository askCatRepo;
 	private UserProfileRepository userProfileRepo;
+	private UserRepository userRepo;
 	private AskQuestionReplyRepository quesReplyRepo;
 	private MongoTemplate mongoTemplate;
 	ActivityLogHandler<AskQuestion> logHandler;
@@ -85,6 +86,7 @@ public class AskController {
 		this.askQuesRepo = askQuesRepo;
 		this.askCatRepo = askCatRepo;
 		this.userProfileRepo = userProfileRepo;
+		this.userRepo = userRepository;
 		this.quesReplyRepo = quesReplyRepo;
 		this.mongoTemplate = mongoTemplate;
 		logHandler = new AskQuestionActivityLogHandler(mongoTemplate);
@@ -129,6 +131,7 @@ public class AskController {
 		LoggerUtil.logEntry();
 		User currentUser = Util.getSessionUser(request);
 		UserProfile askQuesExpert = null;
+		User askQuesUser = null;
 		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "ASK")) {
 			if (askQues != null && (Util.isEmpty(askQues.getId()))) {
 				
@@ -143,11 +146,12 @@ public class AskController {
 
 				askQues = askQuesRepo.save(askQuesExtracted);
 				askQuesExpert = userProfileRepo.findOne(askQues.getAnsweredBy().getId());
+				askQuesUser = userRepo.findOne(askQues.getAskedBy().getId());
 				logHandler.addLog(askQues, ActivityLogConstants.CRUD_TYPE_CREATE, request);
 				logger.info("new ask question entity created with ID: " + askQues.getId());
 				MailHandler.sendMailToUserId(askQuesExpert.getUserId(), "A question from the Joy of Age community member", 
 						"Hi "+askQuesExpert.getBasicProfileInfo().getFirstName()+","+
-						"<br/><br/>One of our community member, "+ askQues.getAskedBy().getUserName() +" has asked a question related to your area of expertise. To see the question please sign into the Joy of Age website."+
+						"<br/><br/>One of our community member, "+ askQuesUser.getUserName() +" has asked a question related to your area of expertise. To see the question please sign into the Joy of Age website."+
 						"<br/><br/>In case you have any questions or need clarifications while responding to the question please reach out to admin@joyofage.org "+
 						"<br/><br/>Thank you for your continued support for the Joy of Age community for elders." +
 						"<br/><br/>Sincerely,"+
