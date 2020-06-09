@@ -1108,7 +1108,7 @@ public class UserProfileController {
 								"<br/><br/>Based on your review please take necessary actions and inform "+ currentUser.getUserName() +" the actions that you are taking."+ 
 								"<br/><br/>Sincerely,"+
 								"<br/>Bot@JoyofAge" +
-								"<br/><img style=\"background-color:#212942;padding:5px\" src=\"http://dev.joyofage.org/assets/images/Nav_logo.png\" alt=\"Logo JoyOfAge\">" +
+								"<br/><img style=\"background-color:#212942;padding:5px\" src=\"https://dev.joyofage.org/assets/images/JOA%20Logo%20Light%20RGB.svg\" alt=\"Logo JoyOfAge\">" +
 								"<br/>PS: Please ignore this email alert if you have already responded to this question.");
 
 					// if (userProfile != null) {
