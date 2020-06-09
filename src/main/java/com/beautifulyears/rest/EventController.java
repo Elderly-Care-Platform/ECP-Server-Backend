@@ -351,4 +351,35 @@ public class EventController {
 		return BYGenericResponseHandler.getResponse(reportEvent);
 
 	}
+
+	/**
+	 * Send mail to admin regardign all suggested events
+	 */
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/fetchSuggestedEvents" }, produces = {
+		"application/json" })
+	@ResponseBody
+	public Object fetchSuggestedEvents(HttpServletRequest request) throws Exception {
+		try {
+			String message = "";
+			List<Event> events = eventRepository.getSuggestedEvents();
+			for (Event event : events) {
+				message += event.getTitle() + "<br/>";
+			}
+			if(message.equals("")){
+				message = "No events found.";
+			}
+			MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
+								"Alert: Suggested events waiting for approval",
+								"List of evetns waiting for approval:"+
+								"<br/><br/>"+
+								message+
+								"<br/><br/>Sincerely,"+
+								"<br/>Bot@JoyofAge" +
+								"<br/><img style=\"background-color:#212942;padding:5px\" src=\"http://dev.joyofage.org/assets/images/Nav_logo.png\" alt=\"Logo JoyOfAge\">" +
+								"<br/>PS: Please ignore this email alert if you have already responded to this question.");
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+		return BYGenericResponseHandler.getResponse("success");
+	}
 }
