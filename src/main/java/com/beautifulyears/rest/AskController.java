@@ -156,7 +156,7 @@ public class AskController {
 						"<br/><br/>Thank you for your continued support for the Joy of Age community for elders." +
 						"<br/><br/>Sincerely,"+
 						"<br/>Bot@JoyofAge" +
-						"<br/><img style=\"background-color:#212942;padding:5px\" src=\"https://dev.joyofage.org/assets/images/JOA%20Logo%20Light%20RGB.svg\" alt=\"Logo JoyOfAge\">" +
+						"<br/><img style=\"background-color:#212942;padding:5px\" src=\"https://dev.joyofage.org/assets/images/JOA_Logo_Light_RGB.svg\" alt=\"Logo JoyOfAge\">" +
 						"<br/>PS: Please ignore this email alert if you have already responded to this question.");
 			} else {
 				throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
@@ -424,7 +424,7 @@ public class AskController {
 					"<br/><br/>Thank you for your continued support for the Joy of Age community for elders." +
 					"<br/><br/>Sincerely,"+
 					"<br/>Bot@JoyofAge" +
-					"<br/><img style=\"background-color:#212942;padding:5px\" src=\"https://dev.joyofage.org/assets/images/JOA%20Logo%20Light%20RGB.svg\" alt=\"Logo JoyOfAge\">" +
+					"<br/><img style=\"background-color:#212942;padding:5px\" src=\"https://dev.joyofage.org/assets/images/JOA_Logo_Light_RGB.svg\" alt=\"Logo JoyOfAge\">" +
 					"<br/>PS: Please ignore this email alert if you have already responded to this question.");
 				}
 				else{
@@ -435,7 +435,7 @@ public class AskController {
 						"<br/><br/>Thank you for being an active member of the Joy of Age community for elders."+ 
 						"<br/><br/>Sincerely,"+
 						"<br/>Bot@JoyofAge" +
-						"<br/><img style=\"background-color:#212942;padding:5px\" src=\"https://dev.joyofage.org/assets/images/JOA%20Logo%20Light%20RGB.svg\" alt=\"Logo JoyOfAge\">" +
+						"<br/><img style=\"background-color:#212942;padding:5px\" src=\"https://dev.joyofage.org/assets/images/JOA_Logo_Light_RGB.svg\" alt=\"Logo JoyOfAge\">" +
 						"<br/>PS: Please ignore this email alert if you have already responded to this question.");
 				}
 				askQuesRepo.save(question);
