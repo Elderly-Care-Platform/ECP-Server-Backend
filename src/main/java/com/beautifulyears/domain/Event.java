@@ -26,6 +26,7 @@ public class Event {
 	private String 	organiser;
 	private String 	orgPhone;
 	private String 	orgEmail;
+	private String	createdBy;
 	private final Date createdAt = new Date();
 	private Date lastModifiedAt = new Date();
 
@@ -122,10 +123,18 @@ public class Event {
 	public void setOrgEmail(String orgEmail) {
 		this.orgEmail = orgEmail;
 	}
+
+	public String getCreatedBy() {
+		return createdBy;
+	}
+
+	public void setCreatedBy(String createdBy) {
+		this.createdBy = createdBy;
+	}
 	
 	public Event(String title, Date datetime, String description, int capacity, int entryFee, int eventType,
 			int status, String address, String landmark, String languages,
-			String organiser, String orgPhone, String orgEmail) {
+			String organiser, String orgPhone, String orgEmail, String createdBy) {
 		this.title = title;
 		this.datetime = datetime;
 		this.description = description;
@@ -139,6 +148,7 @@ public class Event {
 		this.organiser = organiser;
 		this.orgPhone = orgPhone;
 		this.orgEmail = orgEmail;
+		this.createdBy = createdBy;
 	}
 
 	public Event() {

@@ -71,4 +71,12 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
 		return count;
 	}
 
+	@Override
+	public List<Event> getSuggestedEvents(){
+		List<Event> events = null;
+		Query query = new Query();
+		query.addCriteria(Criteria.where("status").is(EventConstants.EVENT_STATUS_SUGGESTED));
+		events = this.mongoTemplate.find(query, Event.class);
+		return events;
+	}
 }

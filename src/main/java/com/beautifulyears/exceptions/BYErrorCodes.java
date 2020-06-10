@@ -14,7 +14,6 @@ public enum BYErrorCodes {
 	INTERNAL_SERVER_ERROR(1003, "Some unknown internal server error occured"),
 	ERROR_IN_SENDING_MAIL(1004,"Some unexpected error occured while sending the mail"),
 	NO_CONTENT_FOUND(1005,"No content was found with queries criteria"),
-
 	// discuss related error
 	DISCUSS_NOT_FOUND(2001, "Discuss content with provided discussId doesn't exist"),
 	DISCUSS_ALREADY_LIKED_BY_USER(2002, "Discuss content already liked by the logged in user"),
@@ -43,8 +42,10 @@ public enum BYErrorCodes {
 	RATING_VALUE_INVALID(4002,"Invalid rating value,rating percentage value should be between 0 to 100."),
 	
 	//profile error
-	USER_PROFILE_DOES_NOT_EXIST(5001,"User profile for the sent userId does not exist")
+	USER_PROFILE_DOES_NOT_EXIST(5001,"User profile for the sent userId does not exist"),
 
+	//Jd serives setting 
+	NO_JD_SETTINGS(4003,"Invalid justdial settings, Please check justdial setting limit")
 	;
 
 	private final int id;
