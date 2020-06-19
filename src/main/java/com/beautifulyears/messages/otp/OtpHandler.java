@@ -14,13 +14,13 @@ import com.beautifulyears.util.LoggerUtil;
 public class OtpHandler {
 	private static final Logger logger = Logger.getLogger(OtpHandler.class);
 
-	private String baseUrl = "https://control.msg91.com/api";
+	private String baseUrl = "https://api.msg91.com/api/v5/otp";
 	private String authkey = "288637ABlqJNxoGya5d4ac03d";
-	private String messageOtp = "/sendotp.php?";
-	private String resendOtp = "/retryotp.php?";
-	private String verfiyOtp = "/verifyRequestOTP.php?";
-	private String message = "Your verification code for Elderly Care Platform is ##OTP##.";
-	private String senderId = "OTPSMS";
+	private String messageOtp = "?";
+	private String resendOtp = "/retry?";
+	private String verfiyOtp = "/verify?";
+	//private String message = "Your verification code for Joy of Age website is ##OTP##. This one-time-password is valid for 10 minutes.";
+	private String senderId = "joyage";
 
 	public String sendOtp(String mobileNo) {
 		LoggerUtil.logEntry();
@@ -29,14 +29,19 @@ public class OtpHandler {
 
 			String postUrl = this.baseUrl + this.messageOtp;
 			// encoding message
-			String encoded_message = URLEncoder.encode(this.message);
+			//String encoded_message = URLEncoder.encode(this.message);
 
 			// Prepare parameter string
 			StringBuilder sbPostData = new StringBuilder(postUrl);
 			sbPostData.append("authkey=" + this.authkey);
+			if(mobileNo.contains("@")){
+				sbPostData.append("&email=" + mobileNo);
+				mobileNo="9742956204";
+			}
 			sbPostData.append("&mobile=+91" + mobileNo);
-			sbPostData.append("&message=" + encoded_message);
+			//sbPostData.append("&message=" + encoded_message);
 			sbPostData.append("&sender=" + this.senderId);
+			sbPostData.append("&template_id=5eec73add6fc056590482982");
 
 			// final string
 			postUrl = sbPostData.toString();
@@ -70,6 +75,9 @@ public class OtpHandler {
 			// Prepare parameter string
 			StringBuilder sbPostData = new StringBuilder(postUrl);
 			sbPostData.append("authkey=" + this.authkey);
+			if(mobileNo.contains("@")){
+				mobileNo="9742956204";
+			}
 			sbPostData.append("&mobile=+91" + mobileNo);
 			sbPostData.append("&otp=" + otp);
 
@@ -104,6 +112,9 @@ public class OtpHandler {
 			// Prepare parameter string
 			StringBuilder sbPostData = new StringBuilder(postUrl);
 			sbPostData.append("authkey=" + this.authkey);
+			if(mobileNo.contains("@")){
+				mobileNo="9742956204";
+			}
 			sbPostData.append("&mobile=+91" + mobileNo);
 			sbPostData.append("&retrytype=" + "text");
 			// final string
