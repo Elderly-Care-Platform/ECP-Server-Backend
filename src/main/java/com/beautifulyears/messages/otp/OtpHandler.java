@@ -9,7 +9,11 @@ import java.net.URLEncoder;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 
+import com.beautifulyears.domain.Setting;
 import com.beautifulyears.util.LoggerUtil;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 
 public class OtpHandler {
 	private static final Logger logger = Logger.getLogger(OtpHandler.class);
@@ -21,12 +25,17 @@ public class OtpHandler {
 	private String verfiyOtp = "/verify?";
 	//private String message = "Your verification code for Joy of Age website is ##OTP##. This one-time-password is valid for 10 minutes.";
 	private String senderId = "joyage";
+	private String templateId = "5eec73add6fc056590482982";
+	private MongoTemplate mongoTemplate;
+	
+	public OtpHandler(MongoTemplate mongoTemplate){
+		this.mongoTemplate = mongoTemplate;
+	}
 
 	public String sendOtp(String mobileNo) {
 		LoggerUtil.logEntry();
 		String response = null;
 		try {
-
 			String postUrl = this.baseUrl + this.messageOtp;
 			// encoding message
 			//String encoded_message = URLEncoder.encode(this.message);
@@ -36,12 +45,15 @@ public class OtpHandler {
 			sbPostData.append("authkey=" + this.authkey);
 			if(mobileNo.contains("@")){
 				sbPostData.append("&email=" + mobileNo);
-				mobileNo="9742956204";
+				Query query = new Query();
+				query.addCriteria(Criteria.where("key").is("smsMobileNum"));
+				Setting setting = this.mongoTemplate.findOne(query, Setting.class);
+				mobileNo= setting.getValue();
 			}
 			sbPostData.append("&mobile=+91" + mobileNo);
 			//sbPostData.append("&message=" + encoded_message);
 			sbPostData.append("&sender=" + this.senderId);
-			sbPostData.append("&template_id=5eec73add6fc056590482982");
+			sbPostData.append("&template_id=" + this.templateId);
 
 			// final string
 			postUrl = sbPostData.toString();
@@ -76,7 +88,10 @@ public class OtpHandler {
 			StringBuilder sbPostData = new StringBuilder(postUrl);
 			sbPostData.append("authkey=" + this.authkey);
 			if(mobileNo.contains("@")){
-				mobileNo="9742956204";
+				Query query = new Query();
+				query.addCriteria(Criteria.where("key").is("smsMobileNum"));
+				Setting setting = this.mongoTemplate.findOne(query, Setting.class);
+				mobileNo= setting.getValue();
 			}
 			sbPostData.append("&mobile=+91" + mobileNo);
 			sbPostData.append("&otp=" + otp);
@@ -113,7 +128,10 @@ public class OtpHandler {
 			StringBuilder sbPostData = new StringBuilder(postUrl);
 			sbPostData.append("authkey=" + this.authkey);
 			if(mobileNo.contains("@")){
-				mobileNo="9742956204";
+				Query query = new Query();
+				query.addCriteria(Criteria.where("key").is("smsMobileNum"));
+				Setting setting = this.mongoTemplate.findOne(query, Setting.class);
+				mobileNo= setting.getValue();
 			}
 			sbPostData.append("&mobile=+91" + mobileNo);
 			sbPostData.append("&retrytype=" + "text");

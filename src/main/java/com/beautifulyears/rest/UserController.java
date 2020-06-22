@@ -351,7 +351,7 @@ public class UserController {
 		LoggerUtil.logEntry();
 		try {
 			if (!Util.isEmpty(mobileNo)) {
-				OtpHandler otpHandler = new OtpHandler();
+				OtpHandler otpHandler = new OtpHandler(mongoTemplate);
 				return BYGenericResponseHandler.getResponse(otpHandler.sendOtp(mobileNo));
 			} else {
 				throw new BYException(BYErrorCodes.MISSING_PARAMETER);
@@ -375,7 +375,7 @@ public class UserController {
 		Session session = killSession(req, res);
 		try {
 			if (!(Util.isEmpty(mobileNo) && Util.isEmpty(otp))) {
-				OtpHandler otpHandler = new OtpHandler();
+				OtpHandler otpHandler = new OtpHandler(mongoTemplate);
 				JSONObject otpResp = otpHandler.verifyOtp(mobileNo, otp);
 				if(otpResp!= null && otpResp.has("type") && otpResp.getString("type").equals("success")){
 					Query q = new Query();
@@ -418,7 +418,7 @@ public class UserController {
 		LoggerUtil.logEntry();
 		try {
 			if (!Util.isEmpty(mobileNo)) {
-				OtpHandler otpHandler = new OtpHandler();
+				OtpHandler otpHandler = new OtpHandler(mongoTemplate);
 				return BYGenericResponseHandler.getResponse(otpHandler.resendOtp(mobileNo));
 			} else {
 				throw new BYException(BYErrorCodes.MISSING_PARAMETER);

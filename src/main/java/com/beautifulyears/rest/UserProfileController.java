@@ -528,7 +528,7 @@ public class UserProfileController {
 		UserProfile profile = null;
 		User currentUser = Util.getSessionUser(req);
 		try {
-			OtpHandler otpHandler = new OtpHandler();
+			OtpHandler otpHandler = new OtpHandler(mongoTemplate);
 			String otp = userProfileOtp.getOtp();
 			JSONObject otpResp;
 			if(currentUser.getPhoneNumber() == null || currentUser.getPhoneNumber().equals("")){
