@@ -453,8 +453,16 @@ public class UserProfileController {
 		UserProfile profile = null;
 		User currentUser = Util.getSessionUser(req);
 		try {
-			OtpHandler otpHandler = new OtpHandler();
-			JSONObject otpResp = otpHandler.verifyOtp(currentUser.getPhoneNumber(), userProfileOtp.getOtp());
+			OtpHandler otpHandler = new OtpHandler(mongoTemplate);
+			String otp = userProfileOtp.getOtp();
+			JSONObject otpResp;
+			if(currentUser.getPhoneNumber() == null || currentUser.getPhoneNumber().equals("")){
+				otpResp = otpHandler.verifyOtp(currentUser.getEmail(), otp);
+			}
+			else{
+				otpResp = otpHandler.verifyOtp(currentUser.getPhoneNumber(), otp);
+			}
+			
 			if (otpResp != null && otpResp.has("type") && otpResp.getString("type").equals("success")) {
 				if ((userProfile != null) && (userId != null)) {
 					// Query q = new Query();
@@ -467,6 +475,34 @@ public class UserProfileController {
 					// existingUser = mongoTemplate.findOne(q, User.class);
 					// if (null != existingUser) {
 					// throw new BYException(BYErrorCodes.USER_DETAILS_EXIST);
+					// }
+					// Query q = new Query();
+					// User existingUser = null;
+					// q.addCriteria(Criteria.where("id").ne(new ObjectId(currentUser.getId())));
+
+					// if(	userProfile.getBasicProfileInfo().getPrimaryEmail() != null &&
+					// 	userProfile.getBasicProfileInfo().getPrimaryPhoneNo() != null &&
+					// 	!userProfile.getBasicProfileInfo().getPrimaryEmail().equals("") &&
+					// 	!userProfile.getBasicProfileInfo().getPrimaryPhoneNo().equals("") ){
+					// 	q.addCriteria(new Criteria().orOperator(
+					// 		Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail()),
+					// 		Criteria.where("phoneNumber").is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())));
+					// }
+					// else if(userProfile.getBasicProfileInfo().getPrimaryPhoneNo() != null &&
+					// 	!userProfile.getBasicProfileInfo().getPrimaryPhoneNo().equals("") ){
+					// 	q.addCriteria(
+					// 		Criteria.where("phoneNumber").is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())
+					// 	);
+					// }
+					// else if(userProfile.getBasicProfileInfo().getPrimaryEmail() != null &&
+					// 	!userProfile.getBasicProfileInfo().getPrimaryEmail().equals("") ){
+					// 	q.addCriteria(
+					// 		Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail())
+					// 	);
+					// }
+					// existingUser = mongoTemplate.findOne(q, User.class);
+					// if (null != existingUser) {
+					// 	throw new BYException(BYErrorCodes.USER_DETAILS_EXIST);
 					// }
 
 					if (null != currentUser && SessionController.checkCurrentSessionFor(req, "SUBMIT_PROFILE")) {
