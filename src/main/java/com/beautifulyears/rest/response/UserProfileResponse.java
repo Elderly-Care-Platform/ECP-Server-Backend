@@ -423,6 +423,7 @@ public class UserProfileResponse implements IResponse {
 
 	public static UserProfileEntity getUserProfileEntity(UserProfile userProfile, User user) {
 		UserProfileEntity res = null;
+		UserProfileResponse.quesReplyRepo = null;
 		if (null != userProfile) {
 			res = new UserProfileEntity(userProfile, user);
 		}

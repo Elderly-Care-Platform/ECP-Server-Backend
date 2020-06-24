@@ -195,7 +195,9 @@ public class UserController {
 				User user = null;
 				Criteria criteria = Criteria.where("email").is(email);
 				q.addCriteria(criteria);
+				q.addCriteria(Criteria.where("socialSignOnPlatform").is(platform));
 				user = mongoTemplate.findOne(q, User.class);
+				
 				if (null == user) {
 					logger.debug("User does not exist");
 					user = new User( name, BYConstants.USER_ID_TYPE_EMAIL, BYConstants.USER_REG_TYPE_FULL, 
@@ -204,7 +206,8 @@ public class UserController {
 					socialId, platform,
 					null, null, BYConstants.USER_ROLE_USER,
 					"Active", null, null);
-					return submitUser(user, true, req, res);
+					return BYGenericResponseHandler.getResponse(user);
+					// return submitUser(user, true, req, res);
 				} else {
 					logger.debug("User logged in success for user email = " + user.getEmail() != null
 							? user.getEmail()
@@ -257,7 +260,8 @@ public class UserController {
 				} else {
 					throw new BYException(BYErrorCodes.INVALID_REQUEST);
 				}
-
+				q.addCriteria(Criteria.where("socialSignOnPlatform").is(user.getSocialSignOnPlatform()));
+				
 				User existingUser = mongoTemplate.findOne(q, User.class);
 				User userWithExtractedInformation = decorateWithInformation(user);
 				if (null != existingUser) {
@@ -351,7 +355,7 @@ public class UserController {
 		LoggerUtil.logEntry();
 		try {
 			if (!Util.isEmpty(mobileNo)) {
-				OtpHandler otpHandler = new OtpHandler();
+				OtpHandler otpHandler = new OtpHandler(mongoTemplate);
 				return BYGenericResponseHandler.getResponse(otpHandler.sendOtp(mobileNo));
 			} else {
 				throw new BYException(BYErrorCodes.MISSING_PARAMETER);
@@ -375,21 +379,23 @@ public class UserController {
 		Session session = killSession(req, res);
 		try {
 			if (!(Util.isEmpty(mobileNo) && Util.isEmpty(otp))) {
-				OtpHandler otpHandler = new OtpHandler();
+				OtpHandler otpHandler = new OtpHandler(mongoTemplate);
 				JSONObject otpResp = otpHandler.verifyOtp(mobileNo, otp);
 				if(otpResp!= null && otpResp.has("type") && otpResp.getString("type").equals("success")){
 					Query q = new Query();
 					q.addCriteria(Criteria.where("phoneNumber").is(mobileNo));
+					q.addCriteria(Criteria.where("socialSignOnPlatform").is("mobile"));
 					User user = mongoTemplate.findOne(q, User.class);
 
 					if (null == user) {
 						user = new User( mobileNo, 1, BYConstants.USER_REG_TYPE_FULL, 
-						null, null, mobileNo,
+						null, "", mobileNo,
 						null,null,
 						mobileNo, "mobile",
 						null, null, BYConstants.USER_ROLE_USER,
 						"Active", null, null);
-						return submitUser(user, true, req, res);
+						return BYGenericResponseHandler.getResponse(user);
+						// return submitUser(user, true, req, res);
 					} else {
 						logger.debug("User logged in success for user email = " + user.getEmail() != null
 								? user.getEmail()
@@ -418,7 +424,7 @@ public class UserController {
 		LoggerUtil.logEntry();
 		try {
 			if (!Util.isEmpty(mobileNo)) {
-				OtpHandler otpHandler = new OtpHandler();
+				OtpHandler otpHandler = new OtpHandler(mongoTemplate);
 				return BYGenericResponseHandler.getResponse(otpHandler.resendOtp(mobileNo));
 			} else {
 				throw new BYException(BYErrorCodes.MISSING_PARAMETER);
@@ -439,7 +445,7 @@ public class UserController {
 			if (user.getUserRegType() == BYConstants.USER_REG_TYPE_GUEST) {
 				body = MessageFormat.format(resourceUtil.getResource("welcomeMailToFillProfile"), "");
 			} else {
-				body = MessageFormat.format(resourceUtil.getResource("welcomeMail"), "");
+				body = MessageFormat.format(resourceUtil.getResource("welcomeMail1"), user.getUserName());
 			}
 			MailHandler.sendMail(user.getEmail(), "Welcome to JoyOfAge.org", body);
 			mailStatus = true;

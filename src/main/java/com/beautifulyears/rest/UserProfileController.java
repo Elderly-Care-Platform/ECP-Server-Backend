@@ -388,81 +388,6 @@ public class UserProfileController {
 				if (null != currentUser && SessionController.checkCurrentSessionFor(req, "SUBMIT_PROFILE")) {
 					logger.debug("current user details" + currentUser.toString());
 					if (userProfile.getUserId() != null && userProfile.getUserId().equals(currentUser.getId())) {
-						Query q = new Query();
-						User existingUser = null;
-						q.addCriteria(Criteria.where("id").ne(new ObjectId(currentUser.getId())));
-						if (!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryEmail())
-								&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE) {
-							q.addCriteria(
-									Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail()));
-							existingUser = mongoTemplate.findOne(q, User.class);
-						} else if (!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())
-								&& currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_EMAIL) {
-							q.addCriteria(Criteria.where("phoneNumber")
-									.is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo()));
-							existingUser = mongoTemplate.findOne(q, User.class);
-						}
-						if (null != existingUser) {
-							throw new BYException(BYErrorCodes.USER_DETAILS_EXIST);
-						}
-						// if (!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryEmail())
-						// && currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_PHONE) {
-						// Query q = new Query();
-						// User existingUser = null;
-						// UserProfile existinprofile = null;
-						// Criteria criteria = Criteria.where("email")
-						// .is(userProfile.getBasicProfileInfo().getPrimaryEmail());
-						// q.addCriteria(criteria);
-						// existingUser = mongoTemplate.findOne(q, User.class);
-						// if (null != existingUser &&
-						// !currentUser.getId().equals(existingUser.getId())) {
-						// existingUser.setPhoneNumber(currentUser.getPhoneNumber());
-						// existingUser = UserController.saveUser(existingUser);
-						// Query q2 = new Query();
-						// q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
-						// existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
-						// if (null != existinprofile) {
-						// existinprofile.getBasicProfileInfo()
-						// .setPrimaryPhoneNo(currentUser.getPhoneNumber());
-						// existinprofile.getBasicProfileInfo()
-						// .setDescription(existinprofile.getBasicProfileInfo().getShortDescription());
-						// existinprofile = userProfileRepository.save(existinprofile);
-						// }
-						// UserController.deleteUser(currentUser);
-						// UserController userControl = new UserController(userRepository,
-						// mongoTemplate);
-						// return userControl.login(existingUser, req, res);
-						// }
-
-						// } else if
-						// (!Util.isEmpty(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())
-						// && currentUser.getUserIdType() == BYConstants.USER_ID_TYPE_EMAIL) {
-						// Query q = new Query();
-						// User existingUser = null;
-						// UserProfile existinprofile = null;
-						// Criteria criteria = Criteria.where("phoneNumber")
-						// .is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo());
-						// q.addCriteria(criteria);
-						// existingUser = mongoTemplate.findOne(q, User.class);
-						// if (null != existingUser &&
-						// !currentUser.getId().equals(existingUser.getId())) {
-						// existingUser.setEmail(currentUser.getEmail());
-						// existingUser = UserController.saveUser(existingUser);
-						// Query q2 = new Query();
-						// q2.addCriteria(Criteria.where("userId").is(existingUser.getId()));
-						// existinprofile = mongoTemplate.findOne(q2, UserProfile.class);
-						// if (null != existinprofile) {
-						// existinprofile.getBasicProfileInfo().setPrimaryEmail(currentUser.getEmail());
-						// existinprofile.getBasicProfileInfo()
-						// .setDescription(existinprofile.getBasicProfileInfo().getShortDescription());
-						// existinprofile = userProfileRepository.save(existinprofile);
-						// }
-						// UserController.deleteUser(currentUser);
-						// UserController userControl = new UserController(userRepository,
-						// mongoTemplate);
-						// return userControl.login(existingUser, req, res);
-						// }
-						// }
 
 						if (this.userProfileRepository.findByUserId(userProfile.getUserId()) == null) {
 							profile = new UserProfile();
@@ -528,21 +453,57 @@ public class UserProfileController {
 		UserProfile profile = null;
 		User currentUser = Util.getSessionUser(req);
 		try {
-			OtpHandler otpHandler = new OtpHandler();
-			JSONObject otpResp = otpHandler.verifyOtp(currentUser.getPhoneNumber(), userProfileOtp.getOtp());
+			OtpHandler otpHandler = new OtpHandler(mongoTemplate);
+			String otp = userProfileOtp.getOtp();
+			JSONObject otpResp;
+			if(currentUser.getPhoneNumber() == null || currentUser.getPhoneNumber().equals("")){
+				otpResp = otpHandler.verifyOtp(currentUser.getEmail(), otp);
+			}
+			else{
+				otpResp = otpHandler.verifyOtp(currentUser.getPhoneNumber(), otp);
+			}
+			
 			if (otpResp != null && otpResp.has("type") && otpResp.getString("type").equals("success")) {
 				if ((userProfile != null) && (userId != null)) {
-					Query q = new Query();
-					User existingUser = null;
-					q.addCriteria(Criteria.where("id").ne(new ObjectId(currentUser.getId())));
-					q.addCriteria(new Criteria().orOperator(
-							Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail()),
-							Criteria.where("phoneNumber").is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())));
+					// Query q = new Query();
+					// User existingUser = null;
+					// q.addCriteria(Criteria.where("id").ne(new ObjectId(currentUser.getId())));
+					// q.addCriteria(new Criteria().orOperator(
+					// Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail()),
+					// Criteria.where("phoneNumber").is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())));
 
-					existingUser = mongoTemplate.findOne(q, User.class);
-					if (null != existingUser) {
-						throw new BYException(BYErrorCodes.USER_DETAILS_EXIST);
-					}
+					// existingUser = mongoTemplate.findOne(q, User.class);
+					// if (null != existingUser) {
+					// throw new BYException(BYErrorCodes.USER_DETAILS_EXIST);
+					// }
+					// Query q = new Query();
+					// User existingUser = null;
+					// q.addCriteria(Criteria.where("id").ne(new ObjectId(currentUser.getId())));
+
+					// if(	userProfile.getBasicProfileInfo().getPrimaryEmail() != null &&
+					// 	userProfile.getBasicProfileInfo().getPrimaryPhoneNo() != null &&
+					// 	!userProfile.getBasicProfileInfo().getPrimaryEmail().equals("") &&
+					// 	!userProfile.getBasicProfileInfo().getPrimaryPhoneNo().equals("") ){
+					// 	q.addCriteria(new Criteria().orOperator(
+					// 		Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail()),
+					// 		Criteria.where("phoneNumber").is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())));
+					// }
+					// else if(userProfile.getBasicProfileInfo().getPrimaryPhoneNo() != null &&
+					// 	!userProfile.getBasicProfileInfo().getPrimaryPhoneNo().equals("") ){
+					// 	q.addCriteria(
+					// 		Criteria.where("phoneNumber").is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())
+					// 	);
+					// }
+					// else if(userProfile.getBasicProfileInfo().getPrimaryEmail() != null &&
+					// 	!userProfile.getBasicProfileInfo().getPrimaryEmail().equals("") ){
+					// 	q.addCriteria(
+					// 		Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail())
+					// 	);
+					// }
+					// existingUser = mongoTemplate.findOne(q, User.class);
+					// if (null != existingUser) {
+					// 	throw new BYException(BYErrorCodes.USER_DETAILS_EXIST);
+					// }
 
 					if (null != currentUser && SessionController.checkCurrentSessionFor(req, "SUBMIT_PROFILE")) {
 						if (userProfile.getUserId().equals(currentUser.getId())) {
@@ -563,6 +524,16 @@ public class UserProfileController {
 								currentUser.setPhoneNumber(userProfile.getBasicProfileInfo().getPrimaryPhoneNo());
 								saveUser = true;
 							}
+
+							if (
+								userProfile.getBasicProfileInfo().getFirstName() != null
+									&& !userProfile.getBasicProfileInfo().getFirstName().equals("")
+									&& !userProfile.getBasicProfileInfo().getFirstName().equals(currentUser.getUserName())
+									) {
+								currentUser.setUserName(userProfile.getBasicProfileInfo().getFirstName());
+								saveUser = true;
+							}
+
 							if (saveUser == true) {
 								userRepository.save(currentUser);
 							}
@@ -1096,47 +1067,51 @@ public class UserProfileController {
 							currentUser.getId(), reportService.getCause(), reportService.getComment());
 					reportService = reportServiceRepository.save(reportServiceExtra);
 					String name = "";
-					if(JdService != null){
+					if (JdService != null) {
 						name = "" + JdService.getServiceInfo().get("name");
-					}
-					else if(userProfile != null){
+					} else if (userProfile != null) {
 						name = userProfile.getBasicProfileInfo().getFirstName();
 					}
 					MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
-								"Alert: A service provider has been reported by a member!",
-								"The service provider "+ name +" reported by "+ currentUser.getUserName() +".  Please log into the Administrator panel to review the report."+
-								"<br/><br/>Based on your review please take necessary actions and inform "+ currentUser.getUserName() +" the actions that you are taking."+ 
-								"<br/><br/>Sincerely,"+
-								"<br/>Bot@JoyofAge" +
-								"<br/><img style=\"background-color:#212942;padding:5px\" src=\"https://dev.joyofage.org/assets/images/JOA_Logo_Light_RGB.png\" alt=\"Logo JoyOfAge\">" +
-								"<br/>PS: Please ignore this email alert if you have already responded to this question.");
+							"Alert: A service provider has been reported by a member!",
+							"The service provider " + name + " reported by " + currentUser.getUserName()
+									+ ".  Please log into the Administrator panel to review the report."
+									+ "<br/><br/>Based on your review please take necessary actions and inform "
+									+ currentUser.getUserName() + " the actions that you are taking."
+									+ "<br/><br/>Sincerely," + "<br/>Bot@JoyofAge"
+									+ "<br/><img style=\"background-color:#212942;padding:5px\" src=\"https://joyofage.org/assets/images/JOA_Logo_Light_RGB.png\" alt=\"Logo JoyOfAge\">"
+									+ "<br/>PS: Please ignore this email alert if you have already responded to this question.");
 
 					// if (userProfile != null) {
-					// 	ReportService reportServiceExtra = new ReportService(reportService.getServiceId(),
-					// 			currentUser.getId(), reportService.getCause(), reportService.getComment());
+					// ReportService reportServiceExtra = new
+					// ReportService(reportService.getServiceId(),
+					// currentUser.getId(), reportService.getCause(), reportService.getComment());
 
-					// 	reportService = reportServiceRepository.save(reportServiceExtra);
+					// reportService = reportServiceRepository.save(reportServiceExtra);
 
-					// 	String body = reportService.getComment() + "\r\nService Contact\r\n"
-					// 			+ userProfile.getBasicProfileInfo().getPrimaryEmail() + "\r\n"
-					// 			+ userProfile.getBasicProfileInfo().getPrimaryPhoneNo();
-					// 	MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
-					// 			"Service Provider Reported: Name: " + userProfile.getBasicProfileInfo().getFirstName()
-					// 					+ ", cause: " + reportService.getCause(),
-					// 			body);
+					// String body = reportService.getComment() + "\r\nService Contact\r\n"
+					// + userProfile.getBasicProfileInfo().getPrimaryEmail() + "\r\n"
+					// + userProfile.getBasicProfileInfo().getPrimaryPhoneNo();
+					// MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
+					// "Service Provider Reported: Name: " +
+					// userProfile.getBasicProfileInfo().getFirstName()
+					// + ", cause: " + reportService.getCause(),
+					// body);
 
 					// } else if (JdService != null) {
-					// 	ReportService reportServiceExtra = new ReportService(reportService.getServiceId(),
-					// 			currentUser.getId(), reportService.getCause(), reportService.getComment());
+					// ReportService reportServiceExtra = new
+					// ReportService(reportService.getServiceId(),
+					// currentUser.getId(), reportService.getCause(), reportService.getComment());
 
-					// 	reportService = reportServiceRepository.save(reportServiceExtra);
-					// 	String body = reportService.getComment() + "\r\nService Contact\r\n"
-					// 			+ JdService.getServiceInfo().get("email") + "\r\n"
-					// 			+ JdService.getServiceInfo().get("contact");
-					// 	MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
-					// 			"Justdial Service Provider Reported: Name: " + JdService.getServiceInfo().get("name")
-					// 					+ ", cause: " + reportService.getCause(),
-					// 			body);
+					// reportService = reportServiceRepository.save(reportServiceExtra);
+					// String body = reportService.getComment() + "\r\nService Contact\r\n"
+					// + JdService.getServiceInfo().get("email") + "\r\n"
+					// + JdService.getServiceInfo().get("contact");
+					// MailHandler.sendMultipleMail(BYConstants.ADMIN_EMAILS,
+					// "Justdial Service Provider Reported: Name: " +
+					// JdService.getServiceInfo().get("name")
+					// + ", cause: " + reportService.getCause(),
+					// body);
 					// }
 				} catch (Exception e) {
 					Util.handleException(e);
