@@ -445,7 +445,7 @@ public class UserController {
 			if (user.getUserRegType() == BYConstants.USER_REG_TYPE_GUEST) {
 				body = MessageFormat.format(resourceUtil.getResource("welcomeMailToFillProfile"), "");
 			} else {
-				body = MessageFormat.format(resourceUtil.getResource("welcomeMail"), "");
+				body = MessageFormat.format(resourceUtil.getResource("welcomeMail1"), user.getUserName());
 			}
 			MailHandler.sendMail(user.getEmail(), "Welcome to JoyOfAge.org", body);
 			mailStatus = true;
