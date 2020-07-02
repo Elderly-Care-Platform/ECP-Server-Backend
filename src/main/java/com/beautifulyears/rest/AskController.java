@@ -54,6 +54,8 @@ import com.beautifulyears.util.activityLogHandler.ActivityLogHandler;
 import com.beautifulyears.util.activityLogHandler.AskCategoryActivityLogHandler;
 import com.beautifulyears.util.activityLogHandler.AskQuestionActivityLogHandler;
 import com.beautifulyears.util.activityLogHandler.AskQuestionReplyActivityLogHandler;
+import java.lang.reflect.Field;
+import com.beautifulyears.util.HtmlTagValidator;
 
 /**
  * The REST based service for managing "product"
@@ -403,6 +405,29 @@ public class AskController {
 	@ResponseBody
 	public Object submitAskQuestionReply(@RequestBody AskQuestionReply askQuestionReply, HttpServletRequest request) throws Exception {
 		LoggerUtil.logEntry();
+
+		boolean hasHTML = false;
+		HtmlTagValidator htmlValidator = new HtmlTagValidator();
+		Field[] fieldsSource = askQuestionReply.getClass().getDeclaredFields();
+		for (Field fieldSource : fieldsSource) {
+			try {
+				fieldSource.setAccessible(true);
+				if ( fieldSource.get(askQuestionReply) instanceof String &&  htmlValidator.validate( (String) fieldSource.get(askQuestionReply)) )
+				{
+					hasHTML = true;
+					break;
+				}
+			}
+			catch (SecurityException e) {
+			}
+			catch (IllegalArgumentException e) {
+			}
+			catch (IllegalAccessException e) {
+			}
+		}
+		if(hasHTML){
+			throw new BYException(BYErrorCodes.HTML_INJECTION_FOUND);	
+		}
 		User currentUser = Util.getSessionUser(request);
 		if (null != currentUser && SessionController.checkCurrentSessionFor(request, "ASK")) {
 			if (askQuestionReply != null && (Util.isEmpty(askQuestionReply.getId()))) {
