@@ -456,13 +456,12 @@ public class UserProfileController {
 			OtpHandler otpHandler = new OtpHandler(mongoTemplate);
 			String otp = userProfileOtp.getOtp();
 			JSONObject otpResp;
-			if(currentUser.getPhoneNumber() == null || currentUser.getPhoneNumber().equals("")){
+			if (currentUser.getPhoneNumber() == null || currentUser.getPhoneNumber().equals("")) {
 				otpResp = otpHandler.verifyOtp(currentUser.getEmail(), otp);
-			}
-			else{
+			} else {
 				otpResp = otpHandler.verifyOtp(currentUser.getPhoneNumber(), otp);
 			}
-			
+
 			if (otpResp != null && otpResp.has("type") && otpResp.getString("type").equals("success")) {
 				if ((userProfile != null) && (userId != null)) {
 					// Query q = new Query();
@@ -480,29 +479,29 @@ public class UserProfileController {
 					// User existingUser = null;
 					// q.addCriteria(Criteria.where("id").ne(new ObjectId(currentUser.getId())));
 
-					// if(	userProfile.getBasicProfileInfo().getPrimaryEmail() != null &&
-					// 	userProfile.getBasicProfileInfo().getPrimaryPhoneNo() != null &&
-					// 	!userProfile.getBasicProfileInfo().getPrimaryEmail().equals("") &&
-					// 	!userProfile.getBasicProfileInfo().getPrimaryPhoneNo().equals("") ){
-					// 	q.addCriteria(new Criteria().orOperator(
-					// 		Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail()),
-					// 		Criteria.where("phoneNumber").is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())));
+					// if( userProfile.getBasicProfileInfo().getPrimaryEmail() != null &&
+					// userProfile.getBasicProfileInfo().getPrimaryPhoneNo() != null &&
+					// !userProfile.getBasicProfileInfo().getPrimaryEmail().equals("") &&
+					// !userProfile.getBasicProfileInfo().getPrimaryPhoneNo().equals("") ){
+					// q.addCriteria(new Criteria().orOperator(
+					// Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail()),
+					// Criteria.where("phoneNumber").is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())));
 					// }
 					// else if(userProfile.getBasicProfileInfo().getPrimaryPhoneNo() != null &&
-					// 	!userProfile.getBasicProfileInfo().getPrimaryPhoneNo().equals("") ){
-					// 	q.addCriteria(
-					// 		Criteria.where("phoneNumber").is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())
-					// 	);
+					// !userProfile.getBasicProfileInfo().getPrimaryPhoneNo().equals("") ){
+					// q.addCriteria(
+					// Criteria.where("phoneNumber").is(userProfile.getBasicProfileInfo().getPrimaryPhoneNo())
+					// );
 					// }
 					// else if(userProfile.getBasicProfileInfo().getPrimaryEmail() != null &&
-					// 	!userProfile.getBasicProfileInfo().getPrimaryEmail().equals("") ){
-					// 	q.addCriteria(
-					// 		Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail())
-					// 	);
+					// !userProfile.getBasicProfileInfo().getPrimaryEmail().equals("") ){
+					// q.addCriteria(
+					// Criteria.where("email").is(userProfile.getBasicProfileInfo().getPrimaryEmail())
+					// );
 					// }
 					// existingUser = mongoTemplate.findOne(q, User.class);
 					// if (null != existingUser) {
-					// 	throw new BYException(BYErrorCodes.USER_DETAILS_EXIST);
+					// throw new BYException(BYErrorCodes.USER_DETAILS_EXIST);
 					// }
 
 					if (null != currentUser && SessionController.checkCurrentSessionFor(req, "SUBMIT_PROFILE")) {
@@ -525,11 +524,9 @@ public class UserProfileController {
 								saveUser = true;
 							}
 
-							if (
-								userProfile.getBasicProfileInfo().getFirstName() != null
-									&& !userProfile.getBasicProfileInfo().getFirstName().equals("")
-									&& !userProfile.getBasicProfileInfo().getFirstName().equals(currentUser.getUserName())
-									) {
+							if (userProfile.getBasicProfileInfo().getFirstName() != null
+									&& !userProfile.getBasicProfileInfo().getFirstName().equals("") && !userProfile
+											.getBasicProfileInfo().getFirstName().equals(currentUser.getUserName())) {
 								currentUser.setUserName(userProfile.getBasicProfileInfo().getFirstName());
 								saveUser = true;
 							}
@@ -1036,6 +1033,51 @@ public class UserProfileController {
 			// throw new BYException(BYErrorCodes.INTERNAL_SERVER_ERROR);
 		}
 		return BYGenericResponseHandler.getResponse(categories);
+	}
+
+	/**
+	 * Set Empty UserProfile Image
+	 */
+	@RequestMapping(method = { RequestMethod.GET }, value = { "/setProfileImage" },  produces = { "application/json" })
+	@ResponseBody
+	public Object setUserProfileImage(HttpServletRequest request) throws Exception {
+		LoggerUtil.logEntry();
+		HashMap<String, Integer> updatedUser = new HashMap<>();
+		try {
+			List<User> loginedUsers = new ArrayList<User>();
+			List<String> socialSignOnPlatforms = new ArrayList<String>();
+			socialSignOnPlatforms.add("google");
+			socialSignOnPlatforms.add("facebook");
+			socialSignOnPlatforms.add("mobile");
+			String[] userImages =  {
+				"/assets/images/user/JOA Symbol Grayscale RGB.svg",
+				"/assets/images/user/JOA Symbol Outline Color RGB.svg",
+				"/assets/images/user/JOA Title WO Tagline Dark RGB.svg"
+			};
+			// String[] socialSignOnPlatform = {"google","facebook","mobile"};
+			Query query = new Query();
+			query.addCriteria(Criteria.where("socialSignOnPlatform").in(socialSignOnPlatforms));
+			query.addCriteria(Criteria.where("userRegType").is(BYConstants.USER_REG_TYPE_FULL));
+			loginedUsers = mongoTemplate.find(query, User.class);
+			int count= 0;
+			for (User user : loginedUsers) {
+				UserProfile userProfile = new UserProfile();
+				userProfile = userProfileRepository.findByUserId(user.getId());
+				if(userProfile != null && (userProfile.getBasicProfileInfo().getProfileImage() == null || !userProfile.getBasicProfileInfo().getProfileImage().containsKey("thumbnailImage"))){
+					// userProfile.getBasicProfileInfo().getProfileImage().put("thumbnailImage",userImages[new Random().nextInt(userImages.length)]);
+					Map<String,String> profileImage =  new HashMap<>();
+					profileImage.put("thumbnailImage",userImages[new Random().nextInt(userImages.length)]);
+					userProfile.getBasicProfileInfo().setProfileImage(profileImage);
+					userProfileRepository.save(userProfile);
+					count++;
+				}
+			}
+			updatedUser.put("Updated Users Profile Image", count);
+
+		} catch (Exception e) {
+			return e.toString();
+		}
+		return BYGenericResponseHandler.getResponse(updatedUser);
 	}
 
 	/**
