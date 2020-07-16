@@ -153,8 +153,7 @@ public class DiscussResponse implements IResponse {
 				this.setEditableByUser(true);
 			}
 
-			if (discuss.getUserProfile() != null && discuss.getUserProfile().getBasicProfileInfo() != null
-					&& discuss.getUserProfile().getIndividualInfo() != null) {
+			if (discuss.getUserProfile() != null) {
 				UserProfile userProfile = new UserProfile();
 				userProfile.setBasicProfileInfo(discuss.getUserProfile().getBasicProfileInfo());
 				userProfile.setIndividualInfo(discuss.getUserProfile().getIndividualInfo());

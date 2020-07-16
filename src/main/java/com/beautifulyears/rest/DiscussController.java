@@ -300,8 +300,8 @@ public class DiscussController {
 			// page = discussRepository.getByCriteria(discussTypeArray, topicId,
 			// userId, isFeatured, pageable);
 		} catch (Exception e) {
-			// Util.handleException(e);
-			return page;
+			Util.handleException(e);
+			// return page;
 		}
 		return BYGenericResponseHandler.getResponse(discussPage);
 	}
