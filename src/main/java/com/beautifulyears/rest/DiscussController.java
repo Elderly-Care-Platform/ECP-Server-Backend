@@ -301,6 +301,7 @@ public class DiscussController {
 			// userId, isFeatured, pageable);
 		} catch (Exception e) {
 			Util.handleException(e);
+			// return page;
 		}
 		return BYGenericResponseHandler.getResponse(discussPage);
 	}

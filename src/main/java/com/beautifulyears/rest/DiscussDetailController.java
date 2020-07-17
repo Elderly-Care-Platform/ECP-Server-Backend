@@ -45,11 +45,13 @@ import com.beautifulyears.repository.DiscussRepository;
 import com.beautifulyears.repository.DiscussViewRepository;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.rest.response.DiscussDetailResponse;
+import com.beautifulyears.util.HtmlTagValidator;
 import com.beautifulyears.util.LoggerUtil;
 import com.beautifulyears.util.ResourceUtil;
 import com.beautifulyears.util.Util;
 import com.beautifulyears.util.activityLogHandler.ActivityLogHandler;
 import com.beautifulyears.util.activityLogHandler.ReplyActivityLogHandler;
+import java.lang.reflect.Field;
 
 /**
  * Controller to handle all the discuss detail related API 1. getting full
@@ -142,8 +144,32 @@ public class DiscussDetailController {
 		LoggerUtil.logEntry();
 		String discussId = comment.getDiscussId();
 		User user = null;
+
+		boolean hasHTML = false;
+		HtmlTagValidator htmlValidator = new HtmlTagValidator();
+		Field[] fieldsSource = comment.getClass().getDeclaredFields();
+		for (Field fieldSource : fieldsSource) {
+			try {
+				fieldSource.setAccessible(true);
+				if ( fieldSource.get(comment) instanceof String &&  htmlValidator.validate( (String) fieldSource.get(comment)) )
+				{
+					hasHTML = true;
+					break;
+				}
+			}
+			catch (SecurityException e) {
+			}
+			catch (IllegalArgumentException e) {
+			}
+			catch (IllegalAccessException e) {
+			}
+		}
+		
 		DiscussReply parentComment = null;
 		try {
+			if(hasHTML){
+				throw new BYException(BYErrorCodes.HTML_INJECTION_FOUND);	
+			}
 			Discuss discuss = discussRepository.findOne(discussId);
 			List<DiscussReply> ancestors = null;
 			if (null != discuss) {
@@ -210,6 +236,30 @@ public class DiscussDetailController {
 	public Object editReply(@RequestBody DiscussReply comment, HttpServletRequest req, HttpServletResponse res)
 			throws Exception {
 		LoggerUtil.logEntry();
+
+		boolean hasHTML = false;
+		HtmlTagValidator htmlValidator = new HtmlTagValidator();
+		Field[] fieldsSource = comment.getClass().getDeclaredFields();
+		for (Field fieldSource : fieldsSource) {
+			try {
+				fieldSource.setAccessible(true);
+				if ( fieldSource.get(comment) instanceof String &&  htmlValidator.validate( (String) fieldSource.get(comment)) )
+				{
+					hasHTML = true;
+					break;
+				}
+			}
+			catch (SecurityException e) {
+			}
+			catch (IllegalArgumentException e) {
+			}
+			catch (IllegalAccessException e) {
+			}
+		}
+		if(hasHTML){
+			throw new BYException(BYErrorCodes.HTML_INJECTION_FOUND);	
+		}
+
 		User user = Util.getSessionUser(req);
 		DiscussReply oldComment = mongoTemplate.findById(new ObjectId(comment.getId()), DiscussReply.class);
 		if (null == oldComment) {

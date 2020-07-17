@@ -147,21 +147,16 @@ public class DiscussResponse implements IResponse {
 			this.setFeatured(discuss.isFeatured());
 			this.setPromotion(discuss.isPromotion());
 
-			if (null != user
-					&& (BYConstants.USER_ROLE_EDITOR.equals(user
-							.getUserRoleId())
-							|| BYConstants.USER_ROLE_SUPER_USER.equals(user
-									.getUserRoleId()) || discuss.getUserId()
-							.equals(user.getId()))) {
+			if (null != user && (BYConstants.USER_ROLE_EDITOR.equals(user.getUserRoleId())
+					|| BYConstants.USER_ROLE_SUPER_USER.equals(user.getUserRoleId())
+					|| discuss.getUserId().equals(user.getId()))) {
 				this.setEditableByUser(true);
 			}
 
 			if (discuss.getUserProfile() != null) {
 				UserProfile userProfile = new UserProfile();
-				userProfile.setBasicProfileInfo(discuss.getUserProfile()
-						.getBasicProfileInfo());
-				userProfile.setIndividualInfo(discuss.getUserProfile()
-						.getIndividualInfo());
+				userProfile.setBasicProfileInfo(discuss.getUserProfile().getBasicProfileInfo());
+				userProfile.setIndividualInfo(discuss.getUserProfile().getIndividualInfo());
 				this.setUserProfile(userProfile);
 			}
 		}
@@ -270,8 +265,7 @@ public class DiscussResponse implements IResponse {
 			return articlePhotoFilename;
 		}
 
-		public void setArticlePhotoFilename(
-				Map<String, String> articlePhotoFilename) {
+		public void setArticlePhotoFilename(Map<String, String> articlePhotoFilename) {
 			this.articlePhotoFilename = articlePhotoFilename;
 		}
 

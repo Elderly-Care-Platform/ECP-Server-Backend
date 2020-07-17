@@ -34,6 +34,9 @@ public class FileUploadController {
     private static final int THUMBNAIL_IMG_WIDTH = 200;
     private static final int THUMBNAIL_IMG_HEIGHT = 200;
 
+    private static final int TITLE_IMG_WIDTH = 640;
+    private static final int TITLE_IMG_HEIGHT = 650;
+
     /**
      * Upload file
      */
@@ -57,10 +60,19 @@ public class FileUploadController {
                 try {
                     multipartFile.transferTo(imageFile);
 
-                    resizeImage(imageFile, THUMBNAIL_IMG_WIDTH, THUMBNAIL_IMG_HEIGHT,
+                    if("discussion_image".equals(servletRequest.getParameter("typ"))){
+                        resizeImage(imageFile, TITLE_IMG_WIDTH, TITLE_IMG_HEIGHT,
                             fileName.substring(fileName.lastIndexOf(".") + 1));
-
-                    uploadedFile.add(imageFile.getName());
+                        uploadedFile.add("/project/images/" + imageFile.getName());
+                    }
+                    else if("discussion_video".equals(servletRequest.getParameter("typ"))){
+                        uploadedFile.add("/project/images/" + imageFile.getName());
+                    }
+                    else {
+                        resizeImage(imageFile, THUMBNAIL_IMG_WIDTH, THUMBNAIL_IMG_HEIGHT,
+                            fileName.substring(fileName.lastIndexOf(".") + 1));
+                        uploadedFile.add(imageFile.getName());
+                    }
                 } catch (IOException e) {
                     // Util.handleException(e);
                     throw e;
