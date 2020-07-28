@@ -1060,6 +1060,7 @@ public class UserProfileController {
 			query.addCriteria(Criteria.where("userRegType").is(BYConstants.USER_REG_TYPE_FULL));
 			loginedUsers = mongoTemplate.find(query, User.class);
 			int count= 0;
+			int profileCount = 0;
 			for (User user : loginedUsers) {
 				UserProfile userProfile = new UserProfile();
 				userProfile = userProfileRepository.findByUserId(user.getId());
@@ -1071,8 +1072,23 @@ public class UserProfileController {
 					userProfileRepository.save(userProfile);
 					count++;
 				}
+				
+				if(null == userProfile){
+					UserProfile profile = new UserProfile();
+					profile.setUserId(user.getId());
+					profile.getBasicProfileInfo().setPrimaryEmail(user.getEmail());
+					profile.getBasicProfileInfo().setPrimaryPhoneNo(user.getPhoneNumber());
+					profile.getBasicProfileInfo().setFirstName(user.getUserName());
+					Map<String,String> profileImage =  new HashMap<>();
+					profileImage.put("thumbnailImage",userImages[new Random().nextInt(userImages.length)]);
+					profile.getBasicProfileInfo().setProfileImage(profileImage);
+					userProfileRepository.save(profile);
+					profileCount++;
+				}
 			}
 			updatedUser.put("Updated Users Profile Image", count);
+			updatedUser.put("Created New Users Profiles", profileCount);
+
 
 		} catch (Exception e) {
 			return e.toString();
