@@ -90,7 +90,8 @@ public class UserController {
 		return BYGenericResponseHandler.getResponse(currentSession);
 	}
 
-	//Pulkit: this function will not be called directly through api request any more
+	// Pulkit: this function will not be called directly through api request any
+	// more
 	public @ResponseBody Object login(User loginRequest, HttpServletRequest req, HttpServletResponse res)
 			throws Exception {
 		LoggerUtil.logEntry();
@@ -137,94 +138,101 @@ public class UserController {
 		return BYGenericResponseHandler.getResponse(session);
 	}
 
+	@RequestMapping(value = "/validateEmailPresence", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody Object vaidateEmailPresence(@RequestParam(value = "email", required = true) String email,
+			HttpServletRequest req, HttpServletResponse res) throws Exception {
+		User user = userRepository.findByEmail(email);
+		return BYGenericResponseHandler.getResponse(null == user ? false : true);
+	}
+
+	@RequestMapping(value = "/vaidateMobileNumberPresence", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody Object vaidateMobileNumberPresence(
+			@RequestParam(value = "phoneNumber", required = true) String phoneNumber, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
+		User user = userRepository.findByPhoneNumber(phoneNumber);
+		return BYGenericResponseHandler.getResponse(null == user ? false : true);
+	}
+
 	@RequestMapping(value = "/socialLogin", method = RequestMethod.GET)
 	public @ResponseBody Object socialLogin(@RequestParam(value = "platform", required = true) String platform,
-		@RequestParam(value = "token", required = true) String token, HttpServletRequest req, HttpServletResponse res)
-		throws Exception {
-			String email = null;
-			String name = "";
-			String socialId = null;
-			LoggerUtil.logEntry();
-			Session session = killSession(req, res);
-			JSONObject response = null;
-			if(platform.equals("google") ){
-				String postUrl = "https://www.googleapis.com/oauth2/v3/userinfo?access_token=" + token;
-				URL u = new URL(postUrl);
-				URLConnection c = u.openConnection();
-				BufferedReader in = new BufferedReader(new InputStreamReader(c.getInputStream()));
-				String inputLine;
-				StringBuffer b = new StringBuffer();
-				while ((inputLine = in.readLine()) != null)
-					b.append(inputLine + "\n");
-				in.close();
-				response = new JSONObject(b.toString());
-				if(response != null && response.has("email")){
-					email = response.getString("email");
-					if(response.has("name")){
-						name = response.getString("name");
-					}
-					if(response.has("id")){
-						socialId = response.getString("id");
-					}
+			@RequestParam(value = "token", required = true) String token, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
+		String email = null;
+		String name = "";
+		String socialId = null;
+		LoggerUtil.logEntry();
+		Session session = killSession(req, res);
+		JSONObject response = null;
+		if (platform.equals("google")) {
+			String postUrl = "https://www.googleapis.com/oauth2/v3/userinfo?access_token=" + token;
+			URL u = new URL(postUrl);
+			URLConnection c = u.openConnection();
+			BufferedReader in = new BufferedReader(new InputStreamReader(c.getInputStream()));
+			String inputLine;
+			StringBuffer b = new StringBuffer();
+			while ((inputLine = in.readLine()) != null)
+				b.append(inputLine + "\n");
+			in.close();
+			response = new JSONObject(b.toString());
+			if (response != null && response.has("email")) {
+				email = response.getString("email");
+				if (response.has("name")) {
+					name = response.getString("name");
+				}
+				if (response.has("id")) {
+					socialId = response.getString("id");
 				}
 			}
-			else if(platform.equals("facebook")){
-				String postUrl = "https://graph.facebook.com/me?fields=id,name,email&access_token=" + token;
-				URL u = new URL(postUrl);
-				URLConnection c = u.openConnection();
-				BufferedReader in = new BufferedReader(new InputStreamReader(c.getInputStream()));
-				String inputLine;
-				StringBuffer b = new StringBuffer();
-				while ((inputLine = in.readLine()) != null)
-					b.append(inputLine + "\n");
-				in.close();
-				response = new JSONObject(b.toString());
-				if(response != null && response.has("email")){
-					email = response.getString("email");
-					if(response.has("name")){
-						name = response.getString("name");
-					}
-					if(response.has("id")){
-						socialId = response.getString("id");
-					}
+		} else if (platform.equals("facebook")) {
+			String postUrl = "https://graph.facebook.com/me?fields=id,name,email&access_token=" + token;
+			URL u = new URL(postUrl);
+			URLConnection c = u.openConnection();
+			BufferedReader in = new BufferedReader(new InputStreamReader(c.getInputStream()));
+			String inputLine;
+			StringBuffer b = new StringBuffer();
+			while ((inputLine = in.readLine()) != null)
+				b.append(inputLine + "\n");
+			in.close();
+			response = new JSONObject(b.toString());
+			if (response != null && response.has("email")) {
+				email = response.getString("email");
+				if (response.has("name")) {
+					name = response.getString("name");
+				}
+				if (response.has("id")) {
+					socialId = response.getString("id");
 				}
 			}
-			
-			if(email != null){
-				Query q = new Query();
-				User user = null;
-				Criteria criteria = Criteria.where("email").is(email);
-				q.addCriteria(criteria);
-				q.addCriteria(Criteria.where("socialSignOnPlatform").is(platform));
-				user = mongoTemplate.findOne(q, User.class);
-				
-				if (null == user) {
-					logger.debug("User does not exist");
-					user = new User( name, BYConstants.USER_ID_TYPE_EMAIL, BYConstants.USER_REG_TYPE_FULL, 
-					null, email, null,
-					null,null,
-					socialId, platform,
-					null, null, BYConstants.USER_ROLE_USER,
-					"Active", null, null);
-					return BYGenericResponseHandler.getResponse(user);
-					// return submitUser(user, true, req, res);
-				} else {
-					logger.debug("User logged in success for user email = " + user.getEmail() != null
-							? user.getEmail()
-							: user.getPhoneNumber());
-					session = (Session) req.getSession().getAttribute("session");
-					if (null == session) {
-						session = createSession(req, res, user, true);
-					}
+		}
+
+		if (email != null) {
+			Query q = new Query();
+			User user = null;
+			Criteria criteria = Criteria.where("email").is(email);
+			q.addCriteria(criteria);
+			q.addCriteria(Criteria.where("socialSignOnPlatform").is(platform));
+			user = mongoTemplate.findOne(q, User.class);
+
+			if (null == user) {
+				logger.debug("User does not exist");
+				user = new User(name, BYConstants.USER_ID_TYPE_EMAIL, BYConstants.USER_REG_TYPE_FULL, null, email, null,
+						null, null, socialId, platform, null, null, BYConstants.USER_ROLE_USER, "Active", null, null);
+				return BYGenericResponseHandler.getResponse(user);
+				// return submitUser(user, true, req, res);
+			} else {
+				logger.debug("User logged in success for user email = " + user.getEmail() != null ? user.getEmail()
+						: user.getPhoneNumber());
+				session = (Session) req.getSession().getAttribute("session");
+				if (null == session) {
+					session = createSession(req, res, user, true);
 				}
 			}
-			else {
-				throw new BYException(BYErrorCodes.INVALID_REQUEST);
-			}
-		
-			return BYGenericResponseHandler.getResponse(session);
+		} else {
+			throw new BYException(BYErrorCodes.INVALID_REQUEST);
+		}
+
+		return BYGenericResponseHandler.getResponse(session);
 	}
-	
 
 	@RequestMapping(method = RequestMethod.GET, value = "/logout", produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody Object logout(HttpServletRequest req, HttpServletResponse res) throws Exception {
@@ -261,7 +269,7 @@ public class UserController {
 					throw new BYException(BYErrorCodes.INVALID_REQUEST);
 				}
 				q.addCriteria(Criteria.where("socialSignOnPlatform").is(user.getSocialSignOnPlatform()));
-				
+
 				User existingUser = mongoTemplate.findOne(q, User.class);
 				User userWithExtractedInformation = decorateWithInformation(user);
 				if (null != existingUser) {
@@ -381,25 +389,21 @@ public class UserController {
 			if (!(Util.isEmpty(mobileNo) && Util.isEmpty(otp))) {
 				OtpHandler otpHandler = new OtpHandler(mongoTemplate);
 				JSONObject otpResp = otpHandler.verifyOtp(mobileNo, otp);
-				if(otpResp!= null && otpResp.has("type") && otpResp.getString("type").equals("success")){
+				if (otpResp != null && otpResp.has("type") && otpResp.getString("type").equals("success")) {
 					Query q = new Query();
 					q.addCriteria(Criteria.where("phoneNumber").is(mobileNo));
 					q.addCriteria(Criteria.where("socialSignOnPlatform").is("mobile"));
 					User user = mongoTemplate.findOne(q, User.class);
 
 					if (null == user) {
-						user = new User( mobileNo, 1, BYConstants.USER_REG_TYPE_FULL, 
-						null, "", mobileNo,
-						null,null,
-						mobileNo, "mobile",
-						null, null, BYConstants.USER_ROLE_USER,
-						"Active", null, null);
+						user = new User(mobileNo, 1, BYConstants.USER_REG_TYPE_FULL, null, "", mobileNo, null, null,
+								mobileNo, "mobile", null, null, BYConstants.USER_ROLE_USER, "Active", null, null);
 						return BYGenericResponseHandler.getResponse(user);
 						// return submitUser(user, true, req, res);
 					} else {
-						logger.debug("User logged in success for user email = " + user.getEmail() != null
-								? user.getEmail()
-								: user.getPhoneNumber());
+						logger.debug(
+								"User logged in success for user email = " + user.getEmail() != null ? user.getEmail()
+										: user.getPhoneNumber());
 						session = (Session) req.getSession().getAttribute("session");
 						if (null == session) {
 							session = createSession(req, res, user, true);
@@ -480,11 +484,11 @@ public class UserController {
 				&& (userRoleId.equals(UserRolePermissions.USER) || userRoleId.equals(UserRolePermissions.WRITER))) {
 			return new User(userName, userIdType, userRegType, password, email, phoneNumber, verificationCode,
 					verificationCodeExpiry, socialSignOnId, socialSignOnPlatform, passwordCode, passwordCodeExpiry,
-					userRoleId, "Active", userTags,favEvents);
+					userRoleId, "Active", userTags, favEvents);
 		} else {
 			return new User(userName, userIdType, userRegType, password, email, phoneNumber, verificationCode,
 					verificationCodeExpiry, socialSignOnId, socialSignOnPlatform, passwordCode, passwordCodeExpiry,
-					userRoleId, "Active", userTags,favEvents);
+					userRoleId, "Active", userTags, favEvents);
 		}
 	}
 
@@ -517,13 +521,13 @@ public class UserController {
 		return user;
 	}
 
-	public static User saveUser(User user){
+	public static User saveUser(User user) {
 		LoggerUtil.logEntry();
 		User newuser = userRepository.save(user);
 		return newuser;
 	}
 
-	public static void deleteUser(User user){
+	public static void deleteUser(User user) {
 		LoggerUtil.logEntry();
 		userRepository.delete(user);
 	}
