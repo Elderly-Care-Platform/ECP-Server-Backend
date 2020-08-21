@@ -28,12 +28,15 @@ import com.beautifulyears.constants.ActivityLogConstants;
 import com.beautifulyears.constants.BYConstants;
 import com.beautifulyears.constants.DiscussConstants;
 import com.beautifulyears.constants.UserRolePermissions;
+import com.beautifulyears.domain.BasicProfileInfo;
 import com.beautifulyears.domain.Session;
 import com.beautifulyears.domain.User;
+import com.beautifulyears.domain.UserProfile;
 import com.beautifulyears.exceptions.BYErrorCodes;
 import com.beautifulyears.exceptions.BYException;
 import com.beautifulyears.mail.MailHandler;
 import com.beautifulyears.messages.otp.OtpHandler;
+import com.beautifulyears.repository.UserProfileRepository;
 import com.beautifulyears.repository.UserRepository;
 import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.util.LoggerUtil;
@@ -48,6 +51,8 @@ import com.beautifulyears.util.activityLogHandler.UserActivityLogHandler;
 public class UserController {
 
 	private static UserRepository userRepository;
+	@Autowired
+	private UserProfileRepository userProfileRepository;
 	private MongoTemplate mongoTemplate;
 	private static final Logger logger = Logger.getLogger(UserController.class);
 	ActivityLogHandler<User> logHandler;
@@ -168,7 +173,14 @@ public class UserController {
 				newRegistration.setId(tempIdHolder);
 				userRepository.save(oldRegistration);
 				userRepository.save(newRegistration);
-		return BYGenericResponseHandler.getResponse(oldRegistration);
+
+				UserProfile oldProfile = userProfileRepository.findByUserId(oldAccountId);
+				BasicProfileInfo basicProfileInfo = oldProfile.getBasicProfileInfo();
+				basicProfileInfo.setFirstName(newRegistration.getUserName());
+				basicProfileInfo.setPrimaryEmail(newRegistration.getEmail());
+				basicProfileInfo.setPrimaryPhoneNo(newRegistration.getPhoneNumber());
+				oldProfile.setBasicProfileInfo(basicProfileInfo);
+		return BYGenericResponseHandler.getResponse(userProfileRepository.save(oldProfile));
 	}
 
 	@RequestMapping(value = "/socialLogin", method = RequestMethod.GET)
