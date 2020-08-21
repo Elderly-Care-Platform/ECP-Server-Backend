@@ -169,7 +169,7 @@ public class UserController {
 				User oldRegistration = userRepository.findOne(oldAccountId);
 				String tempIdHolder = oldRegistration.getId();
 				oldRegistration.setId(newRegistration.getId());
-				oldRegistration.setActive("inActive");
+				oldRegistration.setActive("In-Active");
 				newRegistration.setId(tempIdHolder);
 				userRepository.save(oldRegistration);
 				userRepository.save(newRegistration);
@@ -240,7 +240,7 @@ public class UserController {
 			User user = null;
 			Criteria criteria = Criteria.where("email").is(email);
 			q.addCriteria(criteria);
-			q.addCriteria(Criteria.where("socialSignOnPlatform").is(platform));
+			// q.addCriteria(Criteria.where("socialSignOnPlatform").is(platform));
 			user = mongoTemplate.findOne(q, User.class);
 
 			if (null == user) {
@@ -422,7 +422,7 @@ public class UserController {
 				if (otpResp != null && otpResp.has("type") && otpResp.getString("type").equals("success")) {
 					Query q = new Query();
 					q.addCriteria(Criteria.where("phoneNumber").is(mobileNo));
-					q.addCriteria(Criteria.where("socialSignOnPlatform").is("mobile"));
+					// q.addCriteria(Criteria.where("socialSignOnPlatform").is("mobile"));
 					User user = mongoTemplate.findOne(q, User.class);
 
 					if (null == user) {
