@@ -142,7 +142,7 @@ public class UserController {
 	public @ResponseBody Object vaidateEmailPresence(@RequestParam(value = "email", required = true) String email,
 			HttpServletRequest req, HttpServletResponse res) throws Exception {
 		User user = userRepository.findByEmail(email);
-		return BYGenericResponseHandler.getResponse(null == user ? false : true);
+		return BYGenericResponseHandler.getResponse(null == user ? false : user);
 	}
 
 	@RequestMapping(value = "/vaidateMobileNumberPresence", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -150,7 +150,25 @@ public class UserController {
 			@RequestParam(value = "phoneNumber", required = true) String phoneNumber, HttpServletRequest req,
 			HttpServletResponse res) throws Exception {
 		User user = userRepository.findByPhoneNumber(phoneNumber);
-		return BYGenericResponseHandler.getResponse(null == user ? false : true);
+		return BYGenericResponseHandler.getResponse(null == user ? false : user);
+	}
+	
+	@RequestMapping(value = "/mergeAccounts", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody Object swapAccountId(
+			@RequestParam(value = "newAccountId", required = true) String newAccountId,
+			@RequestParam(value = "oldAccountId", required = true) String oldAccountId,
+			 HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
+				User newRegistration = userRepository.findOne(newAccountId);
+				userRepository.delete(newRegistration);
+				User oldRegistration = userRepository.findOne(oldAccountId);
+				String tempIdHolder = oldRegistration.getId();
+				oldRegistration.setId(newRegistration.getId());
+				oldRegistration.setActive("inActive");
+				newRegistration.setId(tempIdHolder);
+				userRepository.save(oldRegistration);
+				userRepository.save(newRegistration);
+		return BYGenericResponseHandler.getResponse(oldRegistration);
 	}
 
 	@RequestMapping(value = "/socialLogin", method = RequestMethod.GET)
