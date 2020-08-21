@@ -172,7 +172,7 @@ public class UserController {
 				oldRegistration.setActive("In-Active");
 				newRegistration.setId(tempIdHolder);
 				userRepository.save(oldRegistration);
-				userRepository.save(newRegistration);
+				newRegistration = userRepository.save(newRegistration);
 
 				UserProfile oldProfile = userProfileRepository.findByUserId(oldAccountId);
 				BasicProfileInfo basicProfileInfo = oldProfile.getBasicProfileInfo();
@@ -180,7 +180,16 @@ public class UserController {
 				basicProfileInfo.setPrimaryEmail(newRegistration.getEmail());
 				basicProfileInfo.setPrimaryPhoneNo(newRegistration.getPhoneNumber());
 				oldProfile.setBasicProfileInfo(basicProfileInfo);
-		return BYGenericResponseHandler.getResponse(userProfileRepository.save(oldProfile));
+				userProfileRepository.save(oldProfile);
+
+				Session session = killSession(req, res);
+				session = (Session) req.getSession().getAttribute("session");
+				
+				if (null == session) {
+					session = createSession(req, res, newRegistration, true);
+				}
+
+		return BYGenericResponseHandler.getResponse(session);
 	}
 
 	@RequestMapping(value = "/socialLogin", method = RequestMethod.GET)
