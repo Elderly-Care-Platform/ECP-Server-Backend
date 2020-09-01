@@ -435,9 +435,9 @@ public class UserController {
 					User user = mongoTemplate.findOne(q, User.class);
 
 					if (null == user) {
-						if (user.getIsActive().equals("Merged")) {
-							user = userRepository.findOne(user.getMergedUserAccountId());
-						}
+						// if (user.getIsActive().equals("Merged")) {
+						// 	user = userRepository.findOne(user.getMergedUserAccountId());
+						// }
 						user = new User(mobileNo, 1, BYConstants.USER_REG_TYPE_FULL, null, "", mobileNo, null, null,
 								mobileNo, "mobile", null, null, BYConstants.USER_ROLE_USER, "Active", null, null);
 						return BYGenericResponseHandler.getResponse(user);
