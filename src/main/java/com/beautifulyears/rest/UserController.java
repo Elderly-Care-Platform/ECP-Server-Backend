@@ -169,7 +169,7 @@ public class UserController {
 		String tempIdHolder = oldRegistration.getId();
 		oldRegistration.setId(newRegistration.getId());
 		oldRegistration.setActive("Merged");
-		oldRegistration.setMergedUserAccountId(newAccountId);
+		oldRegistration.setMergedUserAccountId(tempIdHolder);
 		newRegistration.setId(tempIdHolder);
 		userRepository.save(oldRegistration);
 		newRegistration = userRepository.save(newRegistration);
@@ -443,6 +443,7 @@ public class UserController {
 						if (user.getIsActive().equals("Merged")) {
 							user = userRepository.findOne(user.getMergedUserAccountId());
 						}
+
 						logger.debug(
 								"User logged in success for user email = " + user.getEmail() != null ? user.getEmail()
 										: user.getPhoneNumber());
