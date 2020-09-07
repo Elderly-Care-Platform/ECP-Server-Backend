@@ -161,26 +161,35 @@ public class UserController {
 	@RequestMapping(value = "/mergeAccounts", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody Object swapAccountId(
 			@RequestParam(value = "newAccountId", required = true) String newAccountId,
-			@RequestParam(value = "oldAccountId", required = true) String oldAccountId, HttpServletRequest req,
-			HttpServletResponse res) throws Exception {
-		User newRegistration = userRepository.findOne(newAccountId);
-		userRepository.delete(newRegistration);
-		User oldRegistration = userRepository.findOne(oldAccountId);
-		String tempIdHolder = oldRegistration.getId();
-		oldRegistration.setId(newRegistration.getId());
-		oldRegistration.setActive("Merged");
-		oldRegistration.setMergedUserAccountId(tempIdHolder);
-		newRegistration.setId(tempIdHolder);
-		userRepository.save(oldRegistration);
-		newRegistration = userRepository.save(newRegistration);
+			@RequestParam(value = "oldAccountId", required = true) String oldAccountId,
+			@RequestParam(value = "isRetrieveOldAccountInfo", required = true) Boolean isRetrieveOldAccountInfo,
+			HttpServletRequest req, HttpServletResponse res) throws Exception {
 
-		UserProfile oldProfile = userProfileRepository.findByUserId(oldAccountId);
-		BasicProfileInfo basicProfileInfo = oldProfile.getBasicProfileInfo();
-		basicProfileInfo.setFirstName(newRegistration.getUserName());
-		basicProfileInfo.setPrimaryEmail(newRegistration.getEmail());
-		basicProfileInfo.setPrimaryPhoneNo(newRegistration.getPhoneNumber());
-		oldProfile.setBasicProfileInfo(basicProfileInfo);
-		userProfileRepository.save(oldProfile);
+		User newRegistration = userRepository.findOne(newAccountId);
+		User oldRegistration = userRepository.findOne(oldAccountId);
+
+		if (isRetrieveOldAccountInfo) {
+			newRegistration.setActive("Merged");
+			newRegistration.setMergedUserAccountId(oldAccountId);
+			userRepository.save(newRegistration);
+			newRegistration = oldRegistration;
+		} else {
+			userRepository.delete(newRegistration);
+			String tempIdHolder = oldRegistration.getId();
+			oldRegistration.setId(newRegistration.getId());
+			oldRegistration.setActive("Merged");
+			oldRegistration.setMergedUserAccountId(tempIdHolder);
+			newRegistration.setId(tempIdHolder);
+			userRepository.save(oldRegistration);
+			newRegistration = userRepository.save(newRegistration);
+			UserProfile oldProfile = userProfileRepository.findByUserId(oldAccountId);
+			BasicProfileInfo basicProfileInfo = oldProfile.getBasicProfileInfo();
+			basicProfileInfo.setFirstName(newRegistration.getUserName());
+			basicProfileInfo.setPrimaryEmail(newRegistration.getEmail());
+			basicProfileInfo.setPrimaryPhoneNo(newRegistration.getPhoneNumber());
+			oldProfile.setBasicProfileInfo(basicProfileInfo);
+			userProfileRepository.save(oldProfile);
+		}
 
 		Session session = killSession(req, res);
 		session = (Session) req.getSession().getAttribute("session");
