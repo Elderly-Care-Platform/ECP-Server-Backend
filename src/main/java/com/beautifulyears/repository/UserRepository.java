@@ -10,7 +10,12 @@ import com.beautifulyears.domain.User;
 @Repository
 public interface UserRepository extends MongoRepository<User, String> {
 
-	public List<User> findAll();
-	
-	public List<User> findBySocialSignOnId(String socialSignOnId);
+    public List<User> findAll();
+    
+    public List<User> findBySocialSignOnId(String socialSignOnId);
+
+    public User findByEmail(String email);
+
+    public User findByPhoneNumber(String phoneNumber);
 }
+

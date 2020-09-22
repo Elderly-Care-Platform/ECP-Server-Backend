@@ -47,6 +47,7 @@ public class User implements Serializable {
 	private Integer userIdType;
 	private Integer userRegType;
 	private String phoneNumber;
+	private String mergedUserAccountId;
 	private List<String> userTags = new ArrayList<String>();
 	private List<String> favEvents = new ArrayList<String>();
 
@@ -261,6 +262,14 @@ public class User implements Serializable {
 				+ ", passwordCode=" + passwordCode + ", passwordCodeExpiry="
 				+ passwordCodeExpiry + ", userRoleId=" + userRoleId
 				+ ", isActive=" + isActive + ", permissions=" + permissions + "]";
+	}
+
+	public String getMergedUserAccountId() {
+		return mergedUserAccountId;
+	}
+
+	public void setMergedUserAccountId(String mergedUserAccountId) {
+		this.mergedUserAccountId = mergedUserAccountId;
 	}
 
 }
