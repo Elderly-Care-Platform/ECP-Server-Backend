@@ -534,13 +534,17 @@ public class UserController {
 		// TODO: Change this logic during user regitration phase 2
 		if (userRoleId != null
 				&& (userRoleId.equals(UserRolePermissions.USER) || userRoleId.equals(UserRolePermissions.WRITER))) {
-			return new User(userName, userIdType, userRegType, password, email, phoneNumber, verificationCode,
+					User decoratedUser = new User(userName, userIdType, userRegType, password, email, phoneNumber, verificationCode,
 					verificationCodeExpiry, socialSignOnId, socialSignOnPlatform, passwordCode, passwordCodeExpiry,
 					userRoleId, "Active", userTags, favEvents);
+					decoratedUser.setIsSubscribedForNewsletter(user.getIsSubscribedForNewsletter());
+			return decoratedUser;
 		} else {
-			return new User(userName, userIdType, userRegType, password, email, phoneNumber, verificationCode,
-					verificationCodeExpiry, socialSignOnId, socialSignOnPlatform, passwordCode, passwordCodeExpiry,
-					userRoleId, "Active", userTags, favEvents);
+			User decoratedUser = new User(userName, userIdType, userRegType, password, email, phoneNumber, verificationCode,
+			verificationCodeExpiry, socialSignOnId, socialSignOnPlatform, passwordCode, passwordCodeExpiry,
+			userRoleId, "Active", userTags, favEvents);
+			decoratedUser.setIsSubscribedForNewsletter(user.getIsSubscribedForNewsletter());
+			return decoratedUser;
 		}
 	}
 
