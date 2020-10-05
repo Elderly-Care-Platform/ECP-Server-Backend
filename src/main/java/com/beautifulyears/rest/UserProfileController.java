@@ -69,6 +69,7 @@ import com.beautifulyears.rest.response.BYGenericResponseHandler;
 import com.beautifulyears.rest.response.JustDailServiceResponse;
 import com.beautifulyears.rest.response.PageImpl;
 import com.beautifulyears.rest.response.UserProfileResponse;
+import com.beautifulyears.rest.response.UserProfileResponse.UserProfileEntity;
 import com.beautifulyears.rest.response.UserProfileResponse.UserProfilePage;
 import com.beautifulyears.util.LoggerUtil;
 import com.beautifulyears.util.UpdateUserProfileHandler;
@@ -128,7 +129,7 @@ public class UserProfileController {
 				Query q = new Query();
 				q.addCriteria(Criteria.where("userId").is(userId));
 				userProfile = mongoTemplate.findOne(q, UserProfile.class);
-
+				System.out.println("USER ID ======== "+ userId +" IsSubscribedForNewsletter = "+userInfo.getIsSubscribedForNewsletter());
 				if (userProfile == null) {
 					logger.error("did not find any profile matching ID");
 					userProfile = new UserProfile();
@@ -136,6 +137,7 @@ public class UserProfileController {
 						userProfile.getBasicProfileInfo().setPrimaryEmail(userInfo.getEmail());
 						userProfile.getBasicProfileInfo().setPrimaryPhoneNo(userInfo.getPhoneNumber());
 						userProfile.setUserTags(userInfo.getUserTags());
+						// userProfile.getBasicProfileInfo().setIsSubscribedForNewsletter(userInfo.getIsSubscribedForNewsletter());
 					}
 				} else {
 					logger.debug(userProfile.toString());
@@ -148,7 +150,11 @@ public class UserProfileController {
 		} catch (Exception e) {
 			Util.handleException(e);
 		}
-		return BYGenericResponseHandler.getResponse(UserProfileResponse.getUserProfileEntity(userProfile, userInfo));
+		UserProfileEntity prof = UserProfileResponse.getUserProfileEntity(userProfile, userInfo);
+		if (userProfile != null) {
+			prof.getBasicProfileInfo().setIsSubscribedForNewsletter(userInfo.getIsSubscribedForNewsletter());
+		}
+		return BYGenericResponseHandler.getResponse(prof);
 	}
 
 	@RequestMapping(method = { RequestMethod.GET }, value = { "profile/{profileId}" }, produces = {
