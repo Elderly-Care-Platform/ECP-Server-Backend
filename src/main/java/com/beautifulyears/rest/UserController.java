@@ -143,6 +143,30 @@ public class UserController {
 		return BYGenericResponseHandler.getResponse(session);
 	}
 
+	@RequestMapping(value = "/validateEmailPresenceForUpdate", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody Object vaidateEmailPresenceForUpdate(
+			@RequestParam(value = "email", required = true) String email,
+			@RequestParam(value = "userId", required = true) String userId, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
+		User user = userRepository.findByEmail(email);
+		if (user.getId().equals(userId)) {
+			user = null;
+		}
+		return BYGenericResponseHandler.getResponse(null == user ? false : user);
+	}
+
+	@RequestMapping(value = "/vaidateMobileNumberPresenceForUpdate", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody Object vaidateMobileNumberPresenceForUpdate(
+			@RequestParam(value = "phoneNumber", required = true) String phoneNumber,
+			@RequestParam(value = "userId", required = true) String userId, HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
+		User user = userRepository.findByPhoneNumber(phoneNumber);
+		if (user.getId().equals(userId)) {
+			user = null;
+		}
+		return BYGenericResponseHandler.getResponse(null == user ? false : user);
+	}
+
 	@RequestMapping(value = "/validateEmailPresence", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody Object vaidateEmailPresence(@RequestParam(value = "email", required = true) String email,
 			HttpServletRequest req, HttpServletResponse res) throws Exception {
@@ -167,7 +191,8 @@ public class UserController {
 
 		User newRegistration = userRepository.findOne(newAccountId);
 		User oldRegistration = userRepository.findOne(oldAccountId);
-
+		oldRegistration.setMergedUserAccountId(null);
+		newRegistration.setMergedUserAccountId(null);
 		if (isRetrieveOldAccountInfo) {
 			newRegistration.setActive("Merged");
 			newRegistration.setMergedUserAccountId(oldAccountId);
@@ -199,6 +224,38 @@ public class UserController {
 		}
 
 		return BYGenericResponseHandler.getResponse(session);
+	}
+
+	@RequestMapping(value = "/unsubscribeNewsLetter", method = RequestMethod.GET)
+	public @ResponseBody Object unsubscribeNewsLetter(@RequestParam(value = "mobile", required = true) String mobileNo,
+			@RequestParam(value = "otp", required = true) String otp,
+			@RequestParam(value = "isSubscribedForNewsletter", required = true) Boolean isSubscribedForNewsletter, HttpServletRequest req, HttpServletResponse res)
+			throws Exception {
+		LoggerUtil.logEntry();
+		System.out.println("ENTRY RECIEVED");
+		try {
+			if (!(Util.isEmpty(mobileNo) && Util.isEmpty(otp))) {
+				OtpHandler otpHandler = new OtpHandler(mongoTemplate);
+				JSONObject otpResp = otpHandler.verifyOtp(mobileNo, otp);
+				if (otpResp != null && otpResp.has("type") && otpResp.getString("type").equals("success")) {
+					User sessionUser = Util.getSessionUser(req);
+					if (sessionUser == null) {
+						throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
+					}
+					User user = userRepository.findOne(sessionUser.getId());
+					user.setIsSubscribedForNewsletter(isSubscribedForNewsletter);
+					userRepository.save(user);
+					return BYGenericResponseHandler.getResponse(user);
+				} else {
+					return BYGenericResponseHandler.getResponse(false);
+				}
+			} else {
+				throw new BYException(BYErrorCodes.MISSING_PARAMETER);
+			}
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+		return BYGenericResponseHandler.getResponse(false);
 	}
 
 	@RequestMapping(value = "/socialLogin", method = RequestMethod.GET)
@@ -427,6 +484,30 @@ public class UserController {
 	/**
 	 * Verify OTP
 	 */
+
+	@RequestMapping(value = "/validateOTP", method = RequestMethod.POST)
+	public @ResponseBody Object validateOTP(@RequestParam(value = "mobile", required = true) String mobileNo,
+			@RequestParam(value = "otp", required = true) String otp, HttpServletRequest req, HttpServletResponse res)
+			throws Exception {
+		LoggerUtil.logEntry();
+		try {
+			if (!(Util.isEmpty(mobileNo) && Util.isEmpty(otp))) {
+				OtpHandler otpHandler = new OtpHandler(mongoTemplate);
+				JSONObject otpResp = otpHandler.verifyOtp(mobileNo, otp);
+				if (otpResp != null && otpResp.has("type") && otpResp.getString("type").equals("success")) {
+					return BYGenericResponseHandler.getResponse(true);
+				} else {
+					return BYGenericResponseHandler.getResponse(false);
+				}
+			} else {
+				throw new BYException(BYErrorCodes.MISSING_PARAMETER);
+			}
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+		return BYGenericResponseHandler.getResponse(false);
+	}
+
 	@RequestMapping(value = "/otpLogin", method = RequestMethod.POST)
 	public @ResponseBody Object otpLogin(@RequestParam(value = "mobile", required = true) String mobileNo,
 			@RequestParam(value = "otp", required = true) String otp, HttpServletRequest req, HttpServletResponse res)
@@ -534,13 +615,17 @@ public class UserController {
 		// TODO: Change this logic during user regitration phase 2
 		if (userRoleId != null
 				&& (userRoleId.equals(UserRolePermissions.USER) || userRoleId.equals(UserRolePermissions.WRITER))) {
-			return new User(userName, userIdType, userRegType, password, email, phoneNumber, verificationCode,
-					verificationCodeExpiry, socialSignOnId, socialSignOnPlatform, passwordCode, passwordCodeExpiry,
-					userRoleId, "Active", userTags, favEvents);
+			User decoratedUser = new User(userName, userIdType, userRegType, password, email, phoneNumber,
+					verificationCode, verificationCodeExpiry, socialSignOnId, socialSignOnPlatform, passwordCode,
+					passwordCodeExpiry, userRoleId, "Active", userTags, favEvents);
+			decoratedUser.setIsSubscribedForNewsletter(user.getIsSubscribedForNewsletter());
+			return decoratedUser;
 		} else {
-			return new User(userName, userIdType, userRegType, password, email, phoneNumber, verificationCode,
-					verificationCodeExpiry, socialSignOnId, socialSignOnPlatform, passwordCode, passwordCodeExpiry,
-					userRoleId, "Active", userTags, favEvents);
+			User decoratedUser = new User(userName, userIdType, userRegType, password, email, phoneNumber,
+					verificationCode, verificationCodeExpiry, socialSignOnId, socialSignOnPlatform, passwordCode,
+					passwordCodeExpiry, userRoleId, "Active", userTags, favEvents);
+			decoratedUser.setIsSubscribedForNewsletter(user.getIsSubscribedForNewsletter());
+			return decoratedUser;
 		}
 	}
 

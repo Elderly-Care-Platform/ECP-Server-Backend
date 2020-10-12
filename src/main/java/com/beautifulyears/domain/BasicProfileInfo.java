@@ -46,6 +46,8 @@ public class BasicProfileInfo {
 	
 	private String shortDescription;
 
+	private Boolean isSubscribedForNewsletter;
+
 	public UserAddress getPrimaryUserAddress() {
 		return primaryUserAddress;
 	}
@@ -144,6 +146,14 @@ public class BasicProfileInfo {
 				+ photoGalleryURLs + ", primaryUserAddress="
 				+ primaryUserAddress + ", otherAddresses=" + otherAddresses
 				+ ", shortDescription=" + shortDescription + "]";
+	}
+
+	public Boolean getIsSubscribedForNewsletter() {
+		return isSubscribedForNewsletter;
+	}
+
+	public void setIsSubscribedForNewsletter(Boolean isSubscribedForNewsletter) {
+		this.isSubscribedForNewsletter = isSubscribedForNewsletter;
 	}
 
 	
