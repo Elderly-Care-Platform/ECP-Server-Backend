@@ -12,6 +12,8 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     public List<User> findAll();
     
+    public List<User> findByIsSubscribedForNewsletter(Boolean isSubscribedForNewsletter);
+
     public List<User> findBySocialSignOnId(String socialSignOnId);
 
     public User findByEmail(String email);
