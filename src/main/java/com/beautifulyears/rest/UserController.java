@@ -1,8 +1,11 @@
 package com.beautifulyears.rest;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -224,6 +227,32 @@ public class UserController {
 		}
 
 		return BYGenericResponseHandler.getResponse(session);
+	}
+
+	@RequestMapping(value = "/getListOfSubscribedUsers", method = RequestMethod.GET, produces = MediaType.TEXT_HTML_VALUE)
+	public @ResponseBody Object getListOfSubscribedUsers(){
+		Map<String,String> obj = new HashMap<>();
+		List<Map<String,String>> list = new ArrayList<>();
+		List<User> userList = userRepository.findByIsSubscribedForNewsletter(true);
+			StringBuilder sb = new StringBuilder();
+			sb.append("<style> table { font-family: arial, sans-serif; border-collapse: collapse; width: 100%; } td, th { border: 1px solid #dddddd; text-align: left; padding: 8px; } tr:nth-child(even) { background-color: #dddddd; } </style>");
+			sb.append("<table>");
+			sb.append("<tr>");
+			sb.append("<th>Name</th>");
+			sb.append("<th>Email</th>");
+			sb.append("</tr>");
+			userList.forEach(e->{
+				sb.append("<tr>");
+				sb.append("<td>"+e.getUserName()+"</td>");
+				sb.append("<td>"+e.getEmail()+"</td>");
+				sb.append("</tr>");
+				obj.put("firstName", e.getUserName());
+				obj.put("email", e.getEmail());
+				list.add(obj);
+				
+			});
+			sb.append("</table>");
+		return sb.toString();
 	}
 
 	@RequestMapping(value = "/unsubscribeNewsLetter", method = RequestMethod.GET)
