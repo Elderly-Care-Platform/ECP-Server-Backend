@@ -47,6 +47,8 @@ public class BasicProfileInfo {
 	private String shortDescription;
 
 	private Boolean isSubscribedForNewsletter;
+	private Boolean isSubscribedForSecondaryCareer = false;
+	private Boolean isSubscribedForLearningAcademy = false;
 
 	public UserAddress getPrimaryUserAddress() {
 		return primaryUserAddress;
@@ -155,7 +157,21 @@ public class BasicProfileInfo {
 	public void setIsSubscribedForNewsletter(Boolean isSubscribedForNewsletter) {
 		this.isSubscribedForNewsletter = isSubscribedForNewsletter;
 	}
+	public Boolean getIsSubscribedForSecondaryCareer() {
+		return isSubscribedForSecondaryCareer;
+	}
 
+	public void setIsSubscribedForSecondaryCareer(Boolean isSubscribedForSecondaryCareer) {
+		this.isSubscribedForSecondaryCareer = isSubscribedForSecondaryCareer;
+	}
+
+	public Boolean getIsSubscribedForLearningAcademy() {
+		return isSubscribedForLearningAcademy;
+	}
+
+	public void setIsSubscribedForLearningAcademy(Boolean isSubscribedForLearningAcademy) {
+		this.isSubscribedForLearningAcademy = isSubscribedForLearningAcademy;
+	}
 	
 
 }

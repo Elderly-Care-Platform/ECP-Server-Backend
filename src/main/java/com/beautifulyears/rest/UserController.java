@@ -255,6 +255,43 @@ public class UserController {
 		return sb.toString();
 	}
 
+	@RequestMapping(value = "/updateEmailSubscription", method = RequestMethod.GET)
+	public @ResponseBody Object updateEmailSubscription(@RequestParam(value = "mobile", required = true) String mobileNo,
+			@RequestParam(value = "otp", required = true) String otp,
+			@RequestParam(value = "isSubscribedForNewsletter", required = true) Boolean isSubscribedForNewsletter,
+			@RequestParam(value = "isSubscribedForSecondaryCareer", required = true) Boolean isSubscribedForSecondaryCareer,
+			@RequestParam(value = "isSubscribedForLearningAcademy", required = true) Boolean isSubscribedForLearningAcademy,
+			 HttpServletRequest req, HttpServletResponse res)
+			throws Exception {
+		LoggerUtil.logEntry();
+		System.out.println("ENTRY RECIEVED");
+		try {
+			if (!(Util.isEmpty(mobileNo) && Util.isEmpty(otp))) {
+				OtpHandler otpHandler = new OtpHandler(mongoTemplate);
+				JSONObject otpResp = otpHandler.verifyOtp(mobileNo, otp);
+				if (otpResp != null && otpResp.has("type") && otpResp.getString("type").equals("success")) {
+					User sessionUser = Util.getSessionUser(req);
+					if (sessionUser == null) {
+						throw new BYException(BYErrorCodes.USER_NOT_AUTHORIZED);
+					}
+					User user = userRepository.findOne(sessionUser.getId());
+					user.setIsSubscribedForNewsletter(isSubscribedForNewsletter);
+					user.setIsSubscribedForLearningAcademy(isSubscribedForLearningAcademy);
+					user.setIsSubscribedForSecondaryCareer(isSubscribedForSecondaryCareer);
+					userRepository.save(user);
+					return BYGenericResponseHandler.getResponse(user);
+				} else {
+					return BYGenericResponseHandler.getResponse(false);
+				}
+			} else {
+				throw new BYException(BYErrorCodes.MISSING_PARAMETER);
+			}
+		} catch (Exception e) {
+			Util.handleException(e);
+		}
+		return BYGenericResponseHandler.getResponse(false);
+	}
+
 	@RequestMapping(value = "/unsubscribeNewsLetter", method = RequestMethod.GET)
 	public @ResponseBody Object unsubscribeNewsLetter(@RequestParam(value = "mobile", required = true) String mobileNo,
 			@RequestParam(value = "otp", required = true) String otp,
