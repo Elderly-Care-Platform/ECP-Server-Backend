@@ -153,6 +153,8 @@ public class UserProfileController {
 		UserProfileEntity prof = UserProfileResponse.getUserProfileEntity(userProfile, userInfo);
 		if (userProfile != null) {
 			prof.getBasicProfileInfo().setIsSubscribedForNewsletter(userInfo.getIsSubscribedForNewsletter());
+			prof.getBasicProfileInfo().setIsSubscribedForLearningAcademy(userInfo.getIsSubscribedForLearningAcademy());
+			prof.getBasicProfileInfo().setIsSubscribedForSecondaryCareer(userInfo.getIsSubscribedForSecondaryCareer());
 		}
 		return BYGenericResponseHandler.getResponse(prof);
 	}

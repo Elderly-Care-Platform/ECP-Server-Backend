@@ -14,6 +14,10 @@ public interface UserRepository extends MongoRepository<User, String> {
     
     public List<User> findByIsSubscribedForNewsletter(Boolean isSubscribedForNewsletter);
 
+    public List<User> findByIsSubscribedForSecondaryCareer(Boolean isSubscribedForSecondaryCareer);
+
+    public List<User> findByIsSubscribedForLearningAcademy(Boolean isSubscribedForLearningAcademy);
+
     public List<User> findBySocialSignOnId(String socialSignOnId);
 
     public User findByEmail(String email);

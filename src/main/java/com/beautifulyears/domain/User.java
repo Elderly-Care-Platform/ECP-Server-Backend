@@ -49,6 +49,8 @@ public class User implements Serializable {
 	private String phoneNumber;
 	private String mergedUserAccountId;
 	private Boolean isSubscribedForNewsletter = false;
+	private Boolean isSubscribedForSecondaryCareer = false;
+	private Boolean isSubscribedForLearningAcademy = false;
 	private List<String> userTags = new ArrayList<String>();
 	private List<String> favEvents = new ArrayList<String>();
 
@@ -279,6 +281,22 @@ public class User implements Serializable {
 
 	public void setIsSubscribedForNewsletter(Boolean isSubscribedForNewsletter) {
 		this.isSubscribedForNewsletter = isSubscribedForNewsletter;
+	}
+
+	public Boolean getIsSubscribedForSecondaryCareer() {
+		return isSubscribedForSecondaryCareer;
+	}
+
+	public void setIsSubscribedForSecondaryCareer(Boolean isSubscribedForSecondaryCareer) {
+		this.isSubscribedForSecondaryCareer = isSubscribedForSecondaryCareer;
+	}
+
+	public Boolean getIsSubscribedForLearningAcademy() {
+		return isSubscribedForLearningAcademy;
+	}
+
+	public void setIsSubscribedForLearningAcademy(Boolean isSubscribedForLearningAcademy) {
+		this.isSubscribedForLearningAcademy = isSubscribedForLearningAcademy;
 	}
 
 }
